@@ -1,0 +1,144 @@
+{
+  "name": "calendar-simple-native",
+  "version": "0.0.0",
+  "description": "A simple, themeable calendar for React Native (iOS, Android, web)",
+  "type": "module",
+  "main": "./lib/module/index.js",
+  "types": "./lib/typescript/src/index.d.ts",
+  "exports": {
+    ".": {
+      "calendar-simple-native-source": "./src/index.ts",
+      "types": "./lib/typescript/src/index.d.ts",
+      "default": "./lib/module/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "src",
+    "!**/__tests__",
+    "!**/*.test.*",
+    "!src/core/test",
+    "!src/test-utils"
+  ],
+  "scripts": {
+    "example": "npm exec --workspace calendar-simple-native-example -- expo",
+    "clean": "del-cli lib",
+    "build": "bob build",
+    "prepare": "husky && bob build",
+    "typecheck": "tsc",
+    "lint": "tsc --noEmit && eslint .",
+    "lint:fix": "tsc --noEmit && eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:core": "vitest run",
+    "test:ui": "jest",
+    "test": "npm run test:core && npm run test:ui"
+  },
+  "keywords": [
+    "calendar",
+    "react-native",
+    "expo",
+    "calendar-simple"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaganath-MSJ/CalendarSimple-Native.git"
+  },
+  "author": "jaganath-m-s <jagan.msjc@gmail.com> (https://github.com/Jaganath-MSJ)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Jaganath-MSJ/CalendarSimple-Native/issues"
+  },
+  "homepage": "https://github.com/Jaganath-MSJ/CalendarSimple-Native#readme",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.5.3",
+    "@commitlint/config-conventional": "^20.5.3",
+    "@eslint/js": "^10.0.1",
+    "@react-native/babel-preset": "0.88.0",
+    "@testing-library/react-native": "^14.1.0",
+    "@types/jest": "^30.0.0",
+    "@types/luxon": "^3.7.1",
+    "@types/react": "^19.2.0",
+    "@types/react-test-renderer": "^19.3.0",
+    "del-cli": "^8.0.1",
+    "eslint": "^10.13.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "expo": "~58.0.17",
+    "globals": "^17.13.0",
+    "husky": "^9.1.7",
+    "jest": "^30.5.2",
+    "jest-expo": "^58.0.12",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.9.10",
+    "react": "19.3.0",
+    "react-native": "0.88.0",
+    "react-native-builder-bob": "^0.44.1",
+    "react-test-renderer": "^19.3.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^4.1.12"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-native": ">=0.78",
+    "react-native-web": "*"
+  },
+  "workspaces": [
+    "example"
+  ],
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      [
+        "module",
+        {
+          "esm": true
+        }
+      ],
+      [
+        "typescript",
+        {
+          "project": "tsconfig.build.json"
+        }
+      ]
+    ],
+    "exclude": "{**/{__tests__,__fixtures__,__mocks__,test,test-utils}/**,**/*.test.{ts,tsx}}"
+  },
+  "create-react-native-library": {
+    "type": "library",
+    "languages": "js",
+    "tools": [],
+    "version": "0.64.0"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "peerDependenciesMeta": {
+    "react-native-web": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "luxon": "^3.7.2"
+  },
+  "overrides": {
+    "eslint": "$eslint"
+  },
+  "lint-staged": {
+    "*.{js,ts,jsx,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md}": [
+      "prettier --write"
+    ]
+  }
+}
