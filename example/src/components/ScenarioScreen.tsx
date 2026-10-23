@@ -6,6 +6,7 @@ import { useState, type ReactNode } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Calendar, { type CalendarProps } from "../../../src";
 import { useExampleScheme } from "../launch";
+import { useChrome } from "../ui/chrome";
 
 export type Log = (message: string) => void;
 
@@ -23,6 +24,7 @@ export default function ScenarioScreen({
   scenarios: Scenario[];
 }) {
   const scheme = useExampleScheme();
+  const c = useChrome();
   const [index, setIndex] = useState(0);
   const [message, setMessage] = useState("");
   const scenario = scenarios[index] ?? scenarios[0];
@@ -48,13 +50,22 @@ export default function ScenarioScreen({
               setIndex(i);
               setMessage("");
             }}
-            style={[styles.tab, i === index && styles.tabSelected]}
+            style={[
+              styles.tab,
+              { borderColor: c.border },
+              i === index && {
+                backgroundColor: c.primary,
+                borderColor: c.primary,
+              },
+            ]}
           >
-            <Text style={i === index && styles.tabSelectedText}>{s.name}</Text>
+            <Text style={{ color: i === index ? c.onPrimary : c.textPrimary }}>
+              {s.name}
+            </Text>
           </Pressable>
         ))}
       </ScrollView>
-      <Text style={styles.log} numberOfLines={2}>
+      <Text style={[styles.log, { color: c.textSecondary }]} numberOfLines={2}>
         {message || " "}
       </Text>
       <View key={scenario.name} style={styles.calendar}>
@@ -67,18 +78,15 @@ export default function ScenarioScreen({
 const styles = StyleSheet.create({
   root: { flex: 1 },
   tabs: { flexGrow: 0 },
-  tabsContent: { gap: 8, paddingHorizontal: 8 },
+  tabsContent: { gap: 8, padding: 8 },
   tab: {
     paddingHorizontal: 10,
     paddingVertical: 8,
     minHeight: 44,
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#9ca3af",
-    borderRadius: 6,
+    borderRadius: 999,
   },
-  tabSelected: { backgroundColor: "#2563eb", borderColor: "#2563eb" },
-  tabSelectedText: { color: "#ffffff" },
-  log: { paddingHorizontal: 8, paddingVertical: 4, color: "#6b7280" },
+  log: { paddingHorizontal: 12, paddingVertical: 4 },
   calendar: { flex: 1 },
 });
