@@ -1,8 +1,12 @@
 import type { ComponentType } from "react";
 import IntlCheckScreen from "./screens/IntlCheckScreen";
+import PagerProbeScreen from "./screens/PagerProbeScreen";
 
 export const SCREENS: {
   key: string;
   title: string;
   component: ComponentType;
-}[] = [{ key: "intl", title: "Intl check", component: IntlCheckScreen }];
+}[] = [
+  { key: "intl", title: "Intl check", component: IntlCheckScreen },
+  { key: "pager", title: "Pager probe", component: PagerProbeScreen },
+];
