@@ -1,8 +1,11 @@
 import type { ComponentType } from "react";
+import CustomDaysScreen from "./screens/CustomDaysScreen";
+import DayScreen from "./screens/DayScreen";
 import HeaderScreen from "./screens/HeaderScreen";
 import IntlCheckScreen from "./screens/IntlCheckScreen";
 import MonthScreen from "./screens/MonthScreen";
 import PagerProbeScreen from "./screens/PagerProbeScreen";
+import WeekScreen from "./screens/WeekScreen";
 
 export const SCREENS: {
   key: string;
@@ -12,5 +15,8 @@ export const SCREENS: {
   { key: "intl", title: "Intl check", component: IntlCheckScreen },
   { key: "header", title: "Header", component: HeaderScreen },
   { key: "month", title: "Month", component: MonthScreen },
+  { key: "week", title: "Week", component: WeekScreen },
+  { key: "day", title: "Day", component: DayScreen },
+  { key: "customDays", title: "3 Days", component: CustomDaysScreen },
   { key: "pager", title: "Pager probe", component: PagerProbeScreen },
 ];

@@ -28,9 +28,17 @@ it("draws 6 px bars without text", async () => {
   expect(screen.queryByText("Hackathon")).toBeNull();
 });
 
-it("#9: phone metrics leave room for every bar on 22 Oct (no +N)", async () => {
+it("phone bars use the event colour (style.backgroundColor)", async () => {
   await phone();
-  expect(screen.queryByTestId("calendar-22-more-label")).toBeNull();
+  // Design offsite (#15803d)
+  expect(screen.getAllByTestId("calendar-o5-month-event-item")[0]).toHaveStyle({
+    backgroundColor: "#15803d",
+  });
+});
+
+it("caps phone bars at 3 per day; 22 Oct shows +6", async () => {
+  await phone();
+  expect(screen.getByTestId("calendar-22-more-label")).toHaveTextContent("+6");
 });
 
 it("shows +N when maxEvents limits the slots (web hidden rule)", async () => {

@@ -1,11 +1,14 @@
 /**
- * @file `Calendar.View`: renders the active view (month for now; the time
- * grids and schedule arrive in later phases).
+ * @file `Calendar.View`: renders the active view (month and the time grids; the
+ * schedule arrives in a later phase).
  */
 import { useCalendarState } from "../../context/CalendarContext";
 import type { DateType } from "../../core";
 import type { CalendarProps } from "../../types";
+import { CustomDaysView } from "./CustomDaysView";
+import { DayView } from "./DayView";
 import { MonthView } from "./MonthView";
+import { WeekView } from "./WeekView";
 
 export type ViewProps = Partial<CalendarProps> & {
   /** Internal: the period a pager page shows (default `state.selectedDate`). */
@@ -17,6 +20,12 @@ export function View({ date, ...props }: ViewProps) {
   switch (state.view) {
     case "month":
       return <MonthView {...props} date={date} />;
+    case "week":
+      return <WeekView {...props} date={date} />;
+    case "day":
+      return <DayView {...props} date={date} />;
+    case "customDays":
+      return <CustomDaysView {...props} date={date} />;
     default:
       return null;
   }

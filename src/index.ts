@@ -20,6 +20,11 @@ export type { CalendarPalette } from "./theme";
 export type { MonthViewProps } from "./components/views/MonthView";
 export type { ViewProps } from "./components/views/View";
 export type {
+  CustomDaysViewProps,
+  DayViewProps,
+  WeekViewProps,
+} from "./components/views/WeekView";
+export type {
   CalendarEvent,
   CalendarEventStyle,
   CalendarProps,

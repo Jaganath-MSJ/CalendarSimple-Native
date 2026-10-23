@@ -33,6 +33,9 @@ import { getCellOverflow } from "../month/overflow";
 import type { Frame } from "../ui/placePopover";
 
 /** Override keys accepted by `MonthView` (port spec §2.7; `styles` replaces `classNames`). */
+/** Phone month shows at most 3 bars per day; the rest go in "+N". */
+const PHONE_MAX_BARS = 3;
+
 export type MonthViewProps = Partial<
   Pick<
     CalendarProps,
@@ -106,11 +109,16 @@ export function MonthView({ date, ...local }: MonthViewProps) {
   const rowHeight = gridHeight > 0 ? gridHeight / rows : 0;
   const maxSlots =
     cfg.maxEvents ??
-    calculateMaxEvents(
-      Math.max(0, gridHeight),
-      rows,
-      phone ? MONTH_METRICS.phone : MONTH_METRICS.web,
-    );
+    (phone
+      ? Math.min(
+          calculateMaxEvents(
+            Math.max(0, gridHeight),
+            rows,
+            MONTH_METRICS.phone,
+          ),
+          PHONE_MAX_BARS,
+        )
+      : calculateMaxEvents(Math.max(0, gridHeight), rows, MONTH_METRICS.web));
 
   const { selectable, creatable, onDateClick, onSlotClick, slotPressMode } =
     cfg;

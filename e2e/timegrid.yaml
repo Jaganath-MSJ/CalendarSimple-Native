@@ -1,0 +1,11 @@
+appId: com.calendarsimplenative.example
+---
+- launchApp
+- tapOn: "Week"
+- assertVisible: { id: "calendar-week-view" }
+# 18–24 Oct → 25–31 Oct ("October 2026") → 1–7 Nov.
+- swipe: { direction: LEFT }
+- swipe: { direction: LEFT }
+- assertVisible: "November 2026"
+- tapOn: { id: "calendar-header-today-btn" }
+- longPressOn: { id: "calendar-day-column", index: 4 }
