@@ -9,6 +9,7 @@ export default tseslint.config(
   {
     ignores: [
       'lib',
+      '.tmp',
       'example',
       'node_modules',
       'e2e-web/test-results',

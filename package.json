@@ -32,6 +32,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "core:diff": "node scripts/core-diff.mjs",
+    "docs:check": "node scripts/check-readme-snippets.mjs",
     "test:core": "vitest run",
     "test:ui": "jest",
     "test": "npm run test:core && npm run test:ui",

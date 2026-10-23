@@ -74,3 +74,6 @@ example/android/
 example/dist/
 e2e-web/test-results/
 playwright-report/
+
+# docs:check snippet output
+.tmp/
