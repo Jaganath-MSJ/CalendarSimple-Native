@@ -24,7 +24,9 @@ jobs:
       - run: npm ci
       - run: npm run example:web:export
       - name: Deploy to Netlify
-        run: npx --yes netlify-cli deploy --dir example/dist --prod
+        # example/dist is built by the previous step; --no-build stops netlify-cli
+        # from running the site's UI build command from the repo root.
+        run: npx --yes netlify-cli deploy --no-build --dir example/dist --prod
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
