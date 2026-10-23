@@ -84,5 +84,11 @@ export default tseslint.config(
       '@typescript-eslint/unbound-method': 'off',
     },
   },
+  {
+    // Plain Node scripts are not in the TS project; lint them without types.
+    files: ['scripts/**/*.mjs'],
+    ...tseslint.configs.disableTypeChecked,
+    languageOptions: { globals: { ...globals.node } },
+  },
   eslintConfigPrettier,
 )

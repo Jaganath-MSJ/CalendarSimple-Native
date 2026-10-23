@@ -1,0 +1,138 @@
+/**
+ * @file common.ts
+ * @description Common utility functions used across the calendar components.
+ *
+ * Provides generalized helpers for event-type checking (all-day, multi-day)
+ * and spatial calculations like the maximum number of viewable events per cell.
+ */
+
+import { MONTH_METRICS, RTL_LOCALES, TIME_CONSTANTS } from "../constants";
+import type { BaseCalendarEvent } from "../types";
+import { dateFn, type DateType } from "./date";
+
+/** Month cell metrics consumed by `calculateMaxEvents` (see `MONTH_METRICS`). */
+export interface MonthCellMetrics {
+  dateLabelHeight: number;
+  cellPadding: number;
+  eventPitch: number;
+}
+
+/**
+ * Calculates the maximum number of events that can be displayed in a cell based on the calendar height.
+ *
+ * @param height - The total height of the calendar
+ * @param rowsInView - Number of week rows sharing that height
+ * @param metrics - Cell metrics for the active breakpoint (#9); defaults to the web values
+ * @returns The maximum number of events to display
+ */
+export function calculateMaxEvents(
+  height: number,
+  rowsInView: number,
+  metrics: MonthCellMetrics = MONTH_METRICS.web,
+): number {
+  const { dateLabelHeight, cellPadding, eventPitch } = metrics;
+
+  const cellHeight = height / rowsInView;
+  const availableHeight = cellHeight - dateLabelHeight - cellPadding;
+  const calculatedMax = Math.round(availableHeight / eventPitch) - 1; // -1 for "more" button
+
+  return Math.max(0, calculatedMax);
+}
+
+/**
+ * Helper to determine if an event is an all-day event.
+ * An event is considered "all-day" if its start and end date strings
+ * contain only a date (e.g. yyyy-MM-dd) and no time component (no 'T' or space).
+ *
+ * @param event - The calendar event to check.
+ * @returns True if the event has no time payload.
+ */
+export function isAllDayEvent(event: BaseCalendarEvent): boolean {
+  const isDateOnly = (dateStr: unknown): boolean => {
+    // Non-string dates (Date, number, DateTime) always carry a concrete time,
+    // so they are never date-only. Guarding here also prevents calling string
+    // methods on a non-string value (TypeError: dateStr.includes is not a function).
+    if (typeof dateStr !== "string") return false;
+    return !dateStr.includes("T") && !dateStr.includes(" ");
+  };
+
+  if (!isDateOnly(event.startDate)) {
+    return false;
+  }
+
+  if (event.endDate && !isDateOnly(event.endDate)) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Helper to determine if an event spans across multiple distinct calendar days.
+ * Compares the start of the day for both startDate and endDate.
+ *
+ * @param event - The calendar event to check.
+ * @returns True if the event starts and ends on different days.
+ */
+export function isMultiDay(event: BaseCalendarEvent): boolean {
+  if (!event.endDate) return false;
+  const start = dateFn(event.startDate).startOf("day");
+  const end = dateFn(event.endDate).startOf("day");
+  return !start.equals(dateFn(end));
+}
+
+/**
+ * Calculates the overlap duration in hours of an event with a specific calendar day boundary (00:00 to 23:59).
+ *
+ * @param event - The calendar event.
+ * @param date - The day to check the overlap against.
+ * @returns The overlap duration in hours (e.g., 2.5). Returns 24 for all-day events.
+ */
+export function getEventOverlapInHours(
+  event: BaseCalendarEvent,
+  date: DateType,
+): number {
+  if (isAllDayEvent(event)) return TIME_CONSTANTS.HOURS_IN_DAY;
+
+  const dayStart = dateFn(date).startOf("day");
+  const dayEnd = dateFn(date).endOf("day");
+
+  const eventStart = dateFn(event.startDate);
+  const eventEnd = event.endDate ? dateFn(event.endDate) : eventStart;
+
+  const overlapStart = eventStart > dayStart ? eventStart : dayStart;
+  const overlapEnd = eventEnd < dayEnd ? eventEnd : dayEnd;
+
+  const overlapMs = overlapEnd.valueOf() - overlapStart.valueOf();
+  if (overlapMs <= 0) return 0;
+
+  return overlapMs / TIME_CONSTANTS.MS_PER_HOUR;
+}
+
+/**
+ * Resolves layout direction. Explicit `direction` prop wins; otherwise infers from
+ * the locale's primary subtag. Defaults to `'ltr'` when both are undefined.
+ */
+export function resolveDirection(
+  direction: "ltr" | "rtl" | undefined,
+  locale: string | undefined,
+): "ltr" | "rtl" {
+  if (direction === "ltr" || direction === "rtl") return direction;
+  const base = (locale ?? "en").toLowerCase().split(/[-_]/)[0] ?? "";
+  return (RTL_LOCALES as readonly string[]).includes(base) ? "rtl" : "ltr";
+}
+
+/**
+ * Returns the last calendar day an event occupies. A timed event ending at
+ * exactly 00:00 is over before that day starts, so its last day is the one
+ * before. Date-only (all-day) ranges keep their inclusive end date.
+ */
+export function getLastEventDay(event: BaseCalendarEvent): DateType {
+  const start = dateFn(event.startDate);
+  if (!event.endDate) return start.startOf("day");
+
+  const end = dateFn(event.endDate);
+  const endsAtMidnight =
+    !isAllDayEvent(event) && end > start && end.equals(end.startOf("day"));
+  return (endsAtMidnight ? end.minus({ days: 1 }) : end).startOf("day");
+}

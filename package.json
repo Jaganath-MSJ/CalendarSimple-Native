@@ -73,6 +73,8 @@
     "@types/luxon": "^3.7.1",
     "@types/react": "^19.2.0",
     "@types/react-test-renderer": "^19.3.0",
+    "calendarize": "^1.1.1",
+    "cldr-core": "^49.0.0",
     "del-cli": "^8.0.1",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
