@@ -1,6 +1,5 @@
 /**
- * @file `Calendar.View`: renders the active view (month and the time grids; the
- * schedule arrives in a later phase).
+ * @file `Calendar.View`: renders the active view.
  */
 import { useCalendarState } from "../../context/CalendarContext";
 import type { DateType } from "../../core";
@@ -8,6 +7,7 @@ import type { CalendarProps } from "../../types";
 import { CustomDaysView } from "./CustomDaysView";
 import { DayView } from "./DayView";
 import { MonthView } from "./MonthView";
+import { ScheduleView } from "./ScheduleView";
 import { WeekView } from "./WeekView";
 
 export type ViewProps = Partial<CalendarProps> & {
@@ -26,6 +26,8 @@ export function View({ date, ...props }: ViewProps) {
       return <DayView {...props} date={date} />;
     case "customDays":
       return <CustomDaysView {...props} date={date} />;
+    case "schedule":
+      return <ScheduleView {...props} />;
     default:
       return null;
   }

@@ -1,0 +1,13 @@
+appId: com.calendarsimplenative.example
+---
+- launchApp
+- tapOn: "Schedule"
+- assertVisible: { id: "calendar-2026-10-22-schedule-section" }
+# Pull to refresh.
+- swipe: { direction: DOWN }
+# Scroll to the end: end reached extends the window into December.
+- scrollUntilVisible:
+    element: { id: "calendar-header-title", text: ".*Dec.*" }
+    direction: DOWN
+    timeout: 20000
+- assertVisible: { id: "calendar-header-title", text: ".*Dec.*" }

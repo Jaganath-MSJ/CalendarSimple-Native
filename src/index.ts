@@ -18,6 +18,7 @@ export type {
 } from "./core";
 export type { CalendarPalette } from "./theme";
 export type { MonthViewProps } from "./components/views/MonthView";
+export type { ScheduleViewProps } from "./components/views/ScheduleView";
 export type { ViewProps } from "./components/views/View";
 export type {
   CustomDaysViewProps,

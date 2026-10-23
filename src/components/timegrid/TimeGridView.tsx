@@ -2,8 +2,15 @@
  * @file Shared frame of the Week, Day and Custom Days views: day headers, the
  * banner slot and the scrolling hour grid (port spec §4.3, TDD §8.3, §8.6).
  */
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  LayoutAnimation,
   ScrollView,
   StyleSheet,
   View,
@@ -18,16 +25,21 @@ import {
   useTestID,
   useViewConfig,
 } from "../../context/LayoutContext";
+import { useAllDayBanner } from "../../hooks/useAllDayBanner";
 import { useDayEventLayout } from "../../hooks/useDayEventLayout";
 import { useNow } from "../../hooks/useNow";
 import { useReduceMotion } from "../../hooks/useReduceMotion";
 import { useScreenReader } from "../../hooks/useScreenReader";
 import { useCalendarTheme } from "../../theme";
+import { AllDayBanner } from "./AllDayBanner";
 import { getAutoScrollY } from "./autoScroll";
 import { getColumnLayout, TIME_GUTTER } from "./columnLayout";
 import { DayColumn } from "./DayColumn";
 import { DayHeaderRow } from "./DayHeaderRow";
 import { TimeColumn } from "./TimeColumn";
+
+/** Skips the banner layout when the banner is off. */
+const NO_DAYS: DateType[] = [];
 
 export interface TimeGridViewProps {
   days: DateType[];
@@ -102,14 +114,34 @@ export function TimeGridView({
     if (first) scrollToNowRef.current();
   }, []);
 
-  // Column mode: the header follows the body's horizontal offset.
+  // All-day banner: collapsed again whenever the visible days change.
+  const [expanded, setExpanded] = useState(false);
+  const [expandedKey, setExpandedKey] = useState(daysKey);
+  if (expandedKey !== daysKey) {
+    setExpandedKey(daysKey);
+    setExpanded(false);
+  }
+  const onToggleBanner = useCallback(() => {
+    if (!reduceMotion) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    }
+    setExpanded((v) => !v);
+  }, [reduceMotion]);
+  const banner = useAllDayBanner(
+    cfg.showAllDayRow ? days : NO_DAYS,
+    cfg.events,
+    expanded,
+    cfg.maxEvents,
+  );
+
+  // Column mode: the header and banner follow the body's horizontal offset.
   const headerRef = useRef<ScrollViewInstance>(null);
+  const bannerRef = useRef<ScrollViewInstance>(null);
   const onHScroll = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      headerRef.current?.scrollTo({
-        x: e.nativeEvent.contentOffset.x,
-        animated: false,
-      });
+      const x = e.nativeEvent.contentOffset.x;
+      headerRef.current?.scrollTo({ x, animated: false });
+      bannerRef.current?.scrollTo({ x, animated: false });
     },
     [],
   );
@@ -169,7 +201,17 @@ export function TimeGridView({
           header
         )}
       </View>
-      {/* All-day banner slot (Phase 6). */}
+      {cfg.showAllDayRow ? (
+        <AllDayBanner
+          days={days}
+          colWidth={colWidth}
+          scrollable={scrollable}
+          expanded={expanded}
+          onToggle={onToggleBanner}
+          banner={banner}
+          scrollRef={bannerRef}
+        />
+      ) : null}
       <ScrollView
         ref={scrollRef}
         testID={id("time-grid-scroll")}

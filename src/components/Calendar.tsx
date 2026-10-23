@@ -21,6 +21,7 @@ import { Header } from "./header/Header";
 import { CustomDaysView } from "./views/CustomDaysView";
 import { DayView } from "./views/DayView";
 import { MonthView } from "./views/MonthView";
+import { ScheduleView } from "./views/ScheduleView";
 import { View } from "./views/View";
 import { WeekView } from "./views/WeekView";
 
@@ -32,6 +33,7 @@ export interface CalendarStatics {
   WeekView: typeof WeekView;
   DayView: typeof DayView;
   CustomDaysView: typeof CustomDaysView;
+  ScheduleView: typeof ScheduleView;
 }
 
 export type CalendarComponent = (<TEvent extends CalendarEvent = CalendarEvent>(
@@ -148,6 +150,7 @@ const statics: CalendarStatics = {
   WeekView,
   DayView,
   CustomDaysView,
+  ScheduleView,
 };
 
 /** `React.memo` drops type parameters, so the export is cast (TDD §6.3). */

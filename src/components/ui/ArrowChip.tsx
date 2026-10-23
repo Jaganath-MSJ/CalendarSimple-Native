@@ -1,6 +1,6 @@
 /**
  * @file Event chip with arrows on the sides where the event continues
- * (popover items; all-day banner later).
+ * (popover items and the all-day banner).
  */
 import type { ReactNode } from "react";
 import {
@@ -13,8 +13,10 @@ import {
 } from "react-native";
 import { useCalendarTheme } from "../../theme";
 
-const ARROW = 10;
-const CLIPPED_PADDING = 14;
+/** Width of the arrow point, in px. */
+export const ARROW = 10;
+/** Padding on a clipped side (arrow point plus 4 px). */
+export const CLIPPED_PADDING = 14;
 const PADDING = 6;
 
 export interface ArrowChipProps extends Omit<
