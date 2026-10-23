@@ -60,7 +60,7 @@ export type CalendarStyles = Partial<
 >;
 
 export interface RenderHeaderProps {
-  /** The currently displayed date (first day of the visible period). */
+  /** The selected date (`state.selectedDate`), not the first visible day. */
   currentDate: Date;
   view: ECalendarViewType;
   onNavigate: (date: Date) => void;

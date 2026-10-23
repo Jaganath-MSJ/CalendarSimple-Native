@@ -23,6 +23,7 @@ import {
   type CalendarThemeValue,
 } from "../theme";
 import type { DimensionValue } from "../types";
+import { Header } from "./header/Header";
 import { PeriodPager, type PageOffset } from "./navigation/PeriodPager";
 import { CalendarErrorBoundary } from "./ui/CalendarErrorBoundary";
 
@@ -76,20 +77,22 @@ export function CalendarContent({
   );
 
   const { renderHeader, onNavigate, onViewChange } = config;
-  const header = renderHeader
-    ? renderHeader({
-        currentDate: state.selectedDate.toJSDate(),
-        view: state.view,
-        onNavigate: (date: Date) => {
-          dispatch({ type: "SET_DATE", payload: dateFn(date) });
-          onNavigate?.(date);
-        },
-        onViewChange: (view: ECalendarViewType) => {
-          dispatch({ type: "SET_VIEW", payload: view });
-          onViewChange?.(view);
-        },
-      })
-    : null;
+  const header = renderHeader ? (
+    renderHeader({
+      currentDate: state.selectedDate.toJSDate(),
+      view: state.view,
+      onNavigate: (date: Date) => {
+        dispatch({ type: "SET_DATE", payload: dateFn(date) });
+        onNavigate?.(date);
+      },
+      onViewChange: (view: ECalendarViewType) => {
+        dispatch({ type: "SET_VIEW", payload: view });
+        onViewChange?.(view);
+      },
+    })
+  ) : (
+    <Header />
+  );
 
   const navigate = useNavigate();
   // Until the views land (P4+), each page is an empty body slot.

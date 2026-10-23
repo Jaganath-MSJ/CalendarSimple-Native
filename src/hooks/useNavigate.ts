@@ -6,14 +6,18 @@ import { getNavigatedDate, type DateType } from "../core";
 import { useCalendar } from "../context/CalendarContext";
 
 /**
- * Returns `navigate(direction)`: dispatches `NEXT`/`PREV` and calls
- * `onNavigate` with the new date. Calls made before the next render chain
- * from the previous call's target, so rapid repeats report the right dates.
+ * Returns `navigate(target)`: `1`/`-1` dispatches `NEXT`/`PREV`; a date
+ * (Today, pickers) dispatches `SET_DATE`. Either way `onNavigate` gets the new
+ * date. Calls made before the next render chain from the previous call's
+ * target, so rapid repeats (including Today then ›) report the right dates.
  */
-export function useNavigate(): (direction: 1 | -1) => void {
+export function useNavigate(
+  /** Overrides `config.onNavigate` (e.g. `Calendar.Header` props). */
+  onNavigateOverride?: (date: Date) => void,
+): (target: 1 | -1 | DateType) => void {
   const { state, dispatch, config } = useCalendar();
   const { view, customDays, selectedDate } = state;
-  const { onNavigate } = config;
+  const onNavigate = onNavigateOverride ?? config.onNavigate;
   const pending = useRef<DateType | null>(null);
   const latest = useRef({ view, customDays, onNavigate });
   useEffect(() => {
@@ -26,8 +30,15 @@ export function useNavigate(): (direction: 1 | -1) => void {
   }, [selectedDate]);
 
   return useCallback(
-    (direction: 1 | -1) => {
+    (target: 1 | -1 | DateType) => {
       const { view: v, customDays: c, onNavigate: cb } = latest.current;
+      if (typeof target !== "number") {
+        pending.current = target;
+        dispatch({ type: "SET_DATE", payload: target });
+        cb?.(target.toJSDate());
+        return;
+      }
+      const direction = target;
       const next = getNavigatedDate(
         {
           view: v,

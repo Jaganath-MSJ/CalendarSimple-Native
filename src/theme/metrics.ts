@@ -9,6 +9,8 @@ export interface CalendarMetrics {
   header: {
     padding: number;
     titleFontSize: number;
+    /** Today and picker labels: 13 at ≤ 768 (port spec §8), 14 wide. */
+    controlFontSize: number;
     controlHeight: number;
     rows: 1 | 2;
     /** Fallback header height until the header is measured. */
@@ -71,6 +73,7 @@ export function getBreakpoint(width: number): Breakpoint {
 const PHONE_HEADER = {
   padding: 12,
   titleFontSize: 16,
+  controlFontSize: 13,
   controlHeight: 36,
   rows: 2,
   height: 113,
@@ -163,6 +166,7 @@ const BASE: Record<Breakpoint, Omit<CalendarMetrics, "touchTarget">> = {
     header: {
       padding: 16,
       titleFontSize: 20,
+      controlFontSize: 14,
       controlHeight: 36,
       rows: 1,
       height: 69,
@@ -225,6 +229,7 @@ export function getMetrics(
     header: {
       ...b.header,
       titleFontSize: k(b.header.titleFontSize),
+      controlFontSize: k(b.header.controlFontSize),
       controlHeight: k(b.header.controlHeight),
       height: k(b.header.height),
     },
