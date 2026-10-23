@@ -13,3 +13,4 @@ package-lock.json
 
 # Ignore generated documentation
 docs/
+.superpowers/

@@ -72,3 +72,5 @@ nitrogen/
 example/ios/
 example/android/
 example/dist/
+e2e-web/test-results/
+playwright-report/

@@ -16,6 +16,7 @@ export default tseslint.config(
       'babel.config.mjs',
       'jest.config.js',
       'commitlint.config.js',
+      'release.config.cjs',
     ],
   },
   js.configs.recommended,

@@ -1,0 +1,11 @@
+[
+  {
+    "name": "calendar-simple-native (own code)",
+    "path": "lib/module/index.js",
+    "ignore": ["react", "react-native", "luxon"]
+  },
+  {
+    "name": "luxon (dependency, report only)",
+    "path": "node_modules/luxon/src/luxon.js"
+  }
+]

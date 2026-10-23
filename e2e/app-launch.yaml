@@ -1,0 +1,4 @@
+appId: com.calendarsimplenative.example
+---
+- launchApp
+- assertVisible: "calendar-simple-native examples"

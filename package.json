@@ -33,7 +33,11 @@
     "format:check": "prettier --check .",
     "test:core": "vitest run",
     "test:ui": "jest",
-    "test": "npm run test:core && npm run test:ui"
+    "test": "npm run test:core && npm run test:ui",
+    "size": "size-limit",
+    "example:web:export": "cd example && npx expo export -p web",
+    "e2e:web": "npm run example:web:export && playwright test -c e2e-web",
+    "e2e:native": "maestro test e2e"
   },
   "keywords": [
     "calendar",
@@ -52,13 +56,18 @@
   },
   "homepage": "https://github.com/Jaganath-MSJ/CalendarSimple-Native#readme",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.3",
     "@commitlint/config-conventional": "^20.5.3",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
     "@react-native/babel-preset": "0.88.0",
+    "@semantic-release/changelog": "^7.0.0",
+    "@semantic-release/git": "^11.0.1",
+    "@size-limit/preset-small-lib": "^14.3.0",
     "@testing-library/react-native": "^14.1.0",
     "@types/jest": "^30.0.0",
     "@types/luxon": "^3.7.1",
@@ -80,6 +89,9 @@
     "react-native": "0.88.0",
     "react-native-builder-bob": "^0.44.1",
     "react-test-renderer": "^19.3.0",
+    "semantic-release": "^25.0.9",
+    "serve": "^14.2.6",
+    "size-limit": "^14.3.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.0",
     "vitest": "^4.1.12"
@@ -140,5 +152,9 @@
     "*.{json,css,md}": [
       "prettier --write"
     ]
+  },
+  "allowScripts": {
+    "esbuild": false,
+    "fsevents": false
   }
 }

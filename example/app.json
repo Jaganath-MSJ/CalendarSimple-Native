@@ -8,7 +8,7 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "calendarsimplenative.example"
+      "bundleIdentifier": "com.calendarsimplenative.example"
     },
     "android": {
       "adaptiveIcon": {
@@ -17,7 +17,7 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "calendarsimplenative.example"
+      "package": "com.calendarsimplenative.example"
     },
     "web": {
       "favicon": "./assets/favicon.png"
