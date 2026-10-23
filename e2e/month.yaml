@@ -1,0 +1,11 @@
+appId: com.calendarsimplenative.example
+---
+- launchApp
+- tapOn: "Month"
+- assertVisible: "October 2026"
+- tapOn: { id: "calendar-22-month-cell" }
+- assertVisible: { id: "calendar-day-sheet" }
+- back
+- assertNotVisible: { id: "calendar-day-sheet" }
+- swipe: { direction: LEFT }
+- assertVisible: "November 2026"

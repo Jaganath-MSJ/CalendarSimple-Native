@@ -18,10 +18,14 @@ import { useResolvedColorScheme } from "../hooks/useResolvedColorScheme";
 import type { CalendarEvent, CalendarProps, ResolvedConfig } from "../types";
 import { CalendarContent } from "./CalendarContent";
 import { Header } from "./header/Header";
+import { MonthView } from "./views/MonthView";
+import { View } from "./views/View";
 
 /** Sub-components attached to `Calendar`; later phases add entries. */
 export interface CalendarStatics {
   Header: typeof Header;
+  View: typeof View;
+  MonthView: typeof MonthView;
 }
 
 export type CalendarComponent = (<TEvent extends CalendarEvent = CalendarEvent>(
@@ -131,7 +135,7 @@ function CalendarRoot<TEvent extends CalendarEvent = CalendarEvent>(
   );
 }
 
-const statics: CalendarStatics = { Header };
+const statics: CalendarStatics = { Header, View, MonthView };
 
 /** `React.memo` drops type parameters, so the export is cast (TDD §6.3). */
 export const Calendar = Object.assign(

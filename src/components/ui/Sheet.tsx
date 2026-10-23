@@ -10,7 +10,7 @@ export interface SheetProps {
   visible: boolean;
   onClose: () => void;
   children: ReactNode;
-  testID: string;
+  testID?: string;
   /** Accessibility label of the panel. */
   label: string;
 }

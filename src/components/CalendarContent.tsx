@@ -2,7 +2,7 @@
  * @file Root container: measures, provides the theme and lays out the header
  * and body slots (TDD §8.1 steps 2–4).
  */
-import { useCallback, useMemo, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import {
   I18nManager,
   StyleSheet,
@@ -10,8 +10,14 @@ import {
   View,
   type DimensionValue as RNDimensionValue,
 } from "react-native";
-import { dateFn, resolveDirection, type ECalendarViewType } from "../core";
+import {
+  dateFn,
+  getNavigatedDate,
+  resolveDirection,
+  type ECalendarViewType,
+} from "../core";
 import { useCalendar } from "../context/CalendarContext";
+import { CalendarLayoutProvider, PageProvider } from "../context/LayoutContext";
 import { useContainerLayout } from "../hooks/useContainerLayout";
 import { useNavigate } from "../hooks/useNavigate";
 import {
@@ -26,6 +32,7 @@ import type { DimensionValue } from "../types";
 import { Header } from "./header/Header";
 import { PeriodPager, type PageOffset } from "./navigation/PeriodPager";
 import { CalendarErrorBoundary } from "./ui/CalendarErrorBoundary";
+import { View as CalendarView } from "./views/View";
 
 export interface CalendarContentProps {
   width?: DimensionValue;
@@ -43,7 +50,7 @@ export function CalendarContent({
   children,
 }: CalendarContentProps) {
   const { config, testId, colorScheme, state, dispatch } = useCalendar();
-  const { width, onLayout } = useContainerLayout(
+  const { width, height, onLayout } = useContainerLayout(
     num(widthProp),
     num(heightProp),
   );
@@ -95,15 +102,34 @@ export function CalendarContent({
   );
 
   const navigate = useNavigate();
-  // Until the views land (P4+), each page is an empty body slot.
+  const { view, customDays, selectedDate } = state;
+  // The current page carries the body test ID; neighbours render the
+  // previous/next period without test IDs.
   const renderPage = useCallback(
     (offset: PageOffset) =>
       offset === 0 ? (
-        <View testID={`${testId}-body`} style={styles.body} />
+        <View testID={`${testId}-body`} style={styles.body}>
+          <CalendarView />
+        </View>
       ) : (
-        <View style={styles.body} />
+        <PageProvider value={false}>
+          <View style={styles.body}>
+            <CalendarView
+              date={getNavigatedDate(
+                { view, customDays, selectedDate },
+                offset,
+              )}
+            />
+          </View>
+        </PageProvider>
       ),
-    [testId],
+    [testId, view, customDays, selectedDate],
+  );
+
+  const [headerHeight, setHeaderHeight] = useState<number | undefined>();
+  const layout = useMemo(
+    () => ({ width, height, headerHeight }),
+    [width, height, headerHeight],
   );
 
   return (
@@ -118,26 +144,34 @@ export function CalendarContent({
       ]}
     >
       <CalendarThemeProvider value={theme}>
-        <CalendarErrorBoundary>
-          {children !== undefined ? (
-            measured ? (
-              children
-            ) : null
-          ) : (
-            <>
-              {header}
-              {measured ? (
-                <PeriodPager
-                  enabled={config.swipeNavigation && state.view !== "schedule"}
-                  width={width}
-                  testID={testId}
-                  renderPage={renderPage}
-                  onPage={navigate}
-                />
-              ) : null}
-            </>
-          )}
-        </CalendarErrorBoundary>
+        <CalendarLayoutProvider value={layout}>
+          <CalendarErrorBoundary>
+            {children !== undefined ? (
+              measured ? (
+                children
+              ) : null
+            ) : (
+              <>
+                <View
+                  onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+                >
+                  {header}
+                </View>
+                {measured ? (
+                  <PeriodPager
+                    enabled={
+                      config.swipeNavigation && state.view !== "schedule"
+                    }
+                    width={width}
+                    testID={testId}
+                    renderPage={renderPage}
+                    onPage={navigate}
+                  />
+                ) : null}
+              </>
+            )}
+          </CalendarErrorBoundary>
+        </CalendarLayoutProvider>
       </CalendarThemeProvider>
     </View>
   );
