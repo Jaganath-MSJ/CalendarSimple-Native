@@ -37,6 +37,7 @@ import { getColumnLayout, TIME_GUTTER } from "./columnLayout";
 import { DayColumn } from "./DayColumn";
 import { DayHeaderRow } from "./DayHeaderRow";
 import { TimeColumn } from "./TimeColumn";
+import { useAppIsRTL } from "../../hooks/useAppIsRTL";
 
 /** Skips the banner layout when the banner is off. */
 const NO_DAYS: DateType[] = [];
@@ -146,6 +147,18 @@ export function TimeGridView({
     [],
   );
 
+  // Flipped in an LTR app, the reversed row puts the first day at the far
+  // end of the content, so start there (header and banner follow).
+  // Scroll offsets stay physical, so the onScroll sync above holds in RTL.
+  const hscrollRef = useRef<ScrollViewInstance>(null);
+  const appIsRTL = useAppIsRTL();
+  const startAtEnd = flip && !appIsRTL;
+  const onHContentSize = useCallback(() => {
+    if (!startAtEnd) return;
+    for (const r of [hscrollRef, headerRef, bannerRef])
+      r.current?.scrollToEnd({ animated: false });
+  }, [startAtEnd]);
+
   const row = flip ? styles.rowFlipped : styles.row;
   const header = (
     <DayHeaderRow
@@ -222,8 +235,10 @@ export function TimeGridView({
           <TimeColumn hourHeight={hourHeight} />
           {scrollable ? (
             <ScrollView
+              ref={hscrollRef}
               testID={id("time-grid-hscroll")}
               horizontal
+              onContentSizeChange={onHContentSize}
               onScroll={onHScroll}
               scrollEventThrottle={16}
               snapToInterval={snap ? colWidth : undefined}

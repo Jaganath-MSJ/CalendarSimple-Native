@@ -31,6 +31,7 @@ import { MonthGrid } from "../month/MonthGrid";
 import { MorePopover } from "../month/MorePopover";
 import { getCellOverflow } from "../month/overflow";
 import type { Frame } from "../ui/placePopover";
+import type { FocusAnchor } from "../ui/focusReturn";
 
 /** Override keys accepted by `MonthView` (port spec §2.7; `styles` replaces `classNames`). */
 /** Phone month shows at most 3 bars per day; the rest go in "+N". */
@@ -139,10 +140,11 @@ export function MonthView({ date, ...local }: MonthViewProps) {
   );
 
   const [sheetDay, setSheetDay] = useState<DateType | null>(null);
+  const [sheetAnchor, setSheetAnchor] = useState<FocusAnchor>(null);
   const closeSheet = useCallback(() => setSheetDay(null), []);
 
   const onCellPress = useCallback(
-    (info: CalendarDayInfo<CalendarEvent>) => {
+    (info: CalendarDayInfo<CalendarEvent>, anchor: FocusAnchor) => {
       const day = info.currentDate;
       if (selectable && !day.hasSame(selectedDate, "day")) {
         onDateClick?.(day.toJSDate());
@@ -150,6 +152,7 @@ export function MonthView({ date, ...local }: MonthViewProps) {
       }
       // Option A (phone): a day with events opens the day sheet.
       if (phone && info.totalEvents > 0) {
+        setSheetAnchor(anchor);
         setSheetDay(day);
         return;
       }
@@ -178,19 +181,21 @@ export function MonthView({ date, ...local }: MonthViewProps) {
   const [popover, setPopover] = useState<{
     day: CalendarDayInfo<CalendarEvent>;
     anchor: Frame | null;
+    opener: FocusAnchor;
   } | null>(null);
   const { onMoreClick, showMorePopover } = cfg;
   const onMorePress = useCallback(
     (
       day: CalendarDayInfo<CalendarEvent>,
       measure: (cb: (frame: Frame) => void) => void,
+      opener: FocusAnchor,
     ) => {
       onMoreClick?.(
         day.currentDate.toJSDate(),
         getCellOverflow(day, maxSlots).hiddenEvents,
       );
       if (!showMorePopover) return;
-      setPopover({ day, anchor: null });
+      setPopover({ day, anchor: null, opener });
       measure((anchor) =>
         setPopover((p) => (p && p.day === day ? { ...p, anchor } : p)),
       );
@@ -233,11 +238,13 @@ export function MonthView({ date, ...local }: MonthViewProps) {
           day={sheetDay}
           events={cfg.events}
           onClose={closeSheet}
+          returnFocusTo={sheetAnchor}
         />
         <MorePopover
           day={popover?.day ?? null}
           anchor={popover?.anchor ?? null}
           onClose={closePopover}
+          returnFocusTo={popover?.opener}
         />
       </View>
     </ViewConfigProvider>

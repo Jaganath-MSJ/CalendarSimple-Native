@@ -1,9 +1,10 @@
 /**
  * @file One option row shared by `MenuSheet` and `AnchoredMenu`.
  */
-import { Pressable, StyleSheet, Text } from "react-native";
-import { useCalendarConfig } from "../../context/CalendarContext";
+import { StyleSheet } from "react-native";
 import { useCalendarTheme } from "../../theme";
+import { CalendarText } from "./CalendarText";
+import { CalendarPressable } from "./CalendarPressable";
 
 export interface MenuOption<V> {
   label: string;
@@ -23,9 +24,8 @@ export function MenuOptionRow<V extends string | number>({
   height: number;
 }) {
   const { palette } = useCalendarTheme();
-  const { config } = useCalendarConfig();
   return (
-    <Pressable
+    <CalendarPressable
       testID={`${testID}-menu-option-${option.value}`}
       onPress={() => onSelect(option.value)}
       accessibilityRole="menuitem"
@@ -36,8 +36,7 @@ export function MenuOptionRow<V extends string | number>({
         (pressed || option.selected) && { backgroundColor: palette.bgMuted },
       ]}
     >
-      <Text
-        maxFontSizeMultiplier={config.maxFontSizeMultiplier}
+      <CalendarText
         style={[
           styles.label,
           { color: option.selected ? palette.primary : palette.textPrimary },
@@ -45,8 +44,8 @@ export function MenuOptionRow<V extends string | number>({
         ]}
       >
         {option.label}
-      </Text>
-    </Pressable>
+      </CalendarText>
+    </CalendarPressable>
   );
 }
 

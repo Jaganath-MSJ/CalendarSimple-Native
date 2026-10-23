@@ -10,7 +10,7 @@ import {
   type ScheduleGroup,
 } from "../core";
 import type { CalendarEvent, ResolvedConfig } from "../types";
-import { useNow } from "./useNow";
+import { useToday } from "./useNow";
 
 type GroupsConfig = Pick<
   ResolvedConfig,
@@ -29,7 +29,7 @@ export function useScheduleGroups<E extends CalendarEvent>(
   >,
   cfg: GroupsConfig,
 ): ScheduleGroup<E>[] {
-  const today = useNow().toISODate();
+  const today = useToday();
   const { selectedDate, customDays, scheduleExtraDays } = state;
   const { weekStartsOn, weekEndsOn, scheduleDays } = cfg;
   const key = selectedDate.toISODate();

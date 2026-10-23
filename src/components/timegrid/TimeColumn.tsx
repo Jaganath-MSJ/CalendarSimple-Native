@@ -1,11 +1,12 @@
 /**
  * @file Hour labels down the start edge of the time grid (port spec §4.3).
  */
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { buildLabelCache } from "../../core";
 import { useTestID, useViewConfig } from "../../context/LayoutContext";
 import { useCalendarTheme } from "../../theme";
 import { TIME_GUTTER } from "./columnLayout";
+import { CalendarText } from "../ui/CalendarText";
 
 export function TimeColumn({ hourHeight }: { hourHeight: number }) {
   const cfg = useViewConfig();
@@ -24,8 +25,7 @@ export function TimeColumn({ hourHeight }: { hourHeight: number }) {
     >
       {hours.map((h) => (
         <View key={h} style={{ height: hourHeight }}>
-          <Text
-            maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
+          <CalendarText
             style={[
               styles.label,
               {
@@ -36,7 +36,7 @@ export function TimeColumn({ hourHeight }: { hourHeight: number }) {
             ]}
           >
             {hourLabels[h]}
-          </Text>
+          </CalendarText>
         </View>
       ))}
     </View>

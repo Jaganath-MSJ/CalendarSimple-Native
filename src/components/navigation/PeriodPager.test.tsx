@@ -1,4 +1,4 @@
-import { Text } from "react-native";
+import { I18nManager, Text } from "react-native";
 import { render, screen } from "@testing-library/react-native";
 import Calendar from "../../index";
 import { momentumEndOn, renderCalendar } from "../../test-utils/renderCalendar";
@@ -56,6 +56,24 @@ it("renders the neighbour pages after the first idle period", async () => {
   expect(await screen.findByText("page 1")).toBeOnTheScreen();
 });
 
+it("renders the placeholder on neighbour pages until idle (TDD §8.5)", async () => {
+  await render(
+    <PeriodPager
+      enabled
+      width={W}
+      testID="t"
+      renderPage={page}
+      renderPlaceholder={(o) => <Text>{`skeleton ${o}`}</Text>}
+      onPage={jest.fn()}
+    />,
+  );
+  expect(screen.getByText("page 0")).toBeOnTheScreen();
+  expect(screen.getByText("skeleton 1")).toBeOnTheScreen();
+  expect(screen.queryByText("page 1")).toBeNull();
+  expect(await screen.findByText("page 1")).toBeOnTheScreen();
+  expect(screen.queryByText("skeleton 1")).toBeNull();
+});
+
 it("review focus 4: five swipes through the Calendar land five months on", async () => {
   // Compound children replace the body, so the probe is a header render prop.
   let current: Date | undefined;
@@ -83,4 +101,42 @@ it("disables the pager in schedule view", async () => {
   await renderCalendar(<Calendar swipeNavigation view="schedule" />);
   expect(screen.queryByTestId("calendar-pager")).toBeNull();
   expect(screen.getByTestId("calendar-body")).toBeOnTheScreen();
+});
+
+describe("RTL swipe direction (TDD §8.1 flip rule)", () => {
+  // contentOffset.x is physical (from the left) on iOS and Android; in an
+  // RTL app FlatList lays page 0 out on the right.
+  afterEach(() => {
+    I18nManager.isRTL = false;
+  });
+  const swipes = async (flip: boolean) => {
+    const onPage = jest.fn<void, [1 | -1]>();
+    await render(
+      <PeriodPager
+        enabled
+        flip={flip}
+        width={W}
+        testID="t"
+        renderPage={page}
+        onPage={onPage}
+      />,
+    );
+    await momentumEnd(0); // the page on the left
+    await momentumEnd(2 * W); // the page on the right
+    return onPage.mock.calls;
+  };
+
+  it.each([
+    // [app RTL, calendar flip, left page, right page]
+    [false, false, -1, 1], // LTR calendar in an LTR app
+    [false, true, 1, -1], // RTL calendar (ar) in an LTR app
+    [true, false, 1, -1], // RTL calendar (ar) in an RTL app
+    [true, true, -1, 1], // LTR calendar (en) in an RTL app
+  ] as const)(
+    "app RTL %s, flip %s: left → %s, right → %s",
+    async (rtl, flip, left, right) => {
+      I18nManager.isRTL = rtl;
+      expect(await swipes(flip)).toEqual([[left], [right]]);
+    },
+  );
 });

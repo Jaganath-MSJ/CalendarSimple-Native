@@ -2,10 +2,13 @@
  * @file Header dropdown button for the view, month and year pickers.
  */
 import { useRef, type ComponentRef } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useCalendarConfig } from "../../context/CalendarContext";
 import { useCalendarTheme } from "../../theme";
 import type { MenuAnchor } from "../ui/AnchoredMenu";
+import type { FocusAnchor } from "../ui/focusReturn";
+import { CalendarText } from "../ui/CalendarText";
+import { CalendarPressable } from "../ui/CalendarPressable";
 
 export interface PickerButtonProps {
   kind: "view" | "month" | "year";
@@ -15,7 +18,7 @@ export interface PickerButtonProps {
    * `measureInWindow` reports it, so an anchored menu never opens at a stale
    * anchor; otherwise called at once without a frame.
    */
-  onPress: (frame?: MenuAnchor) => void;
+  onPress: (frame: MenuAnchor | undefined, opener: FocusAnchor) => void;
   /** Measure before opening (wide anchored menus). */
   measure: boolean;
   expanded: boolean;
@@ -31,7 +34,7 @@ export function PickerButton({
   measure,
 }: PickerButtonProps) {
   const ref = useRef<ComponentRef<typeof View>>(null);
-  const { palette, metrics } = useCalendarTheme();
+  const { palette, metrics, flip } = useCalendarTheme();
   const { config } = useCalendarConfig();
   const { messages } = config;
   const hint =
@@ -43,16 +46,17 @@ export function PickerButton({
   const height = metrics.header.controlHeight;
   const slop = Math.max(0, Math.ceil((metrics.touchTarget - height) / 2));
   return (
-    <Pressable
+    <CalendarPressable
       ref={ref}
       testID={testID}
       onPress={() => {
+        const opener = ref.current;
         if (!measure) {
-          onPress();
+          onPress(undefined, opener);
           return;
         }
         ref.current?.measureInWindow((x, y, width, height) =>
-          onPress({ x, y, width, height }),
+          onPress({ x, y, width, height }, opener),
         );
       }}
       hitSlop={{ top: slop, bottom: slop }}
@@ -61,6 +65,7 @@ export function PickerButton({
       accessibilityState={{ expanded }}
       style={({ pressed }) => [
         styles.button,
+        flip && styles.reverse,
         {
           height,
           borderColor: palette.border,
@@ -68,9 +73,8 @@ export function PickerButton({
         },
       ]}
     >
-      <Text
+      <CalendarText
         numberOfLines={1}
-        maxFontSizeMultiplier={config.maxFontSizeMultiplier}
         style={[
           styles.label,
           {
@@ -80,9 +84,11 @@ export function PickerButton({
         ]}
       >
         {label}
-      </Text>
-      <Text style={[styles.caret, { color: palette.textSecondary }]}>▾</Text>
-    </Pressable>
+      </CalendarText>
+      <CalendarText style={[styles.caret, { color: palette.textSecondary }]}>
+        ▾
+      </CalendarText>
+    </CalendarPressable>
   );
 }
 
@@ -97,5 +103,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   label: { flexShrink: 1 },
+  reverse: { flexDirection: "row-reverse" },
   caret: { fontSize: 12 },
 });

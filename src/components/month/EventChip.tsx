@@ -1,12 +1,14 @@
 /**
  * @file A month event: a titled chip (compact, wide) or a 6 px bar (phone).
  */
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { ECalendarViewType, generateTooltipText } from "../../core";
 import { useViewConfig } from "../../context/LayoutContext";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
 import { pickEventStyle } from "../eventStyle";
+import { CalendarText } from "../ui/CalendarText";
+import { CalendarPressable } from "../ui/CalendarPressable";
 
 export interface EventChipProps<E extends CalendarEvent = CalendarEvent> {
   /** The app's own event object. */
@@ -66,7 +68,8 @@ export function EventChip<E extends CalendarEvent = CalendarEvent>({
     );
   }
   return (
-    <Pressable
+    <CalendarPressable
+      feedback="ring"
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={`${event.title || messages.noTitle}, ${tooltip}`}
@@ -77,18 +80,17 @@ export function EventChip<E extends CalendarEvent = CalendarEvent>({
       {renderEvent ? (
         renderEvent(event)
       ) : (
-        <Text
+        <CalendarText
           numberOfLines={1}
-          maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
           style={[
             styles.title,
             { color: colours.color, fontSize: metrics.month.chipFontSize },
           ]}
         >
           {event.title}
-        </Text>
+        </CalendarText>
       )}
-    </Pressable>
+    </CalendarPressable>
   );
 }
 

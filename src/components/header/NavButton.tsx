@@ -1,8 +1,10 @@
 /**
  * @file Previous/next chevron button of the header (port spec §4.1).
  */
-import { Pressable, StyleSheet, Text } from "react-native";
+import { StyleSheet } from "react-native";
 import { useCalendarTheme } from "../../theme";
+import { CalendarText } from "../ui/CalendarText";
+import { CalendarPressable } from "../ui/CalendarPressable";
 
 export interface NavButtonProps {
   direction: "prev" | "next";
@@ -26,7 +28,7 @@ export function NavButton({
   const slop = Math.max(0, Math.ceil((metrics.touchTarget - size) / 2));
   const pointsLeft = (direction === "prev") !== flip;
   return (
-    <Pressable
+    <CalendarPressable
       testID={testID}
       onPress={onPress}
       accessibilityRole="button"
@@ -42,14 +44,14 @@ export function NavButton({
         },
       ]}
     >
-      <Text
+      <CalendarText
         style={[styles.chevron, { color: palette.textSecondary }]}
         importantForAccessibility="no"
         accessibilityElementsHidden
       >
         {pointsLeft ? "‹" : "›"}
-      </Text>
-    </Pressable>
+      </CalendarText>
+    </CalendarPressable>
   );
 }
 

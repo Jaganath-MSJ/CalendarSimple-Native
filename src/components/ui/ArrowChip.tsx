@@ -4,7 +4,6 @@
  */
 import type { ReactNode } from "react";
 import {
-  Pressable,
   StyleSheet,
   View,
   type PressableProps,
@@ -12,6 +11,7 @@ import {
   type ViewStyle,
 } from "react-native";
 import { useCalendarTheme } from "../../theme";
+import { CalendarPressable } from "./CalendarPressable";
 
 /** Width of the arrow point, in px. */
 export const ARROW = 10;
@@ -77,7 +77,8 @@ export function ArrowChip({
   const endSide = flip ? "left" : "right";
   const pad = (clipped: boolean) => (clipped ? CLIPPED_PADDING : PADDING);
   return (
-    <Pressable
+    <CalendarPressable
+      feedback="ring"
       testID={testID}
       accessibilityRole="button"
       {...pressable}
@@ -111,7 +112,7 @@ export function ArrowChip({
           testID={testID && `${testID}-arrow-end`}
         />
       ) : null}
-    </Pressable>
+    </CalendarPressable>
   );
 }
 

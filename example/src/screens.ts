@@ -5,6 +5,7 @@ import HeaderScreen from "./screens/HeaderScreen";
 import IntlCheckScreen from "./screens/IntlCheckScreen";
 import MonthScreen from "./screens/MonthScreen";
 import PagerProbeScreen from "./screens/PagerProbeScreen";
+import PerfScreen from "./screens/PerfScreen";
 import ScheduleScreen from "./screens/ScheduleScreen";
 import WeekScreen from "./screens/WeekScreen";
 
@@ -21,4 +22,5 @@ export const SCREENS: {
   { key: "customDays", title: "3 Days", component: CustomDaysScreen },
   { key: "schedule", title: "Schedule", component: ScheduleScreen },
   { key: "pager", title: "Pager probe", component: PagerProbeScreen },
+  { key: "perf", title: "Performance", component: PerfScreen },
 ];

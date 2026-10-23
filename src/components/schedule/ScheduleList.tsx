@@ -8,7 +8,6 @@ import {
   RefreshControl,
   SectionList,
   StyleSheet,
-  Text,
   View,
   type SectionListData,
 } from "react-native";
@@ -20,12 +19,13 @@ import {
 } from "../../core";
 import { useCalendarState } from "../../context/CalendarContext";
 import { useTestID, useViewConfig } from "../../context/LayoutContext";
-import { useNow } from "../../hooks/useNow";
+import { useToday } from "../../hooks/useNow";
 import { useReduceMotion } from "../../hooks/useReduceMotion";
 import { useScheduleGroups } from "../../hooks/useScheduleGroups";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
 import { ScheduleRow } from "./ScheduleRow";
+import { CalendarText } from "../ui/CalendarText";
 
 interface Section<E> {
   dateKey: string;
@@ -42,7 +42,7 @@ export function ScheduleList<E extends CalendarEvent = CalendarEvent>() {
   const { palette, metrics } = useCalendarTheme();
   const id = useTestID();
   const reduceMotion = useReduceMotion();
-  const today = useNow().toISODate();
+  const today = useToday();
   const groups = useScheduleGroups(cfg.events, state, cfg);
   const { renderEvent, renderScheduleSeparator, messages } = cfg;
   // Circle + sub-info line + padding (metrics are already font-scaled).
@@ -189,12 +189,9 @@ export function ScheduleList<E extends CalendarEvent = CalendarEvent>() {
       }
       ListEmptyComponent={
         <View style={styles.empty}>
-          <Text
-            maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
-            style={{ color: palette.textSecondary }}
-          >
+          <CalendarText style={{ color: palette.textSecondary }}>
             {messages.noEvents}
-          </Text>
+          </CalendarText>
         </View>
       }
       refreshControl={

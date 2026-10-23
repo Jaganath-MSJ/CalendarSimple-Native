@@ -1,12 +1,13 @@
 /**
  * @file Weekday header row and the week rows of the month grid.
  */
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { getDayListNames, type CalendarMatrix } from "../../core";
 import { useViewConfig } from "../../context/LayoutContext";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
 import { WeekRow, type WeekRowProps } from "./WeekRow";
+import { CalendarText } from "../ui/CalendarText";
 
 export interface MonthGridProps<E extends CalendarEvent = CalendarEvent> {
   matrix: CalendarMatrix<E>;
@@ -41,10 +42,9 @@ export function MonthGrid<E extends CalendarEvent = CalendarEvent>({
           <View style={{ width: rowProps.gutter }} />
         ) : null}
         {Array.from({ length: columns }, (_, i) => (
-          <Text
+          <CalendarText
             key={i}
             numberOfLines={1}
-            maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
             style={[
               styles.dayName,
               {
@@ -56,7 +56,7 @@ export function MonthGrid<E extends CalendarEvent = CalendarEvent>({
             ]}
           >
             {(names[(cfg.weekStartsOn + i) % 7] ?? "").toUpperCase()}
-          </Text>
+          </CalendarText>
         ))}
       </View>
       <View style={styles.body}>

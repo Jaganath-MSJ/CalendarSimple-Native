@@ -9,7 +9,8 @@ import {
   type EventListType,
 } from "../core";
 import type { CalendarEvent, ResolvedConfig } from "../types";
-import { useNow } from "./useNow";
+import { windowEvents } from "./monthWindow";
+import { useToday } from "./useNow";
 
 const ORIGINAL = Symbol("calendar.original");
 type Tagged<E> = E & { [ORIGINAL]?: E };
@@ -48,7 +49,7 @@ export function useMonthGrid<E extends CalendarEvent>(
   events: E[],
   cfg: GridConfig<E>,
 ): CalendarMatrix<E> {
-  const today = useNow().toISODate();
+  const today = useToday();
   const {
     weekStartsOn,
     weekEndsOn,
@@ -70,13 +71,19 @@ export function useMonthGrid<E extends CalendarEvent>(
   const key = date.toMillis();
   return useMemo(
     () =>
-      buildMonthGrid(date, tagged, weekStartsOn, weekEndsOn, {
-        enableEnrichedEvents,
-        enrichedEventsByDate: taggedByDate,
-        eventsAreSorted,
-        isEventOrderingEnabled,
-        sortedMonthView,
-      }),
+      buildMonthGrid(
+        date,
+        windowEvents(tagged, date),
+        weekStartsOn,
+        weekEndsOn,
+        {
+          enableEnrichedEvents,
+          enrichedEventsByDate: taggedByDate,
+          eventsAreSorted,
+          isEventOrderingEnabled,
+          sortedMonthView,
+        },
+      ),
     // `date` is keyed by value; `today` re-runs the grid after midnight.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [

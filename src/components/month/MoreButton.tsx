@@ -2,10 +2,13 @@
  * @file "+ N more" under the visible chips (compact, wide).
  */
 import { useRef, type ComponentRef } from "react";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
 import { useViewConfig } from "../../context/LayoutContext";
 import { useCalendarTheme } from "../../theme";
 import type { Frame } from "../ui/placePopover";
+import { CalendarText } from "../ui/CalendarText";
+import type { FocusAnchor } from "../ui/focusReturn";
+import { CalendarPressable } from "../ui/CalendarPressable";
 
 export interface MoreButtonProps {
   hidden: number;
@@ -18,7 +21,10 @@ export interface MoreButtonProps {
    * Called at once; `measure` reports the button's window frame when
    * `measureInWindow` answers (the popover stays hidden until then).
    */
-  onPress: (measure: (cb: (frame: Frame) => void) => void) => void;
+  onPress: (
+    measure: (cb: (frame: Frame) => void) => void,
+    anchor: FocusAnchor,
+  ) => void;
 }
 
 export function MoreButton({
@@ -36,17 +42,19 @@ export function MoreButton({
   const label = cfg.messages.more(hidden);
   const slop = Math.max(0, Math.ceil((metrics.touchTarget - height) / 2));
   return (
-    <Pressable
+    <CalendarPressable
       ref={ref}
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={label}
       hitSlop={{ top: slop, bottom: slop }}
       onPress={() =>
-        onPress((cb) =>
-          ref.current?.measureInWindow((x, y, w, h) =>
-            cb({ x, y, width: w, height: h }),
-          ),
+        onPress(
+          (cb) =>
+            ref.current?.measureInWindow((x, y, w, h) =>
+              cb({ x, y, width: w, height: h }),
+            ),
+          ref.current,
         )
       }
       style={({ pressed }) => [
@@ -60,9 +68,8 @@ export function MoreButton({
         },
       ]}
     >
-      <Text
+      <CalendarText
         numberOfLines={1}
-        maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
         style={[
           styles.text,
           {
@@ -73,8 +80,8 @@ export function MoreButton({
         ]}
       >
         {label}
-      </Text>
-    </Pressable>
+      </CalendarText>
+    </CalendarPressable>
   );
 }
 

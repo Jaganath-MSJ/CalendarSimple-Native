@@ -1,8 +1,8 @@
 /**
  * @file A timed event box in a day column (port spec §4.3, TDD §8.3).
  */
-import { memo } from "react";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { memo, useMemo } from "react";
+import { StyleSheet } from "react-native";
 import {
   DATE_FORMATS,
   ECalendarViewType,
@@ -14,6 +14,8 @@ import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
 import { pickEventStyle } from "../eventStyle";
 import type { EventFrame } from "./positionEvent";
+import { CalendarText } from "../ui/CalendarText";
+import { CalendarPressable } from "../ui/CalendarPressable";
 
 export interface TimedEventItemProps<E extends CalendarEvent = CalendarEvent> {
   event: E;
@@ -31,22 +33,29 @@ function TimedEventItemImpl<E extends CalendarEvent = CalendarEvent>({
   const { messages, renderEvent, onEventClick, onEventLongPress } = cfg;
   const { smallEventHeight, tinyEventHeight, eventFontSize } = metrics.timeGrid;
   const colours = pickEventStyle(event.style, palette.eventDefault);
-  const tooltip = generateTooltipText(
-    event,
-    ECalendarViewType.day,
-    cfg.is12Hour,
-    cfg.locale,
+  const { is12Hour, locale } = cfg;
+  // Luxon formatting once per event, not on every render (TDD §13).
+  const { tooltip, time } = useMemo(
+    () => ({
+      tooltip: generateTooltipText(
+        event,
+        ECalendarViewType.day,
+        is12Hour,
+        locale,
+      ),
+      time: formatDate(
+        event.startDate,
+        is12Hour ? DATE_FORMATS.TIME_12H : DATE_FORMATS.TIME,
+        locale,
+      ),
+    }),
+    [event, is12Hour, locale],
   );
   const tiny = frame.height < tinyEventHeight;
   const small = !tiny && frame.height < smallEventHeight;
   const fontSize = tiny
     ? 10 * Math.min(fontScale, cfg.maxFontSizeMultiplier)
     : eventFontSize;
-  const time = formatDate(
-    event.startDate,
-    cfg.is12Hour ? DATE_FORMATS.TIME_12H : DATE_FORMATS.TIME,
-    cfg.locale,
-  );
   const text = { color: colours.color, fontSize };
   // Room for text inside the 1 px border and the variant's padding. Below
   // ~2 characters only fragments ("C", "'") would show, so draw no text;
@@ -57,7 +66,8 @@ function TimedEventItemImpl<E extends CalendarEvent = CalendarEvent>({
   const showTime = !tiny && !small && inner >= fontSize * 3;
 
   return (
-    <Pressable
+    <CalendarPressable
+      feedback="ring"
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={`${event.title || messages.noTitle}, ${tooltip}`}
@@ -84,26 +94,21 @@ function TimedEventItemImpl<E extends CalendarEvent = CalendarEvent>({
         renderEvent(event)
       ) : showTitle ? (
         <>
-          <Text
+          <CalendarText
             numberOfLines={1}
-            maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
             ellipsizeMode="tail"
             style={[styles.title, text]}
           >
             {event.title || messages.noTitle}
-          </Text>
+          </CalendarText>
           {showTime ? (
-            <Text
-              numberOfLines={1}
-              maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
-              style={[styles.time, text]}
-            >
+            <CalendarText numberOfLines={1} style={[styles.time, text]}>
               {time}
-            </Text>
+            </CalendarText>
           ) : null}
         </>
       ) : null}
-    </Pressable>
+    </CalendarPressable>
   );
 }
 

@@ -5,10 +5,8 @@
  */
 import type { RefObject } from "react";
 import {
-  Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
   type ScrollViewInstance,
 } from "react-native";
@@ -25,6 +23,8 @@ import type { CalendarEvent } from "../../types";
 import { pickEventStyle } from "../eventStyle";
 import { ARROW, ArrowChip, CLIPPED_PADDING } from "../ui/ArrowChip";
 import { TIME_GUTTER } from "./columnLayout";
+import { CalendarText } from "../ui/CalendarText";
+import { CalendarPressable } from "../ui/CalendarPressable";
 
 const PADDING = 4;
 const CHEVRON = 24;
@@ -164,14 +164,13 @@ export function AllDayBanner<E extends CalendarEvent = CalendarEvent>({
           renderEvent(event)
         ) : // Below ~2 characters of room only fragments would show, so no text.
         inner >= fontSize * 2 ? (
-          <Text
+          <CalendarText
             numberOfLines={1}
             ellipsizeMode="tail"
-            maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
             style={[styles.text, { color: colours.color, fontSize }]}
           >
             {title}
-          </Text>
+          </CalendarText>
         ) : null}
       </ArrowChip>
     );
@@ -181,7 +180,7 @@ export function AllDayBanner<E extends CalendarEvent = CalendarEvent>({
     ? null
     : banner.hiddenCounts.map((n, col) =>
         n > 0 ? (
-          <Pressable
+          <CalendarPressable
             key={col}
             testID={id(`${col}-all-day-more-chip`)}
             accessibilityRole="button"
@@ -198,9 +197,8 @@ export function AllDayBanner<E extends CalendarEvent = CalendarEvent>({
               },
             ]}
           >
-            <Text
+            <CalendarText
               numberOfLines={1}
-              maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
               style={[
                 styles.moreText,
                 { color: palette.textSecondary, fontSize },
@@ -208,8 +206,8 @@ export function AllDayBanner<E extends CalendarEvent = CalendarEvent>({
               ]}
             >
               {colWidth < 90 ? `+${n}` : messages.more(n)}
-            </Text>
-          </Pressable>
+            </CalendarText>
+          </CalendarPressable>
         ) : null,
       );
 
@@ -233,17 +231,16 @@ export function AllDayBanner<E extends CalendarEvent = CalendarEvent>({
       ]}
     >
       <View style={styles.gutter}>
-        <Text
-          maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
+        <CalendarText
           style={[
             styles.gmt,
             { color: palette.textSecondary, fontSize: gmtFontSize },
           ]}
         >
           {getGmtOffset()}
-        </Text>
+        </CalendarText>
         {banner.showExpandCollapse ? (
-          <Pressable
+          <CalendarPressable
             testID={id("all-day-expand-icon")}
             accessibilityRole="button"
             accessibilityLabel={
@@ -270,7 +267,7 @@ export function AllDayBanner<E extends CalendarEvent = CalendarEvent>({
                 ]}
               />
             </View>
-          </Pressable>
+          </CalendarPressable>
         ) : null}
       </View>
       {scrollable ? (

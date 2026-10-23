@@ -10,6 +10,7 @@ import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
 import { EventChip } from "./EventChip";
 import { MoreButton } from "./MoreButton";
+import type { FocusAnchor } from "../ui/focusReturn";
 import { MoreLabel } from "./MoreLabel";
 import type { Frame } from "../ui/placePopover";
 import { getCellOverflow } from "./overflow";
@@ -24,6 +25,7 @@ export interface WeekBarsOverlayProps<E extends CalendarEvent = CalendarEvent> {
   onMorePress?: (
     day: CalendarDayInfo<E>,
     measure: (cb: (frame: Frame) => void) => void,
+    anchor: FocusAnchor,
   ) => void;
 }
 
@@ -95,7 +97,7 @@ export function WeekBarsOverlay<E extends CalendarEvent = CalendarEvent>({
         width={cellWidth - 8}
         height={height}
         testID={id(`${day.displayDay}-more-events`)}
-        onPress={(measure) => onMorePress?.(day, measure)}
+        onPress={(measure, anchor) => onMorePress?.(day, measure, anchor)}
       />
     );
   });

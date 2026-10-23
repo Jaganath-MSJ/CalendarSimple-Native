@@ -4,6 +4,7 @@
 import { useMemo } from "react";
 import { layoutAllDayBanner, type BannerLayout, type DateType } from "../core";
 import type { CalendarEvent } from "../types";
+import { inRange } from "./useDayEventLayout";
 
 /** Banner rows, hidden counts and height for `days` (`maxEvents ?? 3` rows). */
 export function useAllDayBanner<E extends CalendarEvent>(
@@ -13,7 +14,7 @@ export function useAllDayBanner<E extends CalendarEvent>(
   maxEvents = 3,
 ): BannerLayout<E> {
   return useMemo(
-    () => layoutAllDayBanner(days, events, expanded, maxEvents),
+    () => layoutAllDayBanner(days, inRange(events, days), expanded, maxEvents),
     [days, events, expanded, maxEvents],
   );
 }

@@ -119,7 +119,12 @@ const BASE: Record<Breakpoint, Omit<CalendarMetrics, "touchTarget">> = {
       timeFontSize: 11,
       titleFontSize: 13,
     },
-    sheet: { radius: 16, rowHeight: 52, grabberWidth: 36, grabberHeight: 4 },
+    sheet: {
+      radius: 16,
+      rowHeight: 52,
+      grabberWidth: 36,
+      grabberHeight: 4,
+    },
   },
   compact: {
     header: PHONE_HEADER,
@@ -160,7 +165,12 @@ const BASE: Record<Breakpoint, Omit<CalendarMetrics, "touchTarget">> = {
       timeFontSize: 13,
       titleFontSize: 14,
     },
-    sheet: { radius: 16, rowHeight: 52, grabberWidth: 36, grabberHeight: 4 },
+    sheet: {
+      radius: 16,
+      rowHeight: 52,
+      grabberWidth: 36,
+      grabberHeight: 4,
+    },
   },
   wide: {
     header: {
@@ -208,7 +218,12 @@ const BASE: Record<Breakpoint, Omit<CalendarMetrics, "touchTarget">> = {
       timeFontSize: 13,
       titleFontSize: 14,
     },
-    sheet: { radius: 16, rowHeight: 52, grabberWidth: 36, grabberHeight: 4 },
+    sheet: {
+      radius: 16,
+      rowHeight: 52,
+      grabberWidth: 36,
+      grabberHeight: 4,
+    },
   },
 };
 

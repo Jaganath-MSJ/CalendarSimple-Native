@@ -2,11 +2,13 @@
  * @file Option list in a bottom sheet (phone and compact pickers).
  */
 import { useRef, type ComponentRef } from "react";
-import { ScrollView, StyleSheet, Text } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import { useCalendarConfig } from "../../context/CalendarContext";
 import { useCalendarTheme } from "../../theme";
 import { MenuOptionRow, type MenuOption } from "./MenuOption";
 import { Sheet } from "./Sheet";
+import { CalendarText } from "./CalendarText";
+import type { FocusAnchor } from "./focusReturn";
 
 export type { MenuOption } from "./MenuOption";
 
@@ -18,6 +20,8 @@ export interface MenuSheetProps<V> {
   onClose: () => void;
   /** Sheet test ID, e.g. `calendar-menu-view`. */
   testID: string;
+  /** Gets screen-reader focus back on close. */
+  returnFocusTo?: FocusAnchor;
 }
 
 export function MenuSheet<V extends string | number>({
@@ -27,6 +31,7 @@ export function MenuSheet<V extends string | number>({
   onSelect,
   onClose,
   testID,
+  returnFocusTo,
 }: MenuSheetProps<V>) {
   const { palette, metrics } = useCalendarTheme();
   const { config, testId } = useCalendarConfig();
@@ -49,14 +54,19 @@ export function MenuSheet<V extends string | number>({
     });
   };
   return (
-    <Sheet visible={visible} onClose={onClose} testID={testID} label={title}>
-      <Text
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      testID={testID}
+      label={title}
+      returnFocusTo={returnFocusTo}
+    >
+      <CalendarText
         accessibilityRole="header"
-        maxFontSizeMultiplier={config.maxFontSizeMultiplier}
         style={[styles.title, { color: palette.textSecondary }]}
       >
         {title}
-      </Text>
+      </CalendarText>
       <ScrollView
         accessibilityRole="menu"
         ref={listRef}

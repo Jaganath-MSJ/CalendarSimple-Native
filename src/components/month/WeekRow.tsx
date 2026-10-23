@@ -2,13 +2,16 @@
  * @file One week of the month grid: optional week number, day cells and the
  * event overlay.
  */
-import { StyleSheet, Text, View } from "react-native";
+import { memo } from "react";
+import { StyleSheet, View } from "react-native";
 import type { CalendarDayInfo, ThemeScheme } from "../../core";
 import { useTestID, useViewConfig } from "../../context/LayoutContext";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
 import { MonthCell } from "./MonthCell";
 import { WeekBarsOverlay, type WeekBarsOverlayProps } from "./WeekBarsOverlay";
+import { CalendarText } from "../ui/CalendarText";
+import type { FocusAnchor } from "../ui/focusReturn";
 
 export interface WeekRowProps<E extends CalendarEvent = CalendarEvent> {
   row: CalendarDayInfo<E>[];
@@ -21,14 +24,14 @@ export interface WeekRowProps<E extends CalendarEvent = CalendarEvent> {
   variant: "chip" | "bar";
   maxSlots: number;
   isSelected: (info: CalendarDayInfo<E>) => boolean;
-  onCellPress: (info: CalendarDayInfo<E>) => void;
+  onCellPress: (info: CalendarDayInfo<E>, anchor: FocusAnchor) => void;
   onCellLongPress?: (info: CalendarDayInfo<E>) => void;
   onMorePress?: WeekBarsOverlayProps<E>["onMorePress"];
   /** Theme state colours, resolved once by the view. */
   resolved?: ThemeScheme;
 }
 
-export function WeekRow<E extends CalendarEvent = CalendarEvent>({
+function WeekRowImpl<E extends CalendarEvent = CalendarEvent>({
   row,
   rowIndex,
   cellWidth,
@@ -66,15 +69,14 @@ export function WeekRow<E extends CalendarEvent = CalendarEvent>({
             cfg.styles.weekNumber,
           ]}
         >
-          <Text
-            maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
+          <CalendarText
             style={{
               color: palette.textSecondary,
               fontSize: metrics.month.labelFontSize,
             }}
           >
             {first && !blankWeek ? String(first.currentDate.weekNumber) : ""}
-          </Text>
+          </CalendarText>
         </View>
       ) : null}
       {row.map((info) => (
@@ -84,8 +86,8 @@ export function WeekRow<E extends CalendarEvent = CalendarEvent>({
           width={cellWidth}
           height={height}
           selected={isSelected(info)}
-          onPress={() => onCellPress(info)}
-          onLongPress={onCellLongPress && (() => onCellLongPress(info))}
+          onPress={onCellPress}
+          onLongPress={onCellLongPress}
           resolved={resolved}
         />
       ))}
@@ -100,6 +102,9 @@ export function WeekRow<E extends CalendarEvent = CalendarEvent>({
     </View>
   );
 }
+
+/** Memoised (TDD §13); its callbacks must be stable. */
+export const WeekRow = memo(WeekRowImpl) as typeof WeekRowImpl;
 
 const styles = StyleSheet.create({
   row: { position: "relative" },

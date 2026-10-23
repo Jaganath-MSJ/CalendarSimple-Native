@@ -3,7 +3,7 @@
  * when `creatable`, a "New event" row (TDD §9).
  */
 import { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import {
   DATE_FORMATS,
   ECalendarViewType,
@@ -15,11 +15,14 @@ import {
   type DateType,
 } from "../../core";
 import { useTestID, useViewConfig } from "../../context/LayoutContext";
-import { useNow } from "../../hooks/useNow";
+import { useToday } from "../../hooks/useNow";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
 import { pickEventStyle } from "../eventStyle";
 import { Sheet } from "../ui/Sheet";
+import { CalendarText } from "../ui/CalendarText";
+import type { FocusAnchor } from "../ui/focusReturn";
+import { CalendarPressable } from "../ui/CalendarPressable";
 
 const TIME_WIDTH = 96;
 const DOT = 10;
@@ -28,17 +31,20 @@ export interface DayEventsSheetProps<E extends CalendarEvent = CalendarEvent> {
   day: DateType | null;
   events: E[];
   onClose: () => void;
+  /** Gets screen-reader focus back on close. */
+  returnFocusTo?: FocusAnchor;
 }
 
 export function DayEventsSheet<E extends CalendarEvent = CalendarEvent>({
   day,
   events,
   onClose,
+  returnFocusTo,
 }: DayEventsSheetProps<E>) {
   const cfg = useViewConfig<E>();
-  const { palette, metrics } = useCalendarTheme();
+  const { palette, metrics, flip } = useCalendarTheme();
   const id = useTestID();
-  const now = useNow();
+  const today = useToday();
   const dayEvents = useMemo(
     () =>
       day
@@ -53,7 +59,7 @@ export function DayEventsSheet<E extends CalendarEvent = CalendarEvent>({
   const short = formatDate(day, DATE_FORMATS.DAY_DATE_SHORT_MONTH, locale);
   const title =
     short.toUpperCase() +
-    (day.hasSame(now, "day") ? ` · ${messages.today.toUpperCase()}` : "");
+    (day.toISODate() === today ? ` · ${messages.today.toUpperCase()}` : "");
   const rowHeight = Math.max(metrics.sheet.rowHeight, metrics.touchTarget);
   const text = { color: palette.textPrimary };
   const muted = { color: palette.textSecondary };
@@ -64,18 +70,15 @@ export function DayEventsSheet<E extends CalendarEvent = CalendarEvent>({
       onClose={onClose}
       testID={id("day-sheet")}
       label={messages.eventsOn(short)}
+      returnFocusTo={returnFocusTo}
     >
       <View style={[styles.header, cfg.styles.daySheet]}>
-        <Text
-          accessibilityRole="header"
-          maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
-          style={[styles.title, text]}
-        >
+        <CalendarText accessibilityRole="header" style={[styles.title, text]}>
           {title}
-        </Text>
-        <Text maxFontSizeMultiplier={cfg.maxFontSizeMultiplier} style={muted}>
+        </CalendarText>
+        <CalendarText style={muted}>
           {messages.eventCount(dayEvents.length)}
-        </Text>
+        </CalendarText>
       </View>
       <ScrollView>
         {dayEvents.map((event, i) => {
@@ -87,7 +90,7 @@ export function DayEventsSheet<E extends CalendarEvent = CalendarEvent>({
             locale,
           );
           return (
-            <Pressable
+            <CalendarPressable
               key={key}
               testID={id(`${key}-day-sheet-item`)}
               accessibilityRole="button"
@@ -99,6 +102,7 @@ export function DayEventsSheet<E extends CalendarEvent = CalendarEvent>({
               onLongPress={() => cfg.onEventLongPress?.(event)}
               style={({ pressed }) => [
                 styles.row,
+                flip && styles.reverse,
                 { height: rowHeight },
                 pressed && { backgroundColor: palette.bgMuted },
               ]}
@@ -114,29 +118,21 @@ export function DayEventsSheet<E extends CalendarEvent = CalendarEvent>({
                   },
                 ]}
               />
-              <Text
-                numberOfLines={1}
-                maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
-                style={[styles.time, muted]}
-              >
+              <CalendarText numberOfLines={1} style={[styles.time, muted]}>
                 {getScheduleTimeLabel(event, day, {
                   is12Hour,
                   locale,
                   messages,
                 })}
-              </Text>
-              <Text
-                numberOfLines={1}
-                maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
-                style={[styles.eventTitle, text]}
-              >
+              </CalendarText>
+              <CalendarText numberOfLines={1} style={[styles.eventTitle, text]}>
                 {getScheduleTitle(event, day, messages)}
-              </Text>
-            </Pressable>
+              </CalendarText>
+            </CalendarPressable>
           );
         })}
         {cfg.creatable ? (
-          <Pressable
+          <CalendarPressable
             testID={id("day-sheet-new-event")}
             accessibilityRole="button"
             accessibilityLabel={messages.newEvent}
@@ -149,17 +145,15 @@ export function DayEventsSheet<E extends CalendarEvent = CalendarEvent>({
             }}
             style={({ pressed }) => [
               styles.row,
+              flip && styles.reverse,
               { height: rowHeight },
               pressed && { backgroundColor: palette.bgMuted },
             ]}
           >
-            <Text
-              maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
-              style={[styles.newEvent, { color: palette.primary }]}
-            >
+            <CalendarText style={[styles.newEvent, { color: palette.primary }]}>
               {`+ ${messages.newEvent}`}
-            </Text>
-          </Pressable>
+            </CalendarText>
+          </CalendarPressable>
         ) : null}
       </ScrollView>
     </Sheet>
@@ -175,6 +169,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 12,
   },
+  reverse: { flexDirection: "row-reverse" },
   dot: { width: DOT, height: DOT, borderRadius: DOT / 2 },
   time: { width: TIME_WIDTH, fontSize: 13 },
   eventTitle: { flex: 1, fontSize: 15 },

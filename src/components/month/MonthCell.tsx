@@ -2,7 +2,8 @@
  * @file One day of the month grid: background, date label and state colours
  * (port spec §4.2, TDD §8.3).
  */
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { memo, useRef, type ComponentRef } from "react";
+import { StyleSheet, View, type Pressable } from "react-native";
 import {
   DATE_FORMATS,
   formatDate,
@@ -14,20 +15,27 @@ import { useCalendarConfig } from "../../context/CalendarContext";
 import { useTestID, useViewConfig } from "../../context/LayoutContext";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
+import { CalendarText } from "../ui/CalendarText";
+import { CalendarPressable } from "../ui/CalendarPressable";
+import type { FocusAnchor } from "../ui/focusReturn";
 
 export interface MonthCellProps<E extends CalendarEvent = CalendarEvent> {
   info: CalendarDayInfo<E>;
   width: number;
   height: number;
-  onPress?: () => void;
-  onLongPress?: () => void;
+  /**
+   * Called with the cell and the pressed element (where focus returns when
+   * an overlay it opens closes). Keep it stable: the cell is memoised.
+   */
+  onPress?: (info: CalendarDayInfo<E>, anchor: FocusAnchor) => void;
+  onLongPress?: (info: CalendarDayInfo<E>) => void;
   /** `selectable && isCurrentMonth && same day as the selected date`. */
   selected?: boolean;
   /** Theme state colours resolved by the view; resolved here when omitted. */
   resolved?: ThemeScheme;
 }
 
-export function MonthCell<E extends CalendarEvent = CalendarEvent>({
+function MonthCellImpl<E extends CalendarEvent = CalendarEvent>({
   info,
   width,
   height,
@@ -36,6 +44,7 @@ export function MonthCell<E extends CalendarEvent = CalendarEvent>({
   selected = false,
   resolved: resolvedProp,
 }: MonthCellProps<E>) {
+  const ref = useRef<ComponentRef<typeof Pressable>>(null);
   const cfg = useViewConfig();
   const { colorScheme } = useCalendarConfig();
   const { palette, metrics, flip } = useCalendarTheme();
@@ -87,9 +96,8 @@ export function MonthCell<E extends CalendarEvent = CalendarEvent>({
       isCurrentMonth,
     })
   ) : (
-    <Text
+    <CalendarText
       testID={id(`${displayDay}-month-label`)}
-      maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
       style={[
         styles.label,
         {
@@ -106,14 +114,15 @@ export function MonthCell<E extends CalendarEvent = CalendarEvent>({
       ]}
     >
       {displayDay}
-    </Text>
+    </CalendarText>
   );
 
   return (
-    <Pressable
+    <CalendarPressable
       testID={id(`${displayDay}-month-cell`)}
-      onPress={onPress}
-      onLongPress={onLongPress}
+      ref={ref}
+      onPress={onPress && (() => onPress(info, ref.current))}
+      onLongPress={onLongPress && (() => onLongPress(info))}
       delayLongPress={500}
       accessibilityRole="button"
       accessibilityLabel={`${formatDate(currentDate, DATE_FORMATS.MONTH_DAY_YEAR, locale)}, ${messages.eventCount(totalEvents)}`}
@@ -154,9 +163,11 @@ export function MonthCell<E extends CalendarEvent = CalendarEvent>({
           )}
         </View>
       ) : null}
-    </Pressable>
+    </CalendarPressable>
   );
 }
+
+export const MonthCell = memo(MonthCellImpl) as typeof MonthCellImpl;
 
 const styles = StyleSheet.create({
   cell: {

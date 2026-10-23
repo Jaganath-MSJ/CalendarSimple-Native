@@ -1,0 +1,33 @@
+# Android back closes each overlay (P9.S5). Run on a tablet emulator: the
+# view picker is an anchored menu and "+N more" opens the popover only at the
+# wide breakpoint; the day sheet is opened from the phone-width Month screen
+# in a split or portrait layout, so this flow uses whichever the tablet shows.
+appId: com.calendarsimplenative.example
+---
+- launchApp
+- tapOn: "Month"
+# View picker (anchored menu on wide, sheet on compact)
+- tapOn: { id: "calendar-header-view-select" }
+- assertVisible: { id: "calendar-menu-view" }
+- back
+- assertNotVisible: { id: "calendar-menu-view" }
+- assertVisible: { id: "calendar-month-view" }
+# "+N more" popover (wide)
+- runFlow:
+    when:
+      visible: { id: "calendar-22-more-events" }
+    commands:
+      - tapOn: { id: "calendar-22-more-events" }
+      - assertVisible: { id: "calendar-popover-content" }
+      - back
+      - assertNotVisible: { id: "calendar-popover-content" }
+# Day sheet (phone width, Option A)
+- runFlow:
+    when:
+      notVisible: { id: "calendar-22-more-events" }
+    commands:
+      - tapOn: { id: "calendar-22-month-cell" }
+      - assertVisible: { id: "calendar-day-sheet" }
+      - back
+      - assertNotVisible: { id: "calendar-day-sheet" }
+- assertVisible: { id: "calendar-month-view" }

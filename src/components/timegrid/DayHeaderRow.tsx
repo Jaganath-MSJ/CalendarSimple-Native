@@ -2,7 +2,7 @@
  * @file Day headers above the time grid (port spec §4.3, TDD §10.2).
  */
 import { Fragment } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import {
   DATE_FORMATS,
   formatDate,
@@ -14,6 +14,7 @@ import {
 import { useCalendarConfig } from "../../context/CalendarContext";
 import { useTestID, useViewConfig } from "../../context/LayoutContext";
 import { useCalendarTheme } from "../../theme";
+import { CalendarText } from "../ui/CalendarText";
 
 export interface DayHeaderRowProps {
   days: DateType[];
@@ -72,8 +73,7 @@ export function DayHeaderRow({
             )}
             style={[styles.cell, { width: colWidth }, own.dayHeader]}
           >
-            <Text
-              maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
+            <CalendarText
               style={[
                 styles.name,
                 {
@@ -87,9 +87,8 @@ export function DayHeaderRow({
               ]}
             >
               {(names[getDayOfWeek(date)] ?? "").toUpperCase()}
-            </Text>
-            <Text
-              maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
+            </CalendarText>
+            <CalendarText
               style={[
                 styles.number,
                 { fontSize: numberSize, color: palette.textPrimary },
@@ -119,7 +118,7 @@ export function DayHeaderRow({
               ]}
             >
               {number}
-            </Text>
+            </CalendarText>
           </View>
         );
       })}

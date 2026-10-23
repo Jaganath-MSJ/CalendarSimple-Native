@@ -29,6 +29,11 @@ export function useCalendarLayout(): CalendarLayout {
 const PageContext = createContext(true);
 export const PageProvider = PageContext.Provider;
 
+/** `true` on the current pager page (and outside a pager). */
+export function useIsCurrentPage(): boolean {
+  return useContext(PageContext);
+}
+
 /** Returns `id(suffix)`: `"{t}-{suffix}"` on the current page, else `undefined`. */
 export function useTestID(): (suffix: string) => string | undefined {
   const { testId } = useCalendarConfig();

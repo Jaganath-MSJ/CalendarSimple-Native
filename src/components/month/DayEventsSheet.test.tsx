@@ -47,7 +47,10 @@ it("row press calls onEventClick and closes", async () => {
 it("Android back closes the sheet", async () => {
   await phone();
   await fireEvent.press(screen.getByTestId("calendar-22-month-cell"));
-  await fireEvent(screen.getByTestId("calendar-day-sheet"), "requestClose");
+  await fireEvent(
+    screen.getByTestId("calendar-day-sheet-modal"),
+    "requestClose",
+  );
   expect(screen.queryByTestId("calendar-day-sheet")).toBeNull();
 });
 

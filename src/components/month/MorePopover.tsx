@@ -1,7 +1,7 @@
 /**
  * @file Every event of a month day in an anchored popover (port spec §4.6).
  */
-import { ScrollView, StyleSheet, Text } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import {
   DATE_FORMATS,
   ECalendarViewType,
@@ -19,6 +19,8 @@ import { pickEventStyle } from "../eventStyle";
 import { AnchoredPopover } from "../ui/AnchoredPopover";
 import { ArrowChip } from "../ui/ArrowChip";
 import type { Frame } from "../ui/placePopover";
+import { CalendarText } from "../ui/CalendarText";
+import type { FocusAnchor } from "../ui/focusReturn";
 
 export const POPOVER_WIDTH = 220;
 const LIST_MAX_HEIGHT = 250;
@@ -27,12 +29,15 @@ export interface MorePopoverProps<E extends CalendarEvent = CalendarEvent> {
   day: CalendarDayInfo<E> | null;
   anchor: Frame | null;
   onClose: () => void;
+  /** Gets screen-reader focus back on close. */
+  returnFocusTo?: FocusAnchor;
 }
 
 export function MorePopover<E extends CalendarEvent = CalendarEvent>({
   day,
   anchor,
   onClose,
+  returnFocusTo,
 }: MorePopoverProps<E>) {
   const cfg = useViewConfig<E>();
   const { palette, metrics } = useCalendarTheme();
@@ -54,13 +59,11 @@ export function MorePopover<E extends CalendarEvent = CalendarEvent>({
       contentTestID={id("popover-content")}
       label={cfg.messages.eventsOn(short)}
       style={cfg.styles.popover}
+      returnFocusTo={returnFocusTo}
     >
-      <Text
-        maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
-        style={[styles.header, { color: palette.textSecondary }]}
-      >
+      <CalendarText style={[styles.header, { color: palette.textSecondary }]}>
         {short.toUpperCase()}
-      </Text>
+      </CalendarText>
       <ScrollView style={{ maxHeight: LIST_MAX_HEIGHT }}>
         {events.map((event, i) => {
           const colours = pickEventStyle(event.style, palette.eventDefault);
@@ -93,16 +96,15 @@ export function MorePopover<E extends CalendarEvent = CalendarEvent>({
               {cfg.renderEvent ? (
                 cfg.renderEvent(event)
               ) : (
-                <Text
+                <CalendarText
                   numberOfLines={1}
-                  maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
                   style={{
                     color: colours.color,
                     fontSize: metrics.month.chipFontSize,
                   }}
                 >
                   {event.title}
-                </Text>
+                </CalendarText>
               )}
             </ArrowChip>
           );

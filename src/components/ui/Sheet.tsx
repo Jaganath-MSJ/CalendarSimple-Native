@@ -5,19 +5,24 @@ import type { ReactNode } from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { useCalendarConfig } from "../../context/CalendarContext";
 import { useCalendarTheme } from "../../theme";
+import { useReturnFocusOnClose, type FocusAnchor } from "./focusReturn";
 
 export interface SheetProps {
   visible: boolean;
   onClose: () => void;
   children: ReactNode;
+  /** Panel test ID; the `Modal` gets `<testID>-modal`. */
   testID?: string;
   /** Accessibility label of the panel. */
   label: string;
+  /** Gets screen-reader focus back when the sheet closes. */
+  returnFocusTo?: FocusAnchor;
 }
 
 /**
  * A bottom sheet in a `Modal`. Tapping the scrim or the Android back button
- * (`onRequestClose`) calls `onClose`. Bottom padding is `safeAreaInsets.bottom`.
+ * (`onRequestClose`) calls `onClose`. Bottom padding is
+ * `safeAreaInsets.bottom`, or 8 when there is no inset.
  */
 export function Sheet({
   visible,
@@ -25,15 +30,17 @@ export function Sheet({
   children,
   testID,
   label,
+  returnFocusTo,
 }: SheetProps) {
   const { palette, metrics } = useCalendarTheme();
   const { config } = useCalendarConfig();
   const { messages } = config;
+  useReturnFocusOnClose(visible, returnFocusTo);
   if (!visible) return null;
   const { radius, grabberWidth, grabberHeight } = metrics.sheet;
   return (
     <Modal
-      testID={testID}
+      testID={testID && `${testID}-modal`}
       visible
       transparent
       animationType="slide"
@@ -48,6 +55,7 @@ export function Sheet({
           accessibilityLabel={messages.close}
         />
         <View
+          testID={testID}
           accessibilityViewIsModal
           accessibilityLabel={label}
           style={[
@@ -56,7 +64,7 @@ export function Sheet({
               backgroundColor: palette.surfaceRaised,
               borderTopLeftRadius: radius,
               borderTopRightRadius: radius,
-              paddingBottom: config.safeAreaInsets.bottom ?? 0,
+              paddingBottom: config.safeAreaInsets.bottom || PANEL_PADDING,
             },
           ]}
         >
@@ -78,8 +86,14 @@ export function Sheet({
   );
 }
 
+/**
+ * Panel top padding, and the bottom padding when there is no safe-area
+ * inset (TDD §10 gives no sheet padding; this reuses the existing top value).
+ */
+const PANEL_PADDING = 8;
+
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: "flex-end" },
-  panel: { maxHeight: "80%", paddingTop: 8 },
+  panel: { maxHeight: "80%", paddingTop: PANEL_PADDING },
   grabber: { alignSelf: "center", marginBottom: 8 },
 });

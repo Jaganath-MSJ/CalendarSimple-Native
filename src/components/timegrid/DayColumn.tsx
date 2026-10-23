@@ -22,6 +22,7 @@ import { NowLine } from "./NowLine";
 import { positionEvent } from "./positionEvent";
 import { slotFromY } from "./slotFromY";
 import { TimedEventItem } from "./TimedEventItem";
+import { CalendarPressable } from "../ui/CalendarPressable";
 
 export interface DayColumnProps<E extends CalendarEvent = CalendarEvent> {
   /** Start of the day. */
@@ -118,7 +119,7 @@ function DayColumnImpl<E extends CalendarEvent = CalendarEvent>({
       ? hours.map((h) => {
           const start = day.set({ hour: h });
           return (
-            <Pressable
+            <CalendarPressable
               key={h}
               testID={id(`${iso}-${h}-slot`)}
               accessibilityRole="button"
@@ -142,13 +143,18 @@ function DayColumnImpl<E extends CalendarEvent = CalendarEvent>({
         })
       : null;
 
+  // Stable frames, so a now-line move does not re-render the events.
+  const frames = useMemo(
+    () => layouts.map((l) => positionEvent(l, colWidth, hourHeight)),
+    [layouts, colWidth, hourHeight],
+  );
   const events = layouts.map((l, i) => {
     const base = l.event.id ?? `${l.event.startDate}-${i}`;
     return (
       <TimedEventItem
         key={`${base}-${i}`}
         event={l.event}
-        frame={positionEvent(l, colWidth, hourHeight)}
+        frame={frames[i]!}
         testID={id(`${base}-day-event-item`)}
       />
     );

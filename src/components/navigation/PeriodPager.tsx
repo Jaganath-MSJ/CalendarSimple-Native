@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -17,6 +18,7 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native";
+import { useAppIsRTL } from "../../hooks/useAppIsRTL";
 
 export type PageOffset = -1 | 0 | 1;
 
@@ -25,10 +27,18 @@ export interface PeriodPagerProps {
   width: number;
   testID: string;
   renderPage: (offset: PageOffset) => ReactNode;
+  /** Neighbour pages until the first idle period (TDD §8.5: the skeleton). */
+  renderPlaceholder?: (offset: PageOffset) => ReactNode;
   onPage: (direction: 1 | -1) => void;
+  /**
+   * The calendar is mirrored relative to the app (TDD §8.1): the next period
+   * then sits on the other side, so the page order reverses.
+   */
+  flip?: boolean;
 }
 
 const PAGES: PageOffset[] = [-1, 0, 1];
+const PAGES_FLIPPED: PageOffset[] = [1, 0, -1];
 const keyOf = (o: PageOffset) => String(o);
 
 /**
@@ -49,8 +59,12 @@ export function PeriodPager({
   width,
   testID,
   renderPage,
+  renderPlaceholder,
   onPage,
+  flip = false,
 }: PeriodPagerProps) {
+  const appIsRTL = useAppIsRTL();
+  const pages = flip ? PAGES_FLIPPED : PAGES;
   const listRef = useRef<FlatList<PageOffset>>(null);
   const [neighboursReady, setNeighboursReady] = useState(false);
   const [recenter, setRecenter] = useState(0);
@@ -69,12 +83,23 @@ export function PeriodPager({
   const onMomentumScrollEnd = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       if (width <= 0) return;
-      const index = Math.round(e.nativeEvent.contentOffset.x / width);
-      if (index === 1) return;
-      onPage(index < 1 ? -1 : 1);
+      // contentOffset.x is physical (from the left) on iOS and Android, while
+      // an RTL app lays the list out from the right (VirtualizedList converts
+      // the same way), so map the physical page back to the data index.
+      const physical = Math.round(e.nativeEvent.contentOffset.x / width);
+      const index = appIsRTL ? pages.length - 1 - physical : physical;
+      const offset = pages[index];
+      if (offset === undefined || offset === 0) return;
+      onPage(offset);
       setRecenter((n) => n + 1);
     },
-    [onPage, width],
+    [onPage, width, appIsRTL, pages],
+  );
+
+  // A stable array, so FlatList re-renders pages only when these change.
+  const extraData = useMemo(
+    () => [renderPage, neighboursReady],
+    [renderPage, neighboursReady],
   );
 
   const getItemLayout = useCallback(
@@ -88,7 +113,9 @@ export function PeriodPager({
 
   const renderItem = ({ item }: ListRenderItemInfo<PageOffset>) => (
     <View style={[styles.page, { width }]}>
-      {item === 0 || neighboursReady ? renderPage(item) : null}
+      {item === 0 || neighboursReady
+        ? renderPage(item)
+        : (renderPlaceholder?.(item) ?? null)}
     </View>
   );
 
@@ -101,10 +128,10 @@ export function PeriodPager({
       ref={listRef}
       testID={`${testID}-pager`}
       style={styles.list}
-      data={PAGES}
+      data={pages}
       keyExtractor={keyOf}
       renderItem={renderItem}
-      extraData={[renderPage, neighboursReady]}
+      extraData={extraData}
       horizontal
       pagingEnabled
       showsHorizontalScrollIndicator={false}

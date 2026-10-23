@@ -9,8 +9,9 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useCalendarConfig } from "../../context/CalendarContext";
-import { useCalendarTheme } from "../../theme";
+import { RAISED_SHADOW, useCalendarTheme } from "../../theme";
 import { MenuOptionRow, type MenuOption } from "./MenuOption";
+import { useReturnFocusOnClose, type FocusAnchor } from "./focusReturn";
 
 export interface MenuAnchor {
   x: number;
@@ -27,6 +28,8 @@ export interface AnchoredMenuProps<V> {
   onClose: () => void;
   /** Menu test ID, e.g. `calendar-menu-view`. */
   testID: string;
+  /** Gets screen-reader focus back when the menu closes. */
+  returnFocusTo?: FocusAnchor;
 }
 
 const MENU_MIN_WIDTH = 180;
@@ -39,10 +42,12 @@ export function AnchoredMenu<V extends string | number>({
   onSelect,
   onClose,
   testID,
+  returnFocusTo,
 }: AnchoredMenuProps<V>) {
   const { palette, metrics } = useCalendarTheme();
   const { config, testId } = useCalendarConfig();
   const window = useWindowDimensions();
+  useReturnFocusOnClose(visible, returnFocusTo);
   if (!visible) return null;
   const width = Math.max(anchor.width, MENU_MIN_WIDTH);
   const left = Math.max(0, Math.min(anchor.x, window.width - width));
@@ -90,10 +95,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 8,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
+    ...RAISED_SHADOW,
   },
 });

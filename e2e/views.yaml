@@ -1,0 +1,21 @@
+# Opens every view through the header view picker (P9.S5).
+appId: com.calendarsimplenative.example
+---
+- launchApp
+- tapOn: "Month"
+- assertVisible: { id: "calendar-month-view" }
+- tapOn: { id: "calendar-header-view-select" }
+- tapOn: { id: "calendar-menu-option-week" }
+- assertVisible: { id: "calendar-week-view" }
+- tapOn: { id: "calendar-header-view-select" }
+- tapOn: { id: "calendar-menu-option-day" }
+- assertVisible: { id: "calendar-day-view" }
+- tapOn: { id: "calendar-header-view-select" }
+- tapOn: { id: "calendar-menu-option-customDays" }
+- assertVisible: { id: "calendar-custom-days-view" }
+- tapOn: { id: "calendar-header-view-select" }
+- tapOn: { id: "calendar-menu-option-schedule" }
+- assertVisible: { id: "calendar-schedule-view" }
+- tapOn: { id: "calendar-header-view-select" }
+- tapOn: { id: "calendar-menu-option-month" }
+- assertVisible: { id: "calendar-month-view" }

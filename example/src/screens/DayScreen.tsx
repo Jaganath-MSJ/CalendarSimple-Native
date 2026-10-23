@@ -1,12 +1,15 @@
 import { StyleSheet, View } from "react-native";
 import Calendar from "../../../src";
 import { OCT_2026_EVENTS } from "../../../src/core/test/fixtures";
+import { useExampleScheme } from "../launch";
 
 /** Day view with the prototype October 2026 data set. */
 export default function DayScreen() {
+  const scheme = useExampleScheme();
   return (
     <View style={styles.root}>
       <Calendar
+        colorScheme={scheme}
         view="day"
         events={OCT_2026_EVENTS}
         selectedDate={new Date(2026, 9, 22)}

@@ -3,7 +3,7 @@
  * dot, the time and the title, or `renderEvent(event)` (port spec §4.5).
  */
 import { memo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import {
   DATE_FORMATS,
   formatDate,
@@ -17,6 +17,8 @@ import { useTestID, useViewConfig } from "../../context/LayoutContext";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
 import { pickEventStyle } from "../eventStyle";
+import { CalendarText } from "../ui/CalendarText";
+import { CalendarPressable } from "../ui/CalendarPressable";
 
 const DOT = 8;
 
@@ -48,7 +50,7 @@ function ScheduleRowInner<E extends CalendarEvent>({
 }: ScheduleRowProps<E>) {
   const cfg = useViewConfig<E>();
   const { colorScheme } = useCalendarConfig();
-  const { palette, metrics } = useCalendarTheme();
+  const { palette, metrics, flip } = useCalendarTheme();
   const id = useTestID();
   const { messages, locale, is12Hour, styles: own, renderEvent } = cfg;
   const m = metrics.schedule;
@@ -63,13 +65,13 @@ function ScheduleRowInner<E extends CalendarEvent>({
   const dayLabel = formatDate(day, DATE_FORMATS.DAY_DATE_SHORT_MONTH, locale);
   const picked = pickEventStyle(event.style, palette.eventDefault);
   const key = event.id ?? `${event.startDate}`;
-  const mfm = cfg.maxFontSizeMultiplier;
 
   return (
     <View
       testID={first ? id(`${dateKey}-schedule-section`) : undefined}
       style={[
         styles.row,
+        flip && styles.reverse,
         !renderEvent && { height },
         last &&
           !separated && {
@@ -97,8 +99,7 @@ function ScheduleRowInner<E extends CalendarEvent>({
                   },
               ]}
             >
-              <Text
-                maxFontSizeMultiplier={mfm}
+              <CalendarText
                 style={[
                   styles.number,
                   { fontSize: m.numberFontSize, color: palette.textPrimary },
@@ -112,11 +113,10 @@ function ScheduleRowInner<E extends CalendarEvent>({
                 ]}
               >
                 {formatDate(day, DATE_FORMATS.DAY_NUMBER, locale)}
-              </Text>
+              </CalendarText>
             </View>
-            <Text
+            <CalendarText
               testID={id("date-info")}
-              maxFontSizeMultiplier={mfm}
               style={[
                 styles.subInfo,
                 { fontSize: m.timeFontSize, color: palette.textSecondary },
@@ -128,11 +128,11 @@ function ScheduleRowInner<E extends CalendarEvent>({
                 DATE_FORMATS.SHORT_DAY,
                 locale,
               )}`.toUpperCase()}
-            </Text>
+            </CalendarText>
           </>
         ) : null}
       </View>
-      <Pressable
+      <CalendarPressable
         testID={id(`${key}-schedule-event`)}
         accessibilityRole="button"
         accessibilityLabel={`${title || messages.noTitle}, ${dayLabel}, ${time}`}
@@ -140,6 +140,7 @@ function ScheduleRowInner<E extends CalendarEvent>({
         onLongPress={() => cfg.onEventLongPress?.(event)}
         style={({ pressed }) => [
           styles.body,
+          flip && styles.reverse,
           { minHeight: metrics.touchTarget },
           pressed && { backgroundColor: palette.bgMuted },
         ]}
@@ -148,16 +149,21 @@ function ScheduleRowInner<E extends CalendarEvent>({
           renderEvent(event)
         ) : (
           <>
-            <View style={[styles.timeCol, { width: m.timeWidth }]}>
+            <View
+              style={[
+                styles.timeCol,
+                flip && styles.reverse,
+                { width: m.timeWidth },
+              ]}
+            >
               <View
                 style={[
                   styles.dot,
                   { backgroundColor: picked.backgroundColor },
                 ]}
               />
-              <Text
+              <CalendarText
                 numberOfLines={1}
-                maxFontSizeMultiplier={mfm}
                 style={[
                   styles.time,
                   { fontSize: m.timeFontSize, color: palette.textSecondary },
@@ -165,13 +171,12 @@ function ScheduleRowInner<E extends CalendarEvent>({
                 ]}
               >
                 {time}
-              </Text>
+              </CalendarText>
             </View>
-            <Text
+            <CalendarText
               numberOfLines={1}
-              maxFontSizeMultiplier={mfm}
               style={[
-                styles.title,
+                flip ? styles.titleFlipped : styles.title,
                 {
                   fontSize: m.titleFontSize,
                   // The event's own text colour; no chip background behind it.
@@ -181,10 +186,10 @@ function ScheduleRowInner<E extends CalendarEvent>({
               ]}
             >
               {title}
-            </Text>
+            </CalendarText>
           </>
         )}
-      </Pressable>
+      </CalendarPressable>
     </View>
   );
 }
@@ -202,4 +207,7 @@ const styles = StyleSheet.create({
   dot: { width: DOT, height: DOT, borderRadius: DOT / 2 },
   time: { flexShrink: 1 },
   title: { flex: 1, paddingEnd: 12 },
+  // Start/end swap only when the calendar flips (TDD §8.1).
+  titleFlipped: { flex: 1, paddingStart: 12 },
+  reverse: { flexDirection: "row-reverse" },
 });

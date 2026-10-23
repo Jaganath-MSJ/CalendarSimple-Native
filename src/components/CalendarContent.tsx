@@ -4,7 +4,6 @@
  */
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import {
-  I18nManager,
   StyleSheet,
   useWindowDimensions,
   View,
@@ -32,7 +31,9 @@ import type { DimensionValue } from "../types";
 import { Header } from "./header/Header";
 import { PeriodPager, type PageOffset } from "./navigation/PeriodPager";
 import { CalendarErrorBoundary } from "./ui/CalendarErrorBoundary";
+import { ViewSkeleton } from "./ui/Skeletons";
 import { View as CalendarView } from "./views/View";
+import { useAppIsRTL } from "../hooks/useAppIsRTL";
 
 export interface CalendarContentProps {
   width?: DimensionValue;
@@ -55,13 +56,14 @@ export function CalendarContent({
     num(heightProp),
   );
   const { fontScale } = useWindowDimensions();
+  const appIsRTL = useAppIsRTL();
   const measured = width > 0;
   // getBreakpoint(NaN | 0) must not decide the layout; phone until measured.
   const breakpoint = measured ? getBreakpoint(width) : "phone";
   const { maxFontSizeMultiplier, palette: paletteOverrides } = config;
   const flip = resolveFlip(
     resolveDirection(config.direction, config.locale),
-    I18nManager.isRTL,
+    appIsRTL,
   );
 
   const theme = useMemo<CalendarThemeValue>(
@@ -126,6 +128,18 @@ export function CalendarContent({
     [testId, view, customDays, selectedDate],
   );
 
+  // Neighbour pages show the view's skeleton until idle (TDD §8.5).
+  const renderPlaceholder = useCallback(
+    () => (
+      <PageProvider value={false}>
+        <View style={styles.body}>
+          <ViewSkeleton view={view} />
+        </View>
+      </PageProvider>
+    ),
+    [view],
+  );
+
   const [headerHeight, setHeaderHeight] = useState<number | undefined>();
   const layout = useMemo(
     () => ({ width, height, headerHeight }),
@@ -165,7 +179,9 @@ export function CalendarContent({
                     width={width}
                     testID={testId}
                     renderPage={renderPage}
+                    renderPlaceholder={renderPlaceholder}
                     onPage={navigate}
+                    flip={flip}
                   />
                 ) : null}
               </>

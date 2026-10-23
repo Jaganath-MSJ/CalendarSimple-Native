@@ -13,8 +13,9 @@ import {
 } from "react-native";
 import { useCalendarConfig } from "../../context/CalendarContext";
 import { useReduceMotion } from "../../hooks/useReduceMotion";
-import { useCalendarTheme } from "../../theme";
+import { RAISED_SHADOW, useCalendarTheme } from "../../theme";
 import { placePopover, type Frame } from "./placePopover";
+import { useReturnFocusOnClose, type FocusAnchor } from "./focusReturn";
 
 export interface AnchoredPopoverProps {
   visible: boolean;
@@ -29,6 +30,8 @@ export interface AnchoredPopoverProps {
   label: string;
   style?: StyleProp<ViewStyle>;
   children: ReactNode;
+  /** Gets screen-reader focus back when the popover closes. */
+  returnFocusTo?: FocusAnchor;
 }
 
 /**
@@ -46,11 +49,13 @@ export function AnchoredPopover({
   label,
   style,
   children,
+  returnFocusTo,
 }: AnchoredPopoverProps) {
   const { palette } = useCalendarTheme();
   const { config } = useCalendarConfig();
   const viewport = useWindowDimensions();
   const reduceMotion = useReduceMotion();
+  useReturnFocusOnClose(visible, returnFocusTo);
   const [height, setHeight] = useState<number | null>(null);
   const [progress] = useState(() => new Animated.Value(0));
   const translateY = useMemo(
@@ -135,10 +140,6 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 8,
     padding: 8,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
+    ...RAISED_SHADOW,
   },
 });

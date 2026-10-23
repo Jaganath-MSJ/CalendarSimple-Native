@@ -4,6 +4,17 @@
 import { useMemo } from "react";
 import { layoutDayEvents, type DateType, type DayEventLayout } from "../core";
 import type { CalendarEvent, ResolvedConfig } from "../types";
+import { eventsInRange } from "./monthWindow";
+
+/** Only events touching `days` can be laid out in them. */
+export function inRange<E extends CalendarEvent>(
+  events: E[],
+  days: DateType[],
+): E[] {
+  const first = days[0];
+  const last = days[days.length - 1];
+  return first && last ? eventsInRange(events, first, last) : events;
+}
 
 type LayoutConfig<E extends CalendarEvent> = Pick<
   ResolvedConfig<E>,
@@ -35,7 +46,7 @@ export function useDayEventLayout<E extends CalendarEvent>(
   } = cfg;
   return useMemo(
     () =>
-      layoutDayEvents(events, days, {
+      layoutDayEvents(inRange(events, days), days, {
         minHour,
         maxHour,
         showAllDayRow,

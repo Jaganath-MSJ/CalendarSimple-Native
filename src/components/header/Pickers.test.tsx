@@ -80,7 +80,10 @@ it("resetDateOnViewChange jumps to today", async () => {
 it("Android back (onRequestClose) closes the sheet", async () => {
   await renderCalendar(<Calendar />);
   await fireEvent.press(screen.getByTestId("calendar-header-view-select"));
-  await fireEvent(screen.getByTestId("calendar-menu-view"), "requestClose");
+  await fireEvent(
+    screen.getByTestId("calendar-menu-view-modal"),
+    "requestClose",
+  );
   expect(screen.queryByTestId("calendar-menu-view")).toBeNull();
 });
 

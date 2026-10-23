@@ -2,9 +2,10 @@
  * @file Phone "+N" label under the bars (not pressable; the cell opens the
  * day sheet).
  */
-import { StyleSheet, Text } from "react-native";
+import { StyleSheet } from "react-native";
 import { useViewConfig } from "../../context/LayoutContext";
 import { useCalendarTheme } from "../../theme";
+import { CalendarText } from "../ui/CalendarText";
 
 export interface MoreLabelProps {
   hidden: number;
@@ -24,11 +25,10 @@ export function MoreLabel({
   const cfg = useViewConfig();
   const { palette, metrics, flip } = useCalendarTheme();
   return (
-    <Text
+    <CalendarText
       testID={testID}
       accessibilityLabel={cfg.messages.more(hidden)}
       numberOfLines={1}
-      maxFontSizeMultiplier={cfg.maxFontSizeMultiplier}
       pointerEvents="none"
       style={[
         styles.label,
@@ -43,7 +43,7 @@ export function MoreLabel({
       ]}
     >
       {`+${hidden}`}
-    </Text>
+    </CalendarText>
   );
 }
 
