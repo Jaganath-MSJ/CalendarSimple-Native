@@ -16,6 +16,7 @@
   "files": [
     "lib",
     "src",
+    "MIGRATION.md",
     "!**/__tests__",
     "!**/*.test.*",
     "!src/core/test",

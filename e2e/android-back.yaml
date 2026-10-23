@@ -4,30 +4,35 @@
 # in a split or portrait layout, so this flow uses whichever the tablet shows.
 appId: com.calendarsimplenative.example
 ---
+# Hardware back exists only on Android; on iOS this flow is a no-op.
 - launchApp
-- tapOn: "Month"
-# View picker (anchored menu on wide, sheet on compact)
-- tapOn: { id: "calendar-header-view-select" }
-- assertVisible: { id: "calendar-menu-view" }
-- back
-- assertNotVisible: { id: "calendar-menu-view" }
-- assertVisible: { id: "calendar-month-view" }
-# "+N more" popover (wide)
 - runFlow:
     when:
-      visible: { id: "calendar-22-more-events" }
+      platform: Android
     commands:
-      - tapOn: { id: "calendar-22-more-events" }
-      - assertVisible: { id: "calendar-popover-content" }
+      - tapOn: "Month"
+      # View picker (anchored menu on wide, sheet on compact)
+      - tapOn: { id: "calendar-header-view-select" }
+      - assertVisible: { id: "calendar-menu-view" }
       - back
-      - assertNotVisible: { id: "calendar-popover-content" }
-# Day sheet (phone width, Option A)
-- runFlow:
-    when:
-      notVisible: { id: "calendar-22-more-events" }
-    commands:
-      - tapOn: { id: "calendar-22-month-cell" }
-      - assertVisible: { id: "calendar-day-sheet" }
-      - back
-      - assertNotVisible: { id: "calendar-day-sheet" }
-- assertVisible: { id: "calendar-month-view" }
+      - assertNotVisible: { id: "calendar-menu-view" }
+      - assertVisible: { id: "calendar-month-view" }
+      # "+N more" popover (wide)
+      - runFlow:
+          when:
+            visible: { id: "calendar-22-more-events" }
+          commands:
+            - tapOn: { id: "calendar-22-more-events" }
+            - assertVisible: { id: "calendar-popover-content" }
+            - back
+            - assertNotVisible: { id: "calendar-popover-content" }
+      # Day sheet (phone width, Option A)
+      - runFlow:
+          when:
+            notVisible: { id: "calendar-22-more-events" }
+          commands:
+            - tapOn: { id: "calendar-22-month-cell" }
+            - assertVisible: { id: "calendar-day-sheet" }
+            - back
+            - assertNotVisible: { id: "calendar-day-sheet" }
+      - assertVisible: { id: "calendar-month-view" }

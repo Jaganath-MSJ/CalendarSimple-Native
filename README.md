@@ -424,12 +424,8 @@ npm run example -- start   # then i, a or w
 
 ## Known limitations
 
-- iOS Hermes returns empty month and weekday names for some locales (`fr`,
-  `ja`); Android and web are not affected.
 - On web at phone width, the week view scrolls horizontally (fixed-width
   columns, as in the web library) when `swipeNavigation` is off.
-- Month view with about 1,000 events in a month is slow to page on mid-range
-  devices; load by range with `onDateRangeChange`.
 - The native end-to-end (Maestro) flows have not been run in CI yet, and the
   Linux screenshot baselines for the web end-to-end tests are pending.
 

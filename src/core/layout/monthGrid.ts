@@ -15,13 +15,9 @@ import {
   type DateType,
   getMonthStartingDay,
   getStartOfDay,
-  getDiffDays,
   getStartOfMonth,
   setDate,
   addDays,
-  isBeforeDate,
-  isAfterDate,
-  isSameDate,
   formatDate,
   subDays,
   getDate,
@@ -61,6 +57,11 @@ export interface MonthGridOptions<
   sortedMonthView?: boolean | ((a: E, b: E) => number);
 }
 
+/** Whole days since 1970-01-01 for the calendar date of `dt` (NaN if invalid). */
+function dayOrdinal(dt: DateType): number {
+  return Math.round(Date.UTC(dt.year, dt.month - 1, dt.day) / 86_400_000);
+}
+
 export function buildMonthGrid<E extends BaseCalendarEvent>(
   selectedDate: DateType,
   events: E[],
@@ -76,21 +77,33 @@ export function buildMonthGrid<E extends BaseCalendarEvent>(
     sortedMonthView = true,
   } = options;
 
+  // Day ordinals (whole days since the epoch, in the event's zone) are
+  // computed once per event: Luxon work per event per week / day cost
+  // ~1.5 s per month page on Hermes with 1,000 events.
+  const spans = new Map<object, { s: number; e: number }>();
+  const span = (event: E) => {
+    let hit = spans.get(event);
+    if (!hit) {
+      hit = {
+        s: dayOrdinal(getStartOfDay(event.startDate)),
+        e: dayOrdinal(getLastEventDay(event)),
+      };
+      spans.set(event, hit);
+    }
+    return hit;
+  };
+
   // Sort events
   const dataEvents = eventsAreSorted
     ? events
-    : [...events].sort((a, b) => {
-        return getDiffDays(
-          getStartOfDay(a.startDate),
-          getStartOfDay(b.startDate),
-        );
-      });
+    : [...events].sort((a, b) => span(a).s - span(b).s);
 
   const length =
     ((weekEndsOn - weekStartsOn + TIME_CONSTANTS.DAYS_IN_WEEK) %
       TIME_CONSTANTS.DAYS_IN_WEEK) +
     1;
   const calendarArray = buildMonthMatrix(selectedDate, weekStartsOn);
+  const todayOrd = dayOrdinal(DateTime.now());
 
   return calendarArray.map((week: number[], weekIndex: number) => {
     const slicedWeek = week.slice(0, length);
@@ -134,19 +147,24 @@ export function buildMonthGrid<E extends BaseCalendarEvent>(
     // 2. Event Identification: Identify all events overlapping with this week
     // -------------------------------------------------------------------------
     const weekStart = getStartOfDay(processedWeek[0]!.currentDate);
-    const weekEnd = getStartOfDay(
-      processedWeek[processedWeek.length - 1]!.currentDate,
+    const weekStartOrd = dayOrdinal(weekStart);
+    const weekEndOrd = dayOrdinal(
+      getStartOfDay(processedWeek[processedWeek.length - 1]!.currentDate),
     );
+    const dayOrds = processedWeek.map((d) => dayOrdinal(d.currentDate));
+    const dayKeys: (string | undefined)[] = [];
+    const dayKey = (i: number) =>
+      (dayKeys[i] ??= formatDate(
+        processedWeek[i]!.currentDate,
+        DATE_FORMATS.DATE,
+      ));
 
     let weekEvents: InternalCalendarEvent<E>[] = [];
 
     if (enableEnrichedEvents && enrichedEventsByDate) {
       const addedEventIds = new Set<string>();
       for (let i = 0; i < length; i++) {
-        const dateStr = formatDate(
-          processedWeek[i]!.currentDate,
-          DATE_FORMATS.DATE,
-        );
+        const dateStr = dayKey(i);
         const dayEvents = enrichedEventsByDate[dateStr] || [];
         dayEvents.forEach((e) => {
           const eventId = e.id || e.startDate + e.title;
@@ -158,13 +176,9 @@ export function buildMonthGrid<E extends BaseCalendarEvent>(
       }
     } else {
       weekEvents = dataEvents.filter((item) => {
-        const start = getStartOfDay(item.startDate);
-        const end = getLastEventDay(item);
+        const { s, e } = span(item);
         // Check overlap
-        return (
-          isBeforeDate(start, addDays(weekEnd, 1)) &&
-          isAfterDate(end, subDays(weekStart, 1))
-        );
+        return s < weekEndOrd + 1 && e > weekStartOrd - 1;
       });
     }
 
@@ -181,17 +195,12 @@ export function buildMonthGrid<E extends BaseCalendarEvent>(
         weekEvents.sort(sortedMonthView);
       } else {
         weekEvents.sort((a, b) => {
-          const startA = getStartOfDay(a.startDate);
-          const startB = getStartOfDay(b.startDate);
+          const A = span(a);
+          const B = span(b);
           // Primary sort: Start date (ascending)
-          if (!isSameDate(startA, startB)) return getDiffDays(startA, startB);
-
-          // Secondary sort: Duration (descending)
-          const endA = getLastEventDay(a);
-          const endB = getLastEventDay(b);
-          const durA = getDiffDays(endA, startA);
-          const durB = getDiffDays(endB, startB);
-          return durB - durA; // Longer events first
+          if (A.s !== B.s) return A.s - B.s;
+          // Secondary sort: Duration (descending), longer events first
+          return B.e - B.s - (A.e - A.s);
         });
       }
     }
@@ -220,11 +229,9 @@ export function buildMonthGrid<E extends BaseCalendarEvent>(
       // Determine start/end indices in this week (0..length-1)
       // We clip the event's start/end to the current week's boundaries because
       // we are only rendering one week at a time in this loop.
-      const start = getStartOfDay(event.startDate);
-      const end = getLastEventDay(event);
-
-      let startIndex = getDiffDays(start, weekStart);
-      let endIndex = getDiffDays(end, weekStart);
+      const { s: startOrd, e: endOrd } = span(event);
+      let startIndex = startOrd - weekStartOrd;
+      let endIndex = endOrd - weekStartOrd;
 
       // Clip to week boundaries
       if (startIndex < 0) startIndex = 0;
@@ -270,12 +277,10 @@ export function buildMonthGrid<E extends BaseCalendarEvent>(
       const { currentDate, isCurrentMonth, displayDay } = dayObj;
 
       // Find events active on this day
+      const dayOrd = dayOrds[dayIndex]!;
       const activeEvents = weekEvents.filter((event) => {
-        const start = getStartOfDay(event.startDate);
-        const end = getLastEventDay(event);
-        return (
-          !isBeforeDate(currentDate, start) && !isAfterDate(currentDate, end)
-        );
+        const { s, e } = span(event);
+        return !(dayOrd < s) && !(dayOrd > e);
       });
 
       const displayData: (EventListType<E> | null)[] = [];
@@ -291,8 +296,8 @@ export function buildMonthGrid<E extends BaseCalendarEvent>(
           (e) => eventSlots.get(e._tempId!) === s,
         );
         if (event) {
-          const itemStartDate = getStartOfDay(event.startDate);
-          const isStart = isSameDate(itemStartDate, currentDate);
+          const { s: startOrd, e: endOrd } = span(event);
+          const isStart = startOrd === dayOrd;
           const isWeekStart = dayIndex === 0;
 
           // If the event starts today (or earlier but this is the start of the week),
@@ -300,18 +305,12 @@ export function buildMonthGrid<E extends BaseCalendarEvent>(
           if (isStart || isWeekStart) {
             // Ensure the visual end date doesn't exceed the end of the current week.
             // This is crucial for rendering the correct width for the event bar using CSS/col-span.
-            const itemEndDate = getLastEventDay(event);
-            const endOfWeekDate = addDays(currentDate, length - 1 - dayIndex);
-
-            let effectiveEndDate = itemEndDate;
-            if (isAfterDate(itemEndDate, endOfWeekDate)) {
-              effectiveEndDate = endOfWeekDate;
-            }
-
+            // The week's days are consecutive, so the clipped end is one of them.
+            const endIndex = Math.min(endOrd - weekStartOrd, length - 1);
             displayData.push({
               ...event,
-              startDateWeek: formatDate(currentDate, DATE_FORMATS.DATE),
-              endDateWeek: formatDate(effectiveEndDate, DATE_FORMATS.DATE),
+              startDateWeek: dayKey(dayIndex),
+              endDateWeek: dayKey(endIndex),
               isSpacer: false,
             });
           } else {
@@ -333,8 +332,7 @@ export function buildMonthGrid<E extends BaseCalendarEvent>(
         totalEvents: activeEvents.length,
         isToday: checkIsToday(selectedDate, displayDay) && isCurrentMonth,
         // #17C: today shown as an adjacent-month cell
-        isTodayAdjacent:
-          !isCurrentMonth && DateTime.now().hasSame(currentDate, "day"),
+        isTodayAdjacent: !isCurrentMonth && dayOrd === todayOrd,
       };
     });
   });

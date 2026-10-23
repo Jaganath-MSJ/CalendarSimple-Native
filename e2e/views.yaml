@@ -11,11 +11,15 @@ appId: com.calendarsimplenative.example
 - tapOn: { id: "calendar-menu-option-day" }
 - assertVisible: { id: "calendar-day-view" }
 - tapOn: { id: "calendar-header-view-select" }
-- tapOn: { id: "calendar-menu-option-customDays" }
-- assertVisible: { id: "calendar-custom-days-view" }
-- tapOn: { id: "calendar-header-view-select" }
 - tapOn: { id: "calendar-menu-option-schedule" }
 - assertVisible: { id: "calendar-schedule-view" }
 - tapOn: { id: "calendar-header-view-select" }
 - tapOn: { id: "calendar-menu-option-month" }
 - assertVisible: { id: "calendar-month-view" }
+# The Month screen has no custom-days option; the "3 Days" screen does.
+- tapOn: "Back"
+- scrollUntilVisible:
+    element: "3 Days"
+    direction: DOWN
+- tapOn: "3 Days"
+- assertVisible: { id: "calendar-custom-days-view" }

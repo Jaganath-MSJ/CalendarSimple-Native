@@ -5,7 +5,23 @@ appId: com.calendarsimplenative.example
 - assertVisible: "October 2026"
 - tapOn: { id: "calendar-22-month-cell" }
 - assertVisible: { id: "calendar-day-sheet" }
-- back
+# Close the day sheet: hardware back on Android, the scrim above it on iOS.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          point: "50%,10%"
 - assertNotVisible: { id: "calendar-day-sheet" }
+# One swipe moves exactly one period (device check: Android moved two).
 - swipe: { direction: LEFT }
+- assertVisible: "November 2026"
+- swipe: { direction: LEFT }
+- assertVisible: "December 2026"
+- swipe: { direction: RIGHT }
 - assertVisible: "November 2026"

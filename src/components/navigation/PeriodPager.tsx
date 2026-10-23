@@ -68,6 +68,11 @@ export function PeriodPager({
   const listRef = useRef<FlatList<PageOffset>>(null);
   const [neighboursReady, setNeighboursReady] = useState(false);
   const [recenter, setRecenter] = useState(0);
+  // One page turn per drag. Android emits momentumScrollEnd twice for one
+  // fling (the second after the recenter, still at the outer offset), which
+  // turned two pages; it also must not count a swipe made mid-recenter.
+  const turnedRef = useRef(false);
+  const recenteringRef = useRef(false);
 
   useEffect(() => {
     if (!enabled) return;
@@ -78,11 +83,16 @@ export function PeriodPager({
   useLayoutEffect(() => {
     if (recenter === 0) return;
     listRef.current?.scrollToIndex({ index: 1, animated: false });
+    recenteringRef.current = false;
   }, [recenter]);
+
+  const onScrollBeginDrag = useCallback(() => {
+    if (!recenteringRef.current) turnedRef.current = false;
+  }, []);
 
   const onMomentumScrollEnd = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      if (width <= 0) return;
+      if (width <= 0 || turnedRef.current || recenteringRef.current) return;
       // contentOffset.x is physical (from the left) on iOS and Android, while
       // an RTL app lays the list out from the right (VirtualizedList converts
       // the same way), so map the physical page back to the data index.
@@ -90,6 +100,8 @@ export function PeriodPager({
       const index = appIsRTL ? pages.length - 1 - physical : physical;
       const offset = pages[index];
       if (offset === undefined || offset === 0) return;
+      turnedRef.current = true;
+      recenteringRef.current = true;
       onPage(offset);
       setRecenter((n) => n + 1);
     },
@@ -139,6 +151,7 @@ export function PeriodPager({
       initialNumToRender={3}
       windowSize={3}
       getItemLayout={getItemLayout}
+      onScrollBeginDrag={onScrollBeginDrag}
       onMomentumScrollEnd={onMomentumScrollEnd}
     />
   );

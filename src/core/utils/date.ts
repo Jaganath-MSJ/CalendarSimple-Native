@@ -7,6 +7,7 @@
  */
 
 import { DateTime } from "luxon";
+import { formatWithNames } from "../i18n/names";
 
 import type { DateType, DateInputType } from "../types/date";
 
@@ -109,9 +110,7 @@ export function formatDate(
   format: string,
   locale?: string,
 ): string {
-  return dateFn(date)
-    .setLocale(locale || "en")
-    .toFormat(format);
+  return formatWithNames(dateFn(date), format, locale || "en");
 }
 
 export function convertToDate(luxonDate: DateType): Date {

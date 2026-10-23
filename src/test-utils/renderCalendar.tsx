@@ -28,3 +28,11 @@ export async function momentumEndOn(testID: string, x: number): Promise<void> {
     nativeEvent: { contentOffset: { x, y: 0 } },
   });
 }
+
+/** A whole user swipe: the drag starts, then the momentum ends at `x`. */
+export async function swipeOn(testID: string, x: number): Promise<void> {
+  await fireEvent(screen.getByTestId(testID), "scrollBeginDrag", {
+    nativeEvent: { contentOffset: { x, y: 0 } },
+  });
+  await momentumEndOn(testID, x);
+}

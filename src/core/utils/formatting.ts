@@ -6,7 +6,7 @@
  * such as tooltip strings and dynamic GMT offsets.
  */
 
-import { Info } from "luxon";
+import { monthNames, weekdayNames } from "../i18n/names";
 import { DATE_FORMATS, TIME_CONSTANTS } from "../constants";
 import {
   ECalendarViewType,
@@ -78,7 +78,7 @@ export function getGmtOffset() {
 
 export function getDayListNames(dayType: EDayType, locale?: string): string[] {
   const format = dayType === EDayType.full ? "long" : "short";
-  const days = Info.weekdays(format, { locale: locale || "en" });
+  const days = weekdayNames(format, locale || "en");
   // Luxon returns Mon-Sun. We need Sun-Sat to match expected 0-6 index.
   return [...days.slice(6, 7), ...days.slice(0, 6)];
 }
@@ -90,7 +90,7 @@ export function getDayListNames(dayType: EDayType, locale?: string): string[] {
  * @returns Twelve entries whose `value` is the 0-based month index (0 = January … 11 = December).
  */
 export function getMonthList(locale?: string): MonthListType[] {
-  return Info.months("long", { locale: locale || "en" }).map((label, i) => ({
+  return monthNames("long", locale || "en").map((label, i) => ({
     label,
     value: i,
   }));

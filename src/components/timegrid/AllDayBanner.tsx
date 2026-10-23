@@ -38,6 +38,8 @@ const TOGGLE_SLOP = { top: 6, bottom: 6, left: 2, right: 2 };
  * chevron is the full-size target for the same action.
  */
 const MORE_SLOP = 2;
+/** Chips sit 4 px apart horizontally (2 px inset on each side of a day). */
+const CHIP_SIDE_SLOP = 2;
 
 export interface AllDayBannerProps<E extends CalendarEvent = CalendarEvent> {
   days: DateType[];
@@ -89,6 +91,16 @@ export function AllDayBanner<E extends CalendarEvent = CalendarEvent>({
     banner.showExpandCollapse ? MIN_HEIGHT_WITH_TOGGLE : 0,
   );
   const width = colWidth * days.length;
+  // Chips are 20 dp in a 24 dp row, so 48 dp is impossible without changing
+  // the row pitch: use the largest slop that cannot reach a neighbour row or
+  // chip (half the gap), an exception to the 44/48 rule documented in
+  // docs/a11y-manual-checklist.md. The expand chevron is the large target.
+  const chipSlop = {
+    top: Math.max(0, (rowHeight - chipHeight) / 2),
+    bottom: Math.max(0, (rowHeight - chipHeight) / 2),
+    left: CHIP_SIDE_SLOP,
+    right: CHIP_SIDE_SLOP,
+  };
   const side = flip ? "right" : "left";
 
   const dividers = days.map((d, i) => (
@@ -137,6 +149,7 @@ export function AllDayBanner<E extends CalendarEvent = CalendarEvent>({
         clippedEnd={clipEnd}
         backgroundColor={colours.backgroundColor}
         height={chipHeight}
+        hitSlop={chipSlop}
         accessibilityLabel={`${title}, ${tooltip}`}
         onPress={() => onEventClick?.(event)}
         onLongPress={() => onEventLongPress?.(event)}

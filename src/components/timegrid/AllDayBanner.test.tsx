@@ -145,3 +145,25 @@ it("bannerHeight at scale 1 equals the core containerHeight", () => {
     }
   }
 });
+
+describe("touch targets (device check: chips were 20 dp with no slop)", () => {
+  it("gives event chips the largest slop that stays inside their row and gap", async () => {
+    await week();
+    const slop = (rowHeight - chipHeight) / 2;
+    expect(slop).toBeGreaterThan(0);
+    expect(
+      screen.getByTestId("calendar-o8-all-day-event").props.hitSlop,
+    ).toEqual({ top: slop, bottom: slop, left: 2, right: 2 });
+  });
+
+  it("reaches 48 x 48 on the expand toggle (drawn 44 x 36 plus slop)", async () => {
+    await week();
+    const t = screen.getByTestId("calendar-all-day-expand-icon");
+    const s = t.props.hitSlop as Record<
+      "top" | "bottom" | "left" | "right",
+      number
+    >;
+    expect(44 + s.left + s.right).toBeGreaterThanOrEqual(48);
+    expect(36 + s.top + s.bottom).toBeGreaterThanOrEqual(48);
+  });
+});

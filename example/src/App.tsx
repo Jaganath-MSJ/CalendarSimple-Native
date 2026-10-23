@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SCREENS } from "./screens";
 import { forcedScheme, initialScreen, SchemeContext } from "./launch";
 
@@ -35,30 +35,42 @@ export default function App() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={styles.fill}>
+      {/* The title stays put; only the menu scrolls (it is taller than a phone). */}
       <Text style={styles.title}>calendar-simple-native examples</Text>
-      {SCREENS.map((s) => (
-        <Pressable
-          key={s.key}
-          accessibilityRole="button"
-          onPress={() => setSelected(s.key)}
-          style={styles.button}
-        >
-          <Text>{s.title}</Text>
-        </Pressable>
-      ))}
+      <ScrollView
+        testID="example-menu"
+        contentContainerStyle={styles.container}
+      >
+        {SCREENS.map((s) => (
+          <Pressable
+            key={s.key}
+            accessibilityRole="button"
+            onPress={() => setSelected(s.key)}
+            style={styles.button}
+          >
+            <Text>{s.title}</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 20, fontWeight: "600" },
+  title: {
+    fontSize: 20,
+    fontWeight: "600",
+    textAlign: "center",
+    paddingBottom: 12,
+  },
   fill: { flex: 1, paddingTop: 60 },
   container: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
+    paddingBottom: 24,
   },
   darkText: { color: "#e5e7eb" },
   button: { padding: 12, borderWidth: 1, borderRadius: 6, alignSelf: "center" },

@@ -1,11 +1,15 @@
 import { I18nManager, Text } from "react-native";
 import { render, screen } from "@testing-library/react-native";
 import Calendar from "../../index";
-import { momentumEndOn, renderCalendar } from "../../test-utils/renderCalendar";
+import {
+  momentumEndOn,
+  renderCalendar,
+  swipeOn,
+} from "../../test-utils/renderCalendar";
 import { PeriodPager } from "./PeriodPager";
 
 const W = 390;
-const momentumEnd = (x: number) => momentumEndOn("t-pager", x);
+const momentumEnd = (x: number) => swipeOn("t-pager", x);
 const page = (o: number) => <Text>{`page ${o}`}</Text>;
 
 it("renders only the current page when disabled", async () => {
@@ -38,6 +42,26 @@ it("calls onPage(+1) / (-1) at the outer pages and nothing in the middle", async
   await momentumEnd(0);
   await momentumEnd(W);
   expect(onPage.mock.calls).toEqual([[1], [-1]]);
+});
+
+it("navigates once when Android repeats momentum-end for one swipe", async () => {
+  // Device log (Pixel emulator): one fling emitted momentumScrollEnd at the
+  // outer page twice, the second ~14 ms after the recenter, still at 2W.
+  const onPage = jest.fn();
+  await render(
+    <PeriodPager
+      enabled
+      width={W}
+      testID="t"
+      renderPage={page}
+      onPage={onPage}
+    />,
+  );
+  await swipeOn("t-pager", 2 * W);
+  await momentumEndOn("t-pager", 2 * W);
+  expect(onPage.mock.calls).toEqual([[1]]);
+  await swipeOn("t-pager", 2 * W); // the next real swipe still navigates
+  expect(onPage.mock.calls).toEqual([[1], [1]]);
 });
 
 it("renders the neighbour pages after the first idle period", async () => {
@@ -89,7 +113,7 @@ it("review focus 4: five swipes through the Calendar land five months on", async
       }}
     />,
   );
-  for (let i = 0; i < 5; i++) await momentumEndOn("calendar-pager", 2 * W);
+  for (let i = 0; i < 5; i++) await swipeOn("calendar-pager", 2 * W);
   expect(current?.toDateString()).toBe(new Date(2027, 2, 22).toDateString());
   expect(onNavigate).toHaveBeenCalledTimes(5);
   expect(onNavigate.mock.calls.at(-1)![0].toDateString()).toBe(
