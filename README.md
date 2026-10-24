@@ -4,6 +4,8 @@ A simple, themeable calendar for React Native (iOS, Android, web). It is the
 React Native port of [calendar-simple](https://github.com/Jaganath-MSJ/CalendarSimple)
 v2.1 and keeps its props, callbacks and render props.
 
+**Live demo:** https://calendar-simple-native.netlify.app/
+
 - Month, Week, Day, Custom Days (1–10) and Schedule views
 - Swipe paging, pull-to-refresh and "load more" in Schedule
 - Light, dark and automatic colour schemes, palette and per-state theme
@@ -413,9 +415,15 @@ Every ID starts with `testID` (default `calendar`). The most useful ones:
 
 ## Example app and demo
 
-The `example/` Expo app has one screen per view plus parity screens for each
-web Storybook group (Features, Customization, Localization, Accessibility,
-Edge cases, Layout limits, Time formatting, Interactions, Playground):
+Try it in the browser: **https://calendar-simple-native.netlify.app/**
+
+The `example/` Expo app (iOS, Android and web) has three sections:
+
+- **Showcase** – every view (Month, Week, Day, 3 Days, Schedule) and feature
+  demos (theming, locales and RTL, loading states, the web Storybook groups)
+- **Playground** – a live calendar with View, Look, Locale and Data controls
+  and a copy-code view
+- **Developer** – Intl check, pager probe, performance and QA screens
 
 ```sh
 npm install
@@ -426,8 +434,9 @@ npm run example -- start   # then i, a or w
 
 - On web at phone width, the week view scrolls horizontally (fixed-width
   columns, as in the web library) when `swipeNavigation` is off.
-- The native end-to-end (Maestro) flows have not been run in CI yet, and the
-  Linux screenshot baselines for the web end-to-end tests are pending.
+- The native end-to-end (Maestro) flows run locally (`npm run e2e:native`) but
+  not in CI yet, and the Linux screenshot baselines for the web end-to-end
+  tests are pending.
 
 ## License
 
