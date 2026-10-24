@@ -25,7 +25,9 @@ jobs:
       - run: npm run docs:check
       - run: npm test
       - run: npm run build
+      # size-limit needs fs.promises.glob (Node 22+); publish also runs on 22.
       - run: npm run size
+        if: matrix.node-version == '22.x'
       - run: npm pack --dry-run
 
   web-e2e:
