@@ -28,13 +28,13 @@ import { CalendarPressable } from "../ui/CalendarPressable";
 
 const PADDING = 4;
 const CHEVRON = 24;
-/** Room for the GMT label above the 36 px chevron touch area. */
+/** Drawn height of the expand toggle (fits under the GMT label). */
+const TOGGLE_HEIGHT = 36;
+/** Room for the GMT label above the toggle. */
 const MIN_HEIGHT_WITH_TOGGLE = 56;
-/** Toggle: 44 x 36 drawn, 6 px vertical slop reaches 48. */
-const TOGGLE_SLOP = { top: 6, bottom: 6, left: 2, right: 2 };
 /**
  * "+N" chips sit 4 px apart in a 24 px row, so their slop is capped at 2 to
- * keep neighbours from overlapping: an exception to the 44/48 rule; the
+ * keep neighbours from overlapping: an exception to the touch-target rule; the
  * chevron is the full-size target for the same action.
  */
 const MORE_SLOP = 2;
@@ -91,6 +91,10 @@ export function AllDayBanner<E extends CalendarEvent = CalendarEvent>({
     banner.showExpandCollapse ? MIN_HEIGHT_WITH_TOGGLE : 0,
   );
   const width = colWidth * days.length;
+  // Toggle: touchTarget wide, TOGGLE_HEIGHT drawn, vertical slop makes the
+  // hit area metrics.touchTarget square (44 pt iOS / 48 dp Android).
+  const toggleSlopY = Math.max(0, (metrics.touchTarget - TOGGLE_HEIGHT) / 2);
+  const toggleSlop = { top: toggleSlopY, bottom: toggleSlopY };
   // Chips are 20 dp in a 24 dp row, so 48 dp is impossible without changing
   // the row pitch: use the largest slop that cannot reach a neighbour row or
   // chip (half the gap), an exception to the 44/48 rule documented in
@@ -261,8 +265,8 @@ export function AllDayBanner<E extends CalendarEvent = CalendarEvent>({
             }
             accessibilityState={{ expanded }}
             onPress={onToggle}
-            hitSlop={TOGGLE_SLOP}
-            style={styles.toggle}
+            hitSlop={toggleSlop}
+            style={[styles.toggle, { width: metrics.touchTarget }]}
           >
             <View
               style={[
@@ -307,8 +311,7 @@ const styles = StyleSheet.create({
   gutter: { width: TIME_GUTTER, alignItems: "center", paddingTop: 4 },
   gmt: { fontWeight: "500" },
   toggle: {
-    width: 44,
-    height: 36,
+    height: TOGGLE_HEIGHT,
     alignItems: "center",
     justifyContent: "center",
   },

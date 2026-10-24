@@ -9,16 +9,12 @@ import {
   View,
   type DimensionValue as RNDimensionValue,
 } from "react-native";
-import {
-  dateFn,
-  getNavigatedDate,
-  resolveDirection,
-  type ECalendarViewType,
-} from "../core";
+import { dateFn, getNavigatedDate, resolveDirection } from "../core";
 import { useCalendar } from "../context/CalendarContext";
 import { CalendarLayoutProvider, PageProvider } from "../context/LayoutContext";
 import { useContainerLayout } from "../hooks/useContainerLayout";
 import { useNavigate } from "../hooks/useNavigate";
+import { useViewChange } from "../hooks/useViewChange";
 import {
   CalendarThemeProvider,
   getBreakpoint,
@@ -50,7 +46,7 @@ export function CalendarContent({
   height: heightProp,
   children,
 }: CalendarContentProps) {
-  const { config, testId, colorScheme, state, dispatch } = useCalendar();
+  const { config, testId, colorScheme, state } = useCalendar();
   const { width, height, onLayout } = useContainerLayout(
     num(widthProp),
     num(heightProp),
@@ -85,25 +81,20 @@ export function CalendarContent({
     ],
   );
 
-  const { renderHeader, onNavigate, onViewChange } = config;
+  const navigate = useNavigate();
+  const changeView = useViewChange(navigate);
+  const { renderHeader } = config;
   const header = renderHeader ? (
     renderHeader({
       currentDate: state.selectedDate.toJSDate(),
       view: state.view,
-      onNavigate: (date: Date) => {
-        dispatch({ type: "SET_DATE", payload: dateFn(date) });
-        onNavigate?.(date);
-      },
-      onViewChange: (view: ECalendarViewType) => {
-        dispatch({ type: "SET_VIEW", payload: view });
-        onViewChange?.(view);
-      },
+      onNavigate: (date: Date) => navigate(dateFn(date)),
+      onViewChange: changeView,
     })
   ) : (
     <Header />
   );
 
-  const navigate = useNavigate();
   const { view, customDays, selectedDate } = state;
   // The current page carries the body test ID; neighbours render the
   // previous/next period without test IDs.

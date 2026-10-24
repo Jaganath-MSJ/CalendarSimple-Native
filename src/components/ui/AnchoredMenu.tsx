@@ -51,7 +51,7 @@ export function AnchoredMenu<V extends string | number>({
   if (!visible) return null;
   const width = Math.max(anchor.width, MENU_MIN_WIDTH);
   const left = Math.max(0, Math.min(anchor.x, window.width - width));
-  const rowHeight = Math.max(metrics.touchTarget, 40);
+  const rowHeight = metrics.touchTarget;
   return (
     <Modal visible transparent onRequestClose={onClose} statusBarTranslucent>
       <Pressable

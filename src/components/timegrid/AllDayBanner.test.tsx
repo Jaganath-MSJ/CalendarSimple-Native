@@ -1,4 +1,9 @@
-import { AccessibilityInfo, LayoutAnimation, ScrollView } from "react-native";
+import {
+  AccessibilityInfo,
+  LayoutAnimation,
+  ScrollView,
+  StyleSheet,
+} from "react-native";
 import { act, fireEvent, screen } from "@testing-library/react-native";
 import { Calendar } from "../Calendar";
 import { getGmtOffset, layoutAllDayBanner } from "../../core";
@@ -156,14 +161,22 @@ describe("touch targets (device check: chips were 20 dp with no slop)", () => {
     ).toEqual({ top: slop, bottom: slop, left: 2, right: 2 });
   });
 
-  it("reaches 48 x 48 on the expand toggle (drawn 44 x 36 plus slop)", async () => {
+  it("reaches metrics.touchTarget square on the expand toggle", async () => {
     await week();
     const t = screen.getByTestId("calendar-all-day-expand-icon");
-    const s = t.props.hitSlop as Record<
-      "top" | "bottom" | "left" | "right",
-      number
+    const target = getMetrics("phone").touchTarget; // 44 iOS / 48 Android
+    const s = (t.props.hitSlop ?? {}) as Partial<
+      Record<"top" | "bottom" | "left" | "right", number>
     >;
-    expect(44 + s.left + s.right).toBeGreaterThanOrEqual(48);
-    expect(36 + s.top + s.bottom).toBeGreaterThanOrEqual(48);
+    const { width, height } = StyleSheet.flatten(t.props.style) as {
+      width: number;
+      height: number;
+    };
+    expect(width + (s.left ?? 0) + (s.right ?? 0)).toBeGreaterThanOrEqual(
+      target,
+    );
+    expect(height + (s.top ?? 0) + (s.bottom ?? 0)).toBeGreaterThanOrEqual(
+      target,
+    );
   });
 });

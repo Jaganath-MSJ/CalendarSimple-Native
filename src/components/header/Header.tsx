@@ -24,6 +24,7 @@ import {
 } from "../../core";
 import { useCalendar } from "../../context/CalendarContext";
 import { useNavigate } from "../../hooks/useNavigate";
+import { useViewChange } from "../../hooks/useViewChange";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarProps } from "../../types";
 import { AnchoredMenu, type MenuAnchor } from "../ui/AnchoredMenu";
@@ -55,7 +56,7 @@ export type HeaderProps = Partial<
 };
 
 export function Header(props: HeaderProps) {
-  const { state, dispatch, config, testId } = useCalendar();
+  const { state, config, testId } = useCalendar();
   const { palette, metrics, breakpoint, flip } = useCalendarTheme();
   const navigate = useNavigate(props.onNavigate);
   const compact = breakpoint !== "wide";
@@ -145,9 +146,10 @@ export function Header(props: HeaderProps) {
   const customDaysOption = props.customDays ?? config.customDays;
   const pastYearLength = props.pastYearLength ?? config.pastYearLength;
   const futureYearLength = props.futureYearLength ?? config.futureYearLength;
-  const resetDateOnViewChange =
-    props.resetDateOnViewChange ?? config.resetDateOnViewChange;
-  const onViewChange = props.onViewChange ?? config.onViewChange;
+  const changeView = useViewChange(navigate, {
+    resetDateOnViewChange: props.resetDateOnViewChange,
+    onViewChange: props.onViewChange,
+  });
 
   const viewOptions = useMemo<MenuOption<ECalendarViewType>[]>(() => {
     const list: MenuOption<ECalendarViewType>[] = VIEW_ORDER.map((v) => ({
@@ -193,11 +195,7 @@ export function Header(props: HeaderProps) {
 
   const selectView = (v: ECalendarViewType) => {
     close();
-    dispatch({ type: "SET_VIEW", payload: v });
-    if (resetDateOnViewChange) {
-      navigate(dateFn());
-    }
-    onViewChange?.(v);
+    changeView(v);
   };
   const selectDate = (next: typeof selectedDate) => {
     close();

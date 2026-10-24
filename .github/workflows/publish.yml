@@ -38,6 +38,22 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Nothing publishes unless the same checks as CI pass.
+      - name: Format
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: API docs
+        run: npm run docs:check
+
+      - name: Size budget
+        run: npm run size
+
       - name: Semantic Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

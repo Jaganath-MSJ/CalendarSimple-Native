@@ -18,7 +18,7 @@ Steps to reproduce the behavior:
 4. See error
 
 **Minimal reproduction**
-If possible, link a minimal reproduction (StackBlitz, CodeSandbox, or a small repo). This is the fastest way to get a fix.
+If possible, link a minimal reproduction as an [Expo Snack](https://snack.expo.dev) (or a small repo). This is the fastest way to get a fix.
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
@@ -32,9 +32,10 @@ Which calendar view(s) does this affect? (Month, Week, Day, Custom Days, Schedul
 **Environment (please complete the following information):**
 
 - `calendar-simple-native` version: [e.g. 1.2.0]
-- React version: [e.g. 19.2.0]
-- Browser: [e.g. Chrome 124, Safari 17]
-- OS: [e.g. Windows 11, macOS 14]
+- Platform: [iOS / Android / web]
+- Expo SDK version: [e.g. 54]
+- React Native version: [e.g. 0.81]
+- Device / OS version (or browser for web): [e.g. iPhone 15, iOS 18; Pixel 8, Android 15; Chrome 124]
 - Is RTL / dark mode / a custom locale enabled? [yes/no — which]
 
 **Did this work in a previous version?**

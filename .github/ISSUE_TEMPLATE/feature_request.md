@@ -26,7 +26,7 @@ If your idea introduces or changes props, callbacks, or types, sketch what the A
 A clear and concise description of any alternative solutions or features you've considered.
 
 **Are you willing to contribute this?**
-Would you be open to opening a PR for this feature? (We're happy to help — see [CONTRIBUTING.md](../../CONTRIBUTING.md).)
+Would you be open to opening a PR for this feature? (We're happy to help.)
 
 **Additional context**
 Add any other context, mockups, or screenshots about the feature request here.

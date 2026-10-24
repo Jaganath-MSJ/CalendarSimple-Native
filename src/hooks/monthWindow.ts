@@ -3,6 +3,7 @@
  * event for every grid, so with 1,000 events each pager page cost ~1 s on
  * Hermes. Only events overlapping the grid's weeks can appear in it.
  */
+import { Settings } from "luxon";
 import { dateFn, type DateType } from "../core";
 
 interface Span {
@@ -12,7 +13,7 @@ interface Span {
 
 /**
  * Parsed `[start, end]` in millis by `startDate|endDate`; `null` when the
- * span does not parse or is negative. Keyed on the strings, so a new event
+ * span does not parse or is negative. Keyed on the default zone and the strings, so a new event
  * object with the same dates (e.g. a re-created events array) hits the cache.
  */
 const spans = new Map<string, Span | null>();
@@ -20,7 +21,8 @@ const spans = new Map<string, Span | null>();
 const MAX_SPANS = 20_000;
 
 function spanOf(e: { startDate: string; endDate?: string }): Span | null {
-  const key = `${e.startDate}|${e.endDate ?? ""}`;
+  // Zone-less strings parse in the default zone, so it is part of the key.
+  const key = `${Settings.defaultZone.name}|${e.startDate}|${e.endDate ?? ""}`;
   if (spans.has(key)) return spans.get(key)!;
   const start = dateFn(e.startDate);
   let span: Span | null = null;
