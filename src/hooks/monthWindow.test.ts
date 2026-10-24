@@ -7,7 +7,7 @@ import {
 import { inRange } from "./useDayEventLayout";
 import { OCT_2026_EVENTS } from "../core/test/fixtures";
 import { generateEvents } from "../../example/src/perf/generateEvents";
-import { windowEvents } from "./monthWindow";
+import { eventsInRange, windowEvents } from "./monthWindow";
 
 const garbage = [
   { id: "bad", title: "Bad", startDate: "not a date" },
@@ -67,4 +67,22 @@ it("drops events far outside the month", () => {
     dateFn(new Date(2026, 9, 1)),
   );
   expect(kept).toEqual([]);
+});
+
+it("re-parses spans when Luxon's default zone changes", () => {
+  const { Settings } = jest.requireActual<typeof import("luxon")>("luxon");
+  const before = Settings.defaultZone;
+  const e = [{ id: "z", title: "Z", startDate: "2026-10-10T03:00:00Z" }];
+  try {
+    Settings.defaultZone = "America/Los_Angeles"; // Oct 9 local
+    expect(
+      eventsInRange(e, dateFn("2026-10-09"), dateFn("2026-10-09")),
+    ).toEqual(e);
+    Settings.defaultZone = "UTC"; // Oct 10 local
+    expect(
+      eventsInRange(e, dateFn("2026-10-09"), dateFn("2026-10-09")),
+    ).toEqual([]);
+  } finally {
+    Settings.defaultZone = before;
+  }
 });

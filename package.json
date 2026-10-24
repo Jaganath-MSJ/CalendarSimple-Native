@@ -20,7 +20,9 @@
     "!**/__tests__",
     "!**/*.test.*",
     "!src/core/test",
-    "!src/test-utils"
+    "!src/test-utils",
+    "!src/**/*.md",
+    "!lib/**/*.md"
   ],
   "scripts": {
     "example": "npm exec --workspace calendar-simple-native-example -- expo",

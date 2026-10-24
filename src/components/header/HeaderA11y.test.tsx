@@ -46,6 +46,51 @@ it("renderHeader onViewChange dispatches then reports", async () => {
   expect(onViewChange).toHaveBeenCalledWith("week");
 });
 
+it("renderHeader onViewChange resets to today when resetDateOnViewChange", async () => {
+  const calls: string[] = [];
+  let props!: RenderHeaderProps;
+  await renderCalendar(
+    <Calendar
+      selectedDate={new Date(2026, 0, 5)}
+      resetDateOnViewChange
+      onNavigate={(d) =>
+        calls.push(`nav:${DateTime.fromJSDate(d).toISODate()}`)
+      }
+      onViewChange={(v) => calls.push(`view:${v}`)}
+      renderHeader={(p) => {
+        props = p;
+        return null;
+      }}
+    />,
+  );
+  await act(() => props.onViewChange("week"));
+  const today = DateTime.now().toISODate();
+  expect(calls).toEqual([`nav:${today}`, "view:week"]);
+  expect(DateTime.fromJSDate(props.currentDate).toISODate()).toBe(today);
+});
+
+it("renderHeader onNavigate chains rapid calls before a render", async () => {
+  const onNavigate = jest.fn<void, [Date]>();
+  let props!: RenderHeaderProps;
+  await renderCalendar(
+    <Calendar
+      selectedDate={new Date(2026, 9, 22)}
+      onNavigate={onNavigate}
+      renderHeader={(p) => {
+        props = p;
+        return null;
+      }}
+    />,
+  );
+  const { onNavigate: nav } = props;
+  await act(() => {
+    nav(new Date(2026, 11, 1));
+    nav(new Date(2027, 0, 1));
+  });
+  expect(onNavigate).toHaveBeenCalledTimes(2);
+  expect(DateTime.fromJSDate(props.currentDate).toISODate()).toBe("2027-01-01");
+});
+
 it("increment/decrement actions page the calendar", async () => {
   await renderCalendar(<Calendar selectedDate={new Date(2026, 9, 22)} />);
   await fireEvent(

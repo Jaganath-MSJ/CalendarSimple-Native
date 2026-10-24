@@ -17,6 +17,7 @@ export type {
   WeekdayIndex,
 } from "./core";
 export type { CalendarPalette } from "./theme";
+export type { HeaderProps } from "./components/header/Header";
 export type { MonthViewProps } from "./components/views/MonthView";
 export type { ScheduleViewProps } from "./components/views/ScheduleView";
 export type { ViewProps } from "./components/views/View";

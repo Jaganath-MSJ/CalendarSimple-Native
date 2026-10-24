@@ -116,6 +116,25 @@ it("syncs view and customDays props", async () => {
   expect(api.state.customDays).toBe(5);
 });
 
+it("syncs clearing the customDays prop", async () => {
+  let api!: ReturnType<typeof useCalendar>;
+  const Probe = () => {
+    api = useCalendar();
+    return null;
+  };
+  const r = await renderCalendar(
+    <Calendar view="customDays" customDays={5}>
+      <Probe />
+    </Calendar>,
+  );
+  await r.rerender(
+    <Calendar view="customDays">
+      <Probe />
+    </Calendar>,
+  );
+  expect(api.state.customDays).toBeUndefined();
+});
+
 it("#19: keeps the config context stable across parent renders", async () => {
   const configs = new Set<unknown>();
   const Probe = () => {

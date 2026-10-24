@@ -100,8 +100,9 @@ function PropSync({
   useSyncEffect(() => {
     if (view) dispatch({ type: "SET_VIEW", payload: view });
   }, view);
+  // Unlike `view`, clearing the prop clears the state (port spec §3.4).
   useSyncEffect(() => {
-    if (customDays) dispatch({ type: "SET_CUSTOM_DAYS", payload: customDays });
+    dispatch({ type: "SET_CUSTOM_DAYS", payload: customDays });
   }, customDays);
   return null;
 }

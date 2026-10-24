@@ -31,7 +31,10 @@ export interface CalendarState {
 export type CalendarAction =
   | { type: typeof CALENDAR_ACTIONS.SET_DATE; payload: DateType }
   | { type: typeof CALENDAR_ACTIONS.SET_VIEW; payload: ECalendarViewType }
-  | { type: typeof CALENDAR_ACTIONS.SET_CUSTOM_DAYS; payload: number }
+  | {
+      type: typeof CALENDAR_ACTIONS.SET_CUSTOM_DAYS;
+      payload: number | undefined;
+    }
   | { type: typeof CALENDAR_ACTIONS.NEXT }
   | { type: typeof CALENDAR_ACTIONS.PREV }
   | { type: typeof CALENDAR_ACTIONS.TODAY }

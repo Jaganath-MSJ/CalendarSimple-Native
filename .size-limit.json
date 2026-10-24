@@ -2,7 +2,8 @@
   {
     "name": "calendar-simple-native (own code)",
     "path": "lib/module/index.js",
-    "ignore": ["react", "react-native", "luxon"]
+    "ignore": ["react", "react-native", "luxon"],
+    "limit": "27.2 kB"
   },
   {
     "name": "luxon (dependency, report only)",

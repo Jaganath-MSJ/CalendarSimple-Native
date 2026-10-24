@@ -4,7 +4,7 @@ A simple, themeable calendar for React Native (iOS, Android, web). It is the
 React Native port of [calendar-simple](https://github.com/Jaganath-MSJ/CalendarSimple)
 v2.1 and keeps its props, callbacks and render props.
 
-**Live demo:** https://calendar-simple-native.netlify.app/
+**Live demo:** https://calendar-simple-native.netlify.app/ · **Try it in Expo Snack:** https://snack.expo.dev/@msj_jagan/calendar-simple-native-demo
 
 - Month, Week, Day, Custom Days (1–10) and Schedule views
 - Swipe paging, pull-to-refresh and "load more" in Schedule
@@ -13,7 +13,7 @@ v2.1 and keeps its props, callbacks and render props.
 - Screen-reader labels, 44 pt touch targets, font scaling, reduce motion
 - Pure TypeScript core (Luxon), no native modules: works in Expo Go
 
-Status: pre-release (`1.0.0-beta` coming). Migrating from the web library? See
+Status: beta (`1.0.0-beta.1` on npm: `npm install calendar-simple-native@beta`). Migrating from the web library? See
 [MIGRATION.md](./MIGRATION.md).
 
 ## Requirements
@@ -32,6 +32,7 @@ Expo:
 
 ```sh
 npx expo install calendar-simple-native
+npx expo install react-dom react-native-web   # only if you target web
 ```
 
 Bare React Native:
@@ -415,7 +416,9 @@ Every ID starts with `testID` (default `calendar`). The most useful ones:
 
 ## Example app and demo
 
-Try it in the browser: **https://calendar-simple-native.netlify.app/**
+Try it in the browser: **https://calendar-simple-native.netlify.app/**, or on
+your phone with Expo Go via the
+[Snack](https://snack.expo.dev/@msj_jagan/calendar-simple-native-demo).
 
 The `example/` Expo app (iOS, Android and web) has three sections:
 
