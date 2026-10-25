@@ -437,9 +437,9 @@ npm run example -- start   # then i, a or w
 
 - On web at phone width, the week view scrolls horizontally (fixed-width
   columns, as in the web library) when `swipeNavigation` is off.
-- The native end-to-end (Maestro) flows run locally (`npm run e2e:native`) but
-  not in CI yet, and the Linux screenshot baselines for the web end-to-end
-  tests are pending.
+- The web screenshot tests run only on macOS until Linux baselines exist. The
+  native end-to-end (Maestro) flows run nightly on an Android emulator in CI;
+  iOS flows run locally (`npm run e2e:native`).
 
 ## License
 
