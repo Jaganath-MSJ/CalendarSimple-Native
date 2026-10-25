@@ -4,8 +4,15 @@ appId: com.calendarsimplenative.example
 - tapOn: "Week"
 - assertVisible: { id: "calendar-week-view" }
 # 18–24 Oct → 25–31 Oct ("October 2026") → 1–7 Nov.
-- swipe: { direction: LEFT }
-- swipe: { direction: LEFT }
+# Swipe one period at a time and let the pager settle: a drag that starts
+# while it re-centres is ignored by design, and CI emulators are slow.
+- repeat:
+    times: 4
+    while:
+      notVisible: "November 2026"
+    commands:
+      - swipe: { direction: LEFT }
+      - waitForAnimationToEnd
 - assertVisible: "November 2026"
 - tapOn: { id: "calendar-header-today-btn" }
 - longPressOn: { id: "calendar-day-column", index: 4 }
