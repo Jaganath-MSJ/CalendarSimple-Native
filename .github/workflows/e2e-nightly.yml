@@ -33,6 +33,14 @@ jobs:
         run: |
           npx expo prebuild -p android
           cd android && ./gradlew assembleRelease
+      # Keep only the APK; the Gradle outputs and caches would leave the
+      # emulator without room for its userdata partition.
+      - name: Free build space
+        run: |
+          cp example/android/app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/app-release.apk"
+          (cd example/android && ./gradlew --stop) || true
+          rm -rf example/android ~/.gradle/caches
+          df -h /
       - name: Install Maestro
         run: |
           curl -Ls "https://get.maestro.mobile.dev" | bash
@@ -54,5 +62,5 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
-            adb install example/android/app/build/outputs/apk/release/app-release.apk
+            adb install "$RUNNER_TEMP/app-release.apk"
             maestro test e2e
