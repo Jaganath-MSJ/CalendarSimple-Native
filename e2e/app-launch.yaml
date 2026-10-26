@@ -1,0 +1,4 @@
+appId: com.calendarsimplenative.example
+---
+- launchApp
+- assertVisible: "React Native calendar for iOS, Android and web"
