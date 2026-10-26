@@ -15,7 +15,7 @@ v2.1 and keeps its props, callbacks and render props.
 - Screen-reader labels, 44 pt touch targets, font scaling, reduce motion
 - Pure TypeScript core (Luxon), no native modules: works in Expo Go
 
-Status: beta (`1.0.0-beta.1` on npm: `npm install calendar-simple-native@beta`). Migrating from the web library? See
+Status: stable (1.0.0). Migrating from the web library? See
 [MIGRATION.md](./MIGRATION.md).
 
 ## Requirements
