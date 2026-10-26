@@ -1,6 +1,6 @@
 {
   "name": "calendar-simple-native",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "A simple, themeable calendar for React Native (iOS, Android, web)",
   "type": "module",
   "main": "./lib/module/index.js",
