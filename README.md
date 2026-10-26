@@ -4,7 +4,9 @@ A simple, themeable calendar for React Native (iOS, Android, web). It is the
 React Native port of [calendar-simple](https://github.com/Jaganath-MSJ/CalendarSimple)
 v2.1 and keeps its props, callbacks and render props.
 
-**Live demo:** https://calendar-simple-native.netlify.app/ · **Try it in Expo Snack:** https://snack.expo.dev/@msj_jagan/calendar-simple-native-demo
+[npm](https://www.npmjs.com/package/calendar-simple-native) ·
+[Live demo](https://calendar-simple-native.netlify.app/) ·
+[Try it in Expo Snack](https://snack.expo.dev/@msj_jagan/calendar-simple-native-demo)
 
 - Month, Week, Day, Custom Days (1–10) and Schedule views
 - Swipe paging, pull-to-refresh and "load more" in Schedule
@@ -416,9 +418,10 @@ Every ID starts with `testID` (default `calendar`). The most useful ones:
 
 ## Example app and demo
 
-Try it in the browser: **https://calendar-simple-native.netlify.app/**, or on
-your phone with Expo Go via the
-[Snack](https://snack.expo.dev/@msj_jagan/calendar-simple-native-demo).
+Try the [live demo](https://calendar-simple-native.netlify.app/) in the
+browser, or open the
+[Expo Snack](https://snack.expo.dev/@msj_jagan/calendar-simple-native-demo)
+on your phone with Expo Go.
 
 The `example/` Expo app (iOS, Android and web) has three sections:
 
@@ -437,9 +440,9 @@ npm run example -- start   # then i, a or w
 
 - On web at phone width, the week view scrolls horizontally (fixed-width
   columns, as in the web library) when `swipeNavigation` is off.
-- The native end-to-end (Maestro) flows run locally (`npm run e2e:native`) but
-  not in CI yet, and the Linux screenshot baselines for the web end-to-end
-  tests are pending.
+- The web screenshot tests run only on macOS until Linux baselines exist. The
+  native end-to-end (Maestro) flows run nightly on an Android emulator in CI;
+  iOS flows run locally (`npm run e2e:native`).
 
 ## License
 
