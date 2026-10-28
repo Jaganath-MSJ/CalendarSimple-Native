@@ -1,0 +1,38 @@
+version: 2
+updates:
+  # Root package and the example workspace share one lockfile.
+  - package-ecosystem: npm
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Expo pins these per SDK; upgrade them with `npx expo install --fix`.
+      - dependency-name: "react"
+        update-types: [version-update:semver-major]
+      - dependency-name: "react-native"
+      - dependency-name: "react-dom"
+        update-types: [version-update:semver-major]
+      - dependency-name: "expo"
+        update-types: [version-update:semver-major]
+      - dependency-name: "expo-*"
+        update-types: [version-update:semver-major]
+      - dependency-name: "jest-expo"
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "ci(deps)"
+    groups:
+      actions:
+        patterns: ["*"]

@@ -55,11 +55,7 @@ jobs:
         run: npm run size
 
       - name: Semantic Release
+        # npm auth uses trusted publishing (OIDC, id-token above); no npm token.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # First release only: NPM_TOKEN publishes the package so a trusted
-          # publisher can be added on npmjs.com. After that, delete the secret
-          # and npm auth falls back to trusted publishing (OIDC).
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx semantic-release
