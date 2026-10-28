@@ -1,8 +1,9 @@
-name: E2E Nightly (Android)
+name: E2E (Android)
 
+# Too slow (about 30 min) for every PR: runs on PRs into beta and main, or by hand.
 on:
-  schedule:
-    - cron: "0 3 * * *"
+  pull_request:
+    branches: [beta, main]
   workflow_dispatch:
 
 permissions:
