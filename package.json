@@ -86,7 +86,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "expect-type": "^1.4.0",
-    "expo": "~58.0.17",
+    "expo": "~58.0.25",
     "globals": "^17.13.0",
     "husky": "^9.1.7",
     "jest": "^30.5.2",
@@ -94,7 +94,7 @@
     "lint-staged": "^16.4.0",
     "prettier": "^3.9.10",
     "react": "19.3.0",
-    "react-native": "0.88.0",
+    "react-native": "0.88.1",
     "react-native-builder-bob": "^0.44.1",
     "react-test-renderer": "^19.3.0",
     "semantic-release": "^25.0.9",
@@ -150,7 +150,8 @@
     "luxon": "^3.7.2"
   },
   "overrides": {
-    "eslint": "$eslint"
+    "eslint": "$eslint",
+    "zod@<4.6.6": "^4.6.7"
   },
   "lint-staged": {
     "*.{js,ts,jsx,tsx}": [
