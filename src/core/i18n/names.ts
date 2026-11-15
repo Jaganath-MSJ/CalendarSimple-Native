@@ -5,10 +5,12 @@
  * `Info.weekdays` (and the matching `toFormat` tokens) for some locales such
  * as `fr` and `ja`. Every displayed name goes through this module:
  *
- * 1. Luxon's names for the locale, when every entry is non-empty.
- * 2. `Intl.DateTimeFormat(locale, { month | weekday }).formatToParts`
+ * 1. Names registered with `registerLocaleNames` for the locale (or its
+ *    language: `fr-CA` uses `fr`).
+ * 2. Luxon's names for the locale, when every entry is non-empty.
+ * 3. `Intl.DateTimeFormat(locale, { month | weekday }).formatToParts`
  *    (then `.format`) on fixed reference dates (standalone forms).
- * 3. Luxon's English names.
+ * 4. Luxon's English names.
  */
 import { DateTime, Info } from "luxon";
 
@@ -18,13 +20,64 @@ export type NameLength = "long" | "short";
 /** `"format"` names sit inside a date (MMMM); `"standalone"` stand alone (LLLL). */
 export type NameContext = "format" | "standalone";
 
+/**
+ * Month and weekday names for one locale, used before any built-in source.
+ * Each list is optional; a missing or incomplete list falls back as usual.
+ */
+export interface LocaleNames {
+  /** Twelve long month names, January first. */
+  months?: string[];
+  /** Twelve short month names, January first. */
+  monthsShort?: string[];
+  /** Seven long weekday names, **Sunday first** (like `weekStartsOn` 0). */
+  weekdays?: string[];
+  /** Seven short weekday names, Sunday first. */
+  weekdaysShort?: string[];
+}
+
+/** Where a locale's names come from (IntlCheck screen, tests). */
+export type NameSource = "custom" | "luxon" | "intl" | "english";
+
 const cache = new Map<string, string[]>();
 const luxonOk = new Map<string, boolean>();
+const custom = new Map<string, LocaleNames>();
 
 /** Clears the name caches (tests). */
 export function clearNameCache(): void {
   cache.clear();
   luxonOk.clear();
+}
+
+/**
+ * Sets the month and weekday names for `locale` (for example `"fr"`, or
+ * `"fr-CA"` for that region only). Call it once at app start, before the
+ * calendar renders; a later call does not re-render a mounted calendar.
+ * Pass `undefined` to remove the names.
+ */
+export function registerLocaleNames(
+  locale: string,
+  names: LocaleNames | undefined,
+): void {
+  if (names) custom.set(locale, names);
+  else custom.delete(locale);
+  clearNameCache();
+}
+
+/** The registered list for `locale` (or its language), Luxon order. */
+function customNames(
+  kind: "month" | "weekday",
+  length: NameLength,
+  locale: string,
+): string[] | undefined {
+  const names = custom.get(locale) ?? custom.get(locale.split("-")[0] ?? "");
+  if (!names) return undefined;
+  if (kind === "month") {
+    const list = length === "long" ? names.months : names.monthsShort;
+    return usable(list, 12) ? list : undefined;
+  }
+  const list = length === "long" ? names.weekdays : names.weekdaysShort;
+  // Sunday first → Luxon's Monday first.
+  return usable(list, 7) ? [...list.slice(1), list[0]!] : undefined;
 }
 
 function usable(names: unknown, count: number): names is string[] {
@@ -105,7 +158,7 @@ function resolve(
           : Info.weekdays(length, { locale: l }),
     );
 
-  let names = luxon(loc);
+  let names = customNames(kind, length, loc) ?? luxon(loc);
   if (!usable(names, count)) {
     // Intl names are standalone forms ({ month } alone): a "format" month
     // read from { month, day } parts loses its suffix in ja ("10" not "10月").
@@ -140,11 +193,16 @@ export function weekdayNames(
   return resolve("weekday", length, locale, context);
 }
 
-/** True when Luxon's own names for `locale` are complete (fast path). */
+/**
+ * True when Luxon's own names for `locale` are complete and none are
+ * registered (fast path: plain `toFormat`).
+ */
 function luxonNamesUsable(locale: string): boolean {
   const hit = luxonOk.get(locale);
   if (hit !== undefined) return hit;
   const ok =
+    !custom.has(locale) &&
+    !custom.has(locale.split("-")[0] ?? "") &&
     usable(
       safe(() => Info.monthsFormat("long", { locale })),
       12,
@@ -163,6 +221,30 @@ function luxonNamesUsable(locale: string): boolean {
     );
   luxonOk.set(locale, ok);
   return ok;
+}
+
+/** Which source `monthNames` / `weekdayNames` use for `locale`. */
+export function nameSource(
+  kind: "month" | "weekday",
+  length: NameLength,
+  locale: string,
+): NameSource {
+  const loc = locale || "en";
+  if (customNames(kind, length, loc)) return "custom";
+  const count = kind === "month" ? 12 : 7;
+  const luxon = safe(() =>
+    kind === "month"
+      ? Info.months(length, { locale: loc })
+      : Info.weekdays(length, { locale: loc }),
+  );
+  if (usable(luxon, count)) return "luxon";
+  const intl = intlNames(
+    loc,
+    kind,
+    length,
+    kind === "month" ? MONTH_DATES : WEEKDAY_DATES,
+  );
+  return usable(intl, count) ? "intl" : "english";
 }
 
 const NAME_TOKEN = /M{3,4}|L{3,4}|E{3,4}|c{3,4}/;

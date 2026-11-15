@@ -348,9 +348,44 @@ Measured on Hermes (React Native 0.88):
   `weekStartsOn="locale"` uses a built-in CLDR week-start table.
 - Hour cycle, day periods (`ko` 오전/오후) and native digits (`ar-EG`) work on
   both platforms.
-- On iOS, Hermes returns empty month and weekday names for some locales
-  (seen with `fr` and `ja`); Android and web are fine. See
-  [Known limitations](#known-limitations).
+- On iOS, Luxon on Hermes returns empty month and weekday names for some
+  locales (seen with `fr` and `ja`). The calendar then reads them through
+  `Intl.DateTimeFormat`, and uses English only if that is empty too.
+
+### Your own month and weekday names
+
+`registerLocaleNames` sets the names for a locale (or a language: `"fr"` also
+covers `"fr-CA"`) ahead of every built-in source. Call it once at app start,
+before the calendar renders. Weekdays are listed Sunday first.
+
+```tsx
+import Calendar, { registerLocaleNames } from "calendar-simple-native";
+
+registerLocaleNames("fr", {
+  months: [
+    "janvier",
+    "février",
+    "mars",
+    "avril",
+    "mai",
+    "juin",
+    "juillet",
+    "août",
+    "septembre",
+    "octobre",
+    "novembre",
+    "décembre",
+  ],
+  weekdaysShort: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."],
+});
+
+export function FrenchNamesCalendar() {
+  return <Calendar locale="fr" />;
+}
+```
+
+Each list (`months`, `monthsShort`, `weekdays`, `weekdaysShort`) is optional;
+a missing or incomplete list falls back as usual.
 
 ## Compound components
 

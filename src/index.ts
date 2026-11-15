@@ -7,11 +7,13 @@ export {
   DEFAULT_MESSAGES,
   ECalendarViewType,
   EDayType,
+  registerLocaleNames,
 } from "./core";
 export type {
   CalendarMessages,
   CalendarTheme,
   ColorScheme,
+  LocaleNames,
   ThemeScheme,
   ThemeStyle,
   WeekdayIndex,
