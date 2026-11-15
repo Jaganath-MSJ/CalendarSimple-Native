@@ -3,6 +3,7 @@ name: Web demo
 on:
   # semantic-release publishes with GITHUB_TOKEN, whose events (release:
   # published) never trigger workflows; follow the publish run instead.
+  # Only stable releases from main update the live demo.
   workflow_run:
     workflows: ["Publish Package"]
     types: [completed]
@@ -20,8 +21,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
-      (github.event.workflow_run.head_branch == 'main' ||
-      github.event.workflow_run.head_branch == 'beta'))
+      github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
