@@ -16,18 +16,23 @@ import { pickEventStyle } from "../eventStyle";
 import type { EventFrame } from "./positionEvent";
 import { CalendarText } from "../ui/CalendarText";
 import { CalendarPressable } from "../ui/CalendarPressable";
+import { useDraggable, type DragSpec } from "../drag/useDraggable";
 
 export interface TimedEventItemProps<E extends CalendarEvent = CalendarEvent> {
   event: E;
   frame: EventFrame;
   testID?: string;
+  /** Set when the event may move (`draggable`); keep it stable (memo). */
+  drag?: DragSpec;
 }
 
 function TimedEventItemImpl<E extends CalendarEvent = CalendarEvent>({
   event,
   frame,
   testID,
+  drag,
 }: TimedEventItemProps<E>) {
+  const draggable = useDraggable(drag);
   const cfg = useViewConfig<E>();
   const { palette, metrics, flip, fontScale } = useCalendarTheme();
   const { messages, renderEvent, onEventClick, onEventLongPress } = cfg;
@@ -65,27 +70,33 @@ function TimedEventItemImpl<E extends CalendarEvent = CalendarEvent>({
   const showTitle = inner >= fontSize * 2;
   const showTime = !tiny && !small && inner >= fontSize * 3;
 
-  return (
+  // Where the event sits in its column; a drag wrapper takes this frame and
+  // the event fills it.
+  const place = [
+    { top: frame.top, height: frame.height, width: frame.width },
+    { zIndex: frame.zIndex },
+    flip ? { right: frame.left } : { left: frame.left },
+  ];
+  const fill = { top: 0, left: 0, height: frame.height, width: frame.width };
+
+  return draggable.wrap(
+    [styles.slot, place],
     <CalendarPressable
       feedback="ring"
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={`${event.title || messages.noTitle}, ${tooltip}`}
+      accessibilityActions={draggable.accessibilityActions}
+      onAccessibilityAction={draggable.onAccessibilityAction}
       onPress={() => onEventClick?.(event)}
       onLongPress={() => onEventLongPress?.(event)}
       delayLongPress={500}
       style={[
         styles.item,
         tiny ? styles.tiny : small ? styles.small : styles.column,
-        {
-          top: frame.top,
-          height: frame.height,
-          width: frame.width,
-          zIndex: frame.zIndex,
-          // 1 px outline in the grid colour separates overlapping items.
-          borderColor: palette.bg,
-        },
-        flip ? { right: frame.left } : { left: frame.left },
+        draggable.wrapped ? fill : place,
+        // 1 px outline in the grid colour separates overlapping items.
+        { borderColor: palette.bg },
         colours,
         cfg.styles.event,
       ]}
@@ -108,7 +119,7 @@ function TimedEventItemImpl<E extends CalendarEvent = CalendarEvent>({
           ) : null}
         </>
       ) : null}
-    </CalendarPressable>
+    </CalendarPressable>,
   );
 }
 
@@ -117,6 +128,7 @@ export const TimedEventItem = memo(
 ) as typeof TimedEventItemImpl;
 
 const styles = StyleSheet.create({
+  slot: { position: "absolute" },
   item: {
     position: "absolute",
     overflow: "hidden",

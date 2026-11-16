@@ -16,6 +16,7 @@ const NATIVE_DEFAULTS = {
   slotPressMode: "press",
   showMorePopover: true,
   keyboardNavigation: true,
+  dragSnapMinutes: 15,
   maxFontSizeMultiplier: 1.5,
   testID: "calendar",
   styles: {},

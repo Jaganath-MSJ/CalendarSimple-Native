@@ -10,11 +10,16 @@ import {
   type GestureResponderEvent,
 } from "react-native";
 import {
+  cellsMoved,
   DATE_FORMATS,
   formatDate,
+  getAxisBounds,
+  stepsMoved,
   type DateType,
   type DayEventLayout,
 } from "../../core";
+import type { EventMover } from "../../hooks/useEventMover";
+import type { DragSpec } from "../drag/useDraggable";
 import { useTestID, useViewConfig } from "../../context/LayoutContext";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
@@ -34,6 +39,8 @@ export interface DayColumnProps<E extends CalendarEvent = CalendarEvent> {
   nowTop: number | null;
   /** One labelled `Pressable` per hour instead of one column press target. */
   screenReader: boolean;
+  /** Moving events (`draggable`): the mover and this column's place. */
+  drag?: { mover: EventMover<E>; index: number; count: number };
 }
 
 /** One hour cell; memoised so `renderHourCell` runs once per slot. */
@@ -65,6 +72,7 @@ function DayColumnImpl<E extends CalendarEvent = CalendarEvent>({
   hourHeight,
   nowTop,
   screenReader,
+  drag,
 }: DayColumnProps<E>) {
   const cfg = useViewConfig<E>();
   const { palette } = useCalendarTheme();
@@ -148,6 +156,39 @@ function DayColumnImpl<E extends CalendarEvent = CalendarEvent>({
     () => layouts.map((l) => positionEvent(l, colWidth, hourHeight)),
     [layouts, colWidth, hourHeight],
   );
+  // Stable drag specs (TimedEventItem is memoised): up and down in
+  // dragSnapMinutes steps inside the grid, sideways across the visible days.
+  const specs = useMemo(() => {
+    if (!drag) return undefined;
+    const { mover, index, count } = drag;
+    const step = (hourHeight * mover.snapMinutes) / 60;
+    const across = count > 1 ? colWidth : 0;
+    const x = getAxisBounds(index, count, colWidth, mover.reversed);
+    return layouts.map((l, i): DragSpec | undefined => {
+      if (!mover.canMove(l.event)) return undefined;
+      const f = frames[i]!;
+      const move = (days: number, minutes: number) =>
+        mover.move(l.event, days, minutes);
+      return {
+        snapX: across,
+        snapY: step,
+        bounds: {
+          minX: across ? x.min : 0,
+          maxX: across ? x.max : 0,
+          minY: -f.top,
+          maxY: Math.max(0, height - f.top - f.height),
+        },
+        drop: (dx, dy) =>
+          move(
+            cellsMoved(dx, across, mover.reversed),
+            stepsMoved(dy, step) * mover.snapMinutes,
+          ),
+        move,
+        stepMinutes: mover.snapMinutes,
+      };
+    });
+  }, [drag, layouts, frames, colWidth, hourHeight, height]);
+
   const events = layouts.map((l, i) => {
     const base = l.event.id ?? `${l.event.startDate}-${i}`;
     return (
@@ -156,6 +197,7 @@ function DayColumnImpl<E extends CalendarEvent = CalendarEvent>({
         event={l.event}
         frame={frames[i]!}
         testID={id(`${base}-day-event-item`)}
+        drag={specs?.[i]}
       />
     );
   });

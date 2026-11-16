@@ -60,6 +60,33 @@ export default tseslint.config(
     },
   },
   {
+    // The main entry stays free of the optional gesture peers; only
+    // src/gestures (the calendar-simple-native/gestures entry) imports them.
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/gestures/**', 'src/core/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                'react-native-gesture-handler',
+                'react-native-gesture-handler/*',
+                'react-native-reanimated',
+                'react-native-reanimated/*',
+                'react-native-worklets',
+                'react-native-worklets/*',
+              ],
+              message:
+                'Only src/gestures may import the optional gesture peers',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['src/core/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [

@@ -6,6 +6,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -19,7 +20,8 @@ import {
   type NativeSyntheticEvent,
   type ScrollViewInstance,
 } from "react-native";
-import type { DateType } from "../../core";
+import { ECalendarViewType, type DateType } from "../../core";
+import { useDragState } from "../../context/GestureAdapterContext";
 import {
   useCalendarLayout,
   useTestID,
@@ -27,6 +29,7 @@ import {
 } from "../../context/LayoutContext";
 import { useAllDayBanner } from "../../hooks/useAllDayBanner";
 import { useDayEventLayout } from "../../hooks/useDayEventLayout";
+import { useEventMover } from "../../hooks/useEventMover";
 import { usePeriodKeys } from "../../hooks/useKeyboardNavigation";
 import { useNow } from "../../hooks/useNow";
 import { useReduceMotion } from "../../hooks/useReduceMotion";
@@ -42,6 +45,12 @@ import { useAppIsRTL } from "../../hooks/useAppIsRTL";
 
 /** Skips the banner layout when the banner is off. */
 const NO_DAYS: DateType[] = [];
+
+const VIEW_OF = {
+  week: ECalendarViewType.week,
+  day: ECalendarViewType.day,
+  custom: ECalendarViewType.customDays,
+} as const;
 
 export interface TimeGridViewProps {
   days: DateType[];
@@ -63,6 +72,17 @@ export function TimeGridView({
   const now = useNow();
   const today = now.toISODate() ?? "";
   const onKeyDown = usePeriodKeys(cfg.keyboardNavigation, { arrows: true });
+  // Moving events: one stable drag object per column; scrolling pauses
+  // while an event is dragged.
+  const mover = useEventMover(cfg, VIEW_OF[variant]);
+  const columnDrag = useMemo(
+    () =>
+      mover
+        ? days.map((_, index) => ({ mover, index, count: days.length }))
+        : undefined,
+    [mover, days],
+  );
+  const { dragging } = useDragState();
 
   const { hourHeight } = metrics.timeGrid;
   const { minHour, maxHour, showCurrentTime, autoScrollToCurrentTime } = cfg;
@@ -183,6 +203,7 @@ export function TimeGridView({
             hourHeight={hourHeight}
             nowTop={nowVisible && iso === today ? nowTop : null}
             screenReader={screenReader}
+            drag={columnDrag?.[i]}
           />
         );
       })}
@@ -233,6 +254,7 @@ export function TimeGridView({
         ref={scrollRef}
         testID={id("time-grid-scroll")}
         onLayout={onScrollLayout}
+        scrollEnabled={!dragging}
         style={styles.root}
       >
         <View style={row}>
@@ -242,6 +264,7 @@ export function TimeGridView({
               ref={hscrollRef}
               testID={id("time-grid-hscroll")}
               horizontal
+              scrollEnabled={!dragging}
               onContentSizeChange={onHContentSize}
               onScroll={onHScroll}
               scrollEventThrottle={16}

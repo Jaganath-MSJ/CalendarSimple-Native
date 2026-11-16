@@ -2,7 +2,13 @@
  * @file Root container: measures, provides the theme and lays out the header
  * and body slots (TDD §8.1 steps 2–4).
  */
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   StyleSheet,
   useWindowDimensions,
@@ -11,6 +17,10 @@ import {
 } from "react-native";
 import { dateFn, getNavigatedDate, resolveDirection } from "../core";
 import { useCalendar } from "../context/CalendarContext";
+import {
+  DragStateProvider,
+  useGestureAdapter,
+} from "../context/GestureAdapterContext";
 import { CalendarLayoutProvider, PageProvider } from "../context/LayoutContext";
 import { useContainerLayout } from "../hooks/useContainerLayout";
 import { useNavigate } from "../hooks/useNavigate";
@@ -81,6 +91,19 @@ export function CalendarContent({
     ],
   );
 
+  // draggable without <CalendarGestures>: only the screen-reader actions move.
+  const { EventWrapper } = useGestureAdapter();
+  const dragWithoutGestures =
+    Boolean(config.draggable) && Boolean(config.onEventDrop) && !EventWrapper;
+  useEffect(() => {
+    if (__DEV__ && dragWithoutGestures)
+      console.warn(
+        "[calendar] draggable: wrap the calendar in <CalendarGestures> from " +
+          '"calendar-simple-native/gestures" to drag events; without it only ' +
+          "the screen-reader move actions work.",
+      );
+  }, [dragWithoutGestures]);
+
   const navigate = useNavigate();
   const changeView = useViewChange(navigate);
   const { renderHeader } = config;
@@ -149,36 +172,40 @@ export function CalendarContent({
       ]}
     >
       <CalendarThemeProvider value={theme}>
-        <CalendarLayoutProvider value={layout}>
-          <CalendarErrorBoundary>
-            {children !== undefined ? (
-              measured ? (
-                children
-              ) : null
-            ) : (
-              <>
-                <View
-                  onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
-                >
-                  {header}
-                </View>
-                {measured ? (
-                  <PeriodPager
-                    enabled={
-                      config.swipeNavigation && state.view !== "schedule"
+        <DragStateProvider>
+          <CalendarLayoutProvider value={layout}>
+            <CalendarErrorBoundary>
+              {children !== undefined ? (
+                measured ? (
+                  children
+                ) : null
+              ) : (
+                <>
+                  <View
+                    onLayout={(e) =>
+                      setHeaderHeight(e.nativeEvent.layout.height)
                     }
-                    width={width}
-                    testID={testId}
-                    renderPage={renderPage}
-                    renderPlaceholder={renderPlaceholder}
-                    onPage={navigate}
-                    flip={flip}
-                  />
-                ) : null}
-              </>
-            )}
-          </CalendarErrorBoundary>
-        </CalendarLayoutProvider>
+                  >
+                    {header}
+                  </View>
+                  {measured ? (
+                    <PeriodPager
+                      enabled={
+                        config.swipeNavigation && state.view !== "schedule"
+                      }
+                      width={width}
+                      testID={testId}
+                      renderPage={renderPage}
+                      renderPlaceholder={renderPlaceholder}
+                      onPage={navigate}
+                      flip={flip}
+                    />
+                  ) : null}
+                </>
+              )}
+            </CalendarErrorBoundary>
+          </CalendarLayoutProvider>
+        </DragStateProvider>
       </CalendarThemeProvider>
     </View>
   );

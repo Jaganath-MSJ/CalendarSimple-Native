@@ -51,6 +51,14 @@ export interface CalendarMessages {
   eventsOn: (date: string) => string;
   /** "Create event at 14:00, Thu 22 Oct" */
   createEventAt: (time: string, date: string) => string;
+  /** "Move 15 minutes earlier" (accessibility action, `draggable`) */
+  moveEarlier: (minutes: number) => string;
+  /** "Move 15 minutes later" (accessibility action, `draggable`) */
+  moveLater: (minutes: number) => string;
+  /** "Move to the previous day" (accessibility action, `draggable`) */
+  movePreviousDay: string;
+  /** "Move to the next day" (accessibility action, `draggable`) */
+  moveNextDay: string;
 }
 
 /** English defaults for every message. */
@@ -88,6 +96,10 @@ export const DEFAULT_MESSAGES: CalendarMessages = {
   dayOfTotal: (i, n) => `(Day ${i}/${n})`,
   eventsOn: (d) => `Events on ${d}`,
   createEventAt: (t, d) => `Create event at ${t}, ${d}`,
+  moveEarlier: (m) => `Move ${m} minutes earlier`,
+  moveLater: (m) => `Move ${m} minutes later`,
+  movePreviousDay: "Move to the previous day",
+  moveNextDay: "Move to the next day",
 };
 
 /**

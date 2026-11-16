@@ -8,6 +8,7 @@ import {
   calculateMaxEvents,
   dateFn,
   DATE_FORMATS,
+  ECalendarViewType,
   formatDate,
   getMonthKeyTarget,
   isVisibleWeekday,
@@ -32,6 +33,7 @@ import {
   type WebKeyEvent,
 } from "../../hooks/useKeyboardNavigation";
 import { useNavigate } from "../../hooks/useNavigate";
+import { useEventMover } from "../../hooks/useEventMover";
 import { useMonthGrid } from "../../hooks/useMonthGrid";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent, CalendarProps, CalendarStyles } from "../../types";
@@ -217,6 +219,13 @@ export function MonthView({ date, ...local }: MonthViewProps) {
     (info: CalendarDayInfo<CalendarEvent>) => setFocusDay(info.currentDate),
     [],
   );
+  // Moving chips (draggable): one stable object for every week row.
+  const mover = useEventMover(cfg, ECalendarViewType.month);
+  const monthDrag = useMemo(
+    () => (mover ? { mover, matrix, rowHeight } : undefined),
+    [mover, matrix, rowHeight],
+  );
+
   const rovingIso = rovingDay.toISODate() ?? "";
   const gridKeyboard = useMemo(
     () =>
@@ -299,6 +308,7 @@ export function MonthView({ date, ...local }: MonthViewProps) {
               onMorePress,
               resolved,
               keyboard: gridKeyboard,
+              drag: monthDrag,
             }}
           />
         ) : null}

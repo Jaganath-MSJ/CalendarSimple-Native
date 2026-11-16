@@ -9,7 +9,11 @@ import { useTestID, useViewConfig } from "../../context/LayoutContext";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
 import { MonthCell } from "./MonthCell";
-import { WeekBarsOverlay, type WeekBarsOverlayProps } from "./WeekBarsOverlay";
+import {
+  WeekBarsOverlay,
+  type MonthDrag,
+  type WeekBarsOverlayProps,
+} from "./WeekBarsOverlay";
 import { CalendarText } from "../ui/CalendarText";
 import type { FocusAnchor } from "../ui/focusReturn";
 
@@ -40,6 +44,8 @@ export interface WeekRowProps<E extends CalendarEvent = CalendarEvent> {
   resolved?: ThemeScheme;
   /** Web keyboard navigation; `undefined` when off. */
   keyboard?: GridKeyboard<E>;
+  /** Moving chips (`draggable`); `undefined` when off. */
+  drag?: MonthDrag<E>;
 }
 
 function WeekRowImpl<E extends CalendarEvent = CalendarEvent>({
@@ -56,6 +62,7 @@ function WeekRowImpl<E extends CalendarEvent = CalendarEvent>({
   onMorePress,
   resolved,
   keyboard,
+  drag,
 }: WeekRowProps<E>) {
   const cfg = useViewConfig<E>();
   const { palette, metrics, flip } = useCalendarTheme();
@@ -112,6 +119,8 @@ function WeekRowImpl<E extends CalendarEvent = CalendarEvent>({
       })}
       <WeekBarsOverlay
         row={row}
+        rowIndex={rowIndex}
+        drag={drag}
         cellWidth={cellWidth}
         gutter={gutter}
         variant={variant}

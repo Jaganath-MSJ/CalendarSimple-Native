@@ -11,11 +11,17 @@
       "types": "./lib/typescript/src/index.d.ts",
       "default": "./lib/module/index.js"
     },
+    "./gestures": {
+      "calendar-simple-native-source": "./src/gestures/index.ts",
+      "types": "./lib/typescript/src/gestures/index.d.ts",
+      "default": "./lib/module/gestures/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
     "lib",
     "src",
+    "gestures",
     "MIGRATION.md",
     "!**/__tests__",
     "!**/*.test.*",
@@ -96,6 +102,9 @@
     "react": "19.3.0",
     "react-native": "0.88.1",
     "react-native-builder-bob": "^0.44.1",
+    "react-native-gesture-handler": "~3.3.0",
+    "react-native-reanimated": "4.7.1",
+    "react-native-worklets": "0.13.0",
     "react-test-renderer": "^19.3.0",
     "semantic-release": "^25.0.9",
     "serve": "^14.2.6",
@@ -107,7 +116,9 @@
   "peerDependencies": {
     "react": ">=19",
     "react-native": ">=0.78",
-    "react-native-web": "*"
+    "react-native-web": "*",
+    "react-native-gesture-handler": ">=2.20.0",
+    "react-native-reanimated": ">=3.16.0"
   },
   "workspaces": [
     "example"
@@ -143,6 +154,12 @@
   },
   "peerDependenciesMeta": {
     "react-native-web": {
+      "optional": true
+    },
+    "react-native-gesture-handler": {
+      "optional": true
+    },
+    "react-native-reanimated": {
       "optional": true
     }
   },

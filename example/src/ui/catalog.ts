@@ -104,6 +104,27 @@ const events = [
 />`,
   },
   {
+    key: "drag",
+    title: "Move events",
+    description: "Long-press and drag in time grids and month",
+    group: "features",
+    view: ECalendarViewType.week,
+    code: `import { GestureHandlerRootView } from "react-native-gesture-handler";
+import Calendar from "calendar-simple-native";
+import { CalendarGestures } from "calendar-simple-native/gestures";
+
+<GestureHandlerRootView style={{ flex: 1 }}>
+  <CalendarGestures>
+    <Calendar
+      events={events}
+      view="week"
+      draggable
+      onEventDrop={({ event, start, end }) => moveEvent(event.id, start, end)}
+    />
+  </CalendarGestures>
+</GestureHandlerRootView>`,
+  },
+  {
     key: "features",
     title: "Loading & empty states",
     description: "Loading, empty data, callbacks and more props",

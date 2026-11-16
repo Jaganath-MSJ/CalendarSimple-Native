@@ -86,6 +86,20 @@ export type DimensionValue = number | `${number}%`;
 
 export type SlotPressMode = "press" | "longPress";
 
+/** What `onEventDrop` receives when an event is moved. */
+export interface EventDropInfo<TEvent extends CalendarEvent = CalendarEvent> {
+  /** The event as shown (an occurrence for a recurring event). */
+  event: TEvent;
+  /** New start. */
+  start: Date;
+  /** New end (same length; equal to `start` when the event has no `endDate`). */
+  end: Date;
+  /** `true` for a date-only (all-day) event. */
+  allDay: boolean;
+  /** The view it was moved in. */
+  view: ECalendarViewType;
+}
+
 /** Props of `<Calendar>` (TDD §6.3). */
 export interface CalendarProps<TEvent extends CalendarEvent = CalendarEvent> {
   children?: ReactNode;
@@ -132,6 +146,16 @@ export interface CalendarProps<TEvent extends CalendarEvent = CalendarEvent> {
   onDateClick?: (date: Date) => void;
   onEventClick?: (event: TEvent) => void;
   onEventLongPress?: (event: TEvent) => void;
+  /**
+   * Lets events be moved: by long-press drag with `<CalendarGestures>` from
+   * `calendar-simple-native/gestures`, and always by the screen-reader move
+   * actions. A function decides per event. Needs `onEventDrop`.
+   */
+  draggable?: boolean | ((event: TEvent) => boolean);
+  /** A moved event's new times. The calendar never changes `events` itself. */
+  onEventDrop?: (info: EventDropInfo<TEvent>) => void;
+  /** Minutes per step when moving in time grids (default 15). */
+  dragSnapMinutes?: number;
   onMoreClick?: (date: Date, hiddenEvents: TEvent[]) => void;
   onNavigate?: (date: Date) => void;
   onViewChange?: (view: ECalendarViewType) => void;
@@ -208,6 +232,7 @@ export type ResolvedConfig<TEvent extends CalendarEvent = CalendarEvent> = Omit<
   | "slotPressMode"
   | "showMorePopover"
   | "keyboardNavigation"
+  | "dragSnapMinutes"
   | "testID"
 > &
   Required<Pick<CalendarProps<TEvent>, DefaultedKey>> & {
@@ -221,5 +246,6 @@ export type ResolvedConfig<TEvent extends CalendarEvent = CalendarEvent> = Omit<
     slotPressMode: SlotPressMode;
     showMorePopover: boolean;
     keyboardNavigation: boolean;
+    dragSnapMinutes: number;
     testID: string;
   };
