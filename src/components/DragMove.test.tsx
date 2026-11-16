@@ -46,7 +46,7 @@ async function drop(testID: string, dx: number, dy: number) {
   if (!props) throw new Error(`${testID} is not draggable`);
   await act(() => {
     props.onDragStart();
-    props.onDragEnd(dx, dy);
+    props.move!.onEnd(dx, dy);
   });
 }
 
@@ -66,7 +66,7 @@ describe("time grids", () => {
         />
       </GestureAdapterProvider>,
     );
-    const props = wrapped.get(item)!;
+    const props = wrapped.get(item)!.move!;
     expect(props.snapY).toBe(15); // 60 px per hour, 15 minutes
     await drop(item, 0, 2 * props.snapY);
     const info = onEventDrop.mock.calls[0]![0];
@@ -88,10 +88,10 @@ describe("time grids", () => {
         />
       </GestureAdapterProvider>,
     );
-    const col = wrapped.get(item)!.snapX;
+    const col = wrapped.get(item)!.move!.snapX;
     expect(col).toBeGreaterThan(0);
     // Thursday is the 5th of 7 columns: two to the right, four to the left.
-    expect(wrapped.get(item)!.bounds).toMatchObject({
+    expect(wrapped.get(item)!.move!.bounds).toMatchObject({
       minX: -4 * col,
       maxX: 2 * col,
     });
@@ -129,7 +129,7 @@ describe("time grids", () => {
         />
       </GestureAdapterProvider>,
     );
-    expect(wrapped.get(item)).toMatchObject({
+    expect(wrapped.get(item)!.move).toMatchObject({
       snapX: 0,
       bounds: { minX: 0, maxX: 0, minY: -9 * 60, maxY: 24 * 60 - 10 * 60 },
     });
@@ -222,7 +222,7 @@ describe("time grids", () => {
       </GestureAdapterProvider>,
     );
     const id = "calendar-m::2026-10-22T09:00:00-day-event-item";
-    await drop(id, 0, 4 * wrapped.get(id)!.snapY);
+    await drop(id, 0, 4 * wrapped.get(id)!.move!.snapY);
     const info = onEventDrop.mock.calls[0]![0];
     expect(info.event).toMatchObject({
       recurringEventId: "m",
@@ -249,7 +249,7 @@ describe("month", () => {
       wide,
     );
     const chip = "calendar-m-month-event-item";
-    const { snapX, snapY } = wrapped.get(chip)!;
+    const { snapX, snapY } = wrapped.get(chip)!.move!;
     await drop(chip, snapX, snapY);
     const info = onEventDrop.mock.calls[0]![0];
     expect(iso(info.start)).toBe("2026-10-30T09:00:00.000");
@@ -278,7 +278,7 @@ describe("month", () => {
     );
     const { snapX, snapY, bounds } = wrapped.get(
       "calendar-m-month-event-item",
-    )!;
+    )!.move!;
     // Thu 22 Oct: column 4 of 7, row 3 of 5.
     expect(bounds).toEqual({
       minX: -4 * snapX,

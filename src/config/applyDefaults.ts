@@ -17,6 +17,8 @@ const NATIVE_DEFAULTS = {
   showMorePopover: true,
   keyboardNavigation: true,
   dragSnapMinutes: 15,
+  resizeSnapMinutes: 15,
+  minEventDurationMinutes: 15,
   maxFontSizeMultiplier: 1.5,
   testID: "calendar",
   styles: {},

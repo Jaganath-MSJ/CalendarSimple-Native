@@ -86,6 +86,20 @@ export type DimensionValue = number | `${number}%`;
 
 export type SlotPressMode = "press" | "longPress";
 
+/** What `onEventResize` receives when an event is resized. */
+export interface EventResizeInfo<TEvent extends CalendarEvent = CalendarEvent> {
+  /** The event as shown (an occurrence for a recurring event). */
+  event: TEvent;
+  /** New start (changed when `edge` is `"top"`). */
+  start: Date;
+  /** New end (changed when `edge` is `"bottom"`). */
+  end: Date;
+  /** The edge that moved. */
+  edge: "top" | "bottom";
+  /** The view it was resized in. */
+  view: ECalendarViewType;
+}
+
 /** What `onEventDrop` receives when an event is moved. */
 export interface EventDropInfo<TEvent extends CalendarEvent = CalendarEvent> {
   /** The event as shown (an occurrence for a recurring event). */
@@ -156,6 +170,19 @@ export interface CalendarProps<TEvent extends CalendarEvent = CalendarEvent> {
   onEventDrop?: (info: EventDropInfo<TEvent>) => void;
   /** Minutes per step when moving in time grids (default 15). */
   dragSnapMinutes?: number;
+  /**
+   * Lets timed events in Day, Week and Custom Days be resized from their top
+   * or bottom edge (long press near the edge, with `<CalendarGestures>`),
+   * and by the screen-reader actions. A function decides per event. Needs
+   * `onEventResize`.
+   */
+  resizable?: boolean | ((event: TEvent) => boolean);
+  /** A resized event's new times. The calendar never changes `events`. */
+  onEventResize?: (info: EventResizeInfo<TEvent>) => void;
+  /** Minutes per step when resizing (default 15). */
+  resizeSnapMinutes?: number;
+  /** Shortest length a resize leaves, in minutes (default 15). */
+  minEventDurationMinutes?: number;
   onMoreClick?: (date: Date, hiddenEvents: TEvent[]) => void;
   onNavigate?: (date: Date) => void;
   onViewChange?: (view: ECalendarViewType) => void;
@@ -233,6 +260,8 @@ export type ResolvedConfig<TEvent extends CalendarEvent = CalendarEvent> = Omit<
   | "showMorePopover"
   | "keyboardNavigation"
   | "dragSnapMinutes"
+  | "resizeSnapMinutes"
+  | "minEventDurationMinutes"
   | "testID"
 > &
   Required<Pick<CalendarProps<TEvent>, DefaultedKey>> & {
@@ -247,5 +276,7 @@ export type ResolvedConfig<TEvent extends CalendarEvent = CalendarEvent> = Omit<
     showMorePopover: boolean;
     keyboardNavigation: boolean;
     dragSnapMinutes: number;
+    resizeSnapMinutes: number;
+    minEventDurationMinutes: number;
     testID: string;
   };

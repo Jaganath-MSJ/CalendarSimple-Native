@@ -91,18 +91,21 @@ export function CalendarContent({
     ],
   );
 
-  // draggable without <CalendarGestures>: only the screen-reader actions move.
+  // draggable / resizable without <CalendarGestures>: only the
+  // screen-reader actions change events.
   const { EventWrapper } = useGestureAdapter();
-  const dragWithoutGestures =
-    Boolean(config.draggable) && Boolean(config.onEventDrop) && !EventWrapper;
+  const editable =
+    (Boolean(config.draggable) && Boolean(config.onEventDrop)) ||
+    (Boolean(config.resizable) && Boolean(config.onEventResize));
+  const withoutGestures = editable && !EventWrapper;
   useEffect(() => {
-    if (__DEV__ && dragWithoutGestures)
+    if (__DEV__ && withoutGestures)
       console.warn(
-        "[calendar] draggable: wrap the calendar in <CalendarGestures> from " +
-          '"calendar-simple-native/gestures" to drag events; without it only ' +
-          "the screen-reader move actions work.",
+        "[calendar] draggable / resizable: wrap the calendar in " +
+          '<CalendarGestures> from "calendar-simple-native/gestures" to drag ' +
+          "events; without it only the screen-reader actions work.",
       );
-  }, [dragWithoutGestures]);
+  }, [withoutGestures]);
 
   const navigate = useNavigate();
   const changeView = useViewChange(navigate);

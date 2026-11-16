@@ -13,25 +13,47 @@ import {
   type ReactNode,
 } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
-import type { DragBounds } from "../core";
+import type { AxisBounds, DragBounds, ResizeEdge } from "../core";
 
-/** Props the main package gives a draggable event's wrapper. */
-export interface DragWrapperProps {
-  /** The event's own element (positioned at the wrapper's origin). */
-  children: ReactNode;
-  /** The event's absolute frame; the wrapper draws itself there. */
-  style: StyleProp<ViewStyle>;
+/** Moving the whole event (`draggable`). */
+export interface DragMoveSpec {
   /** Horizontal step in px (a day column or cell); `0` locks the axis. */
   snapX: number;
   /** Vertical step in px (`dragSnapMinutes` or a week row); `0` locks it. */
   snapY: number;
   /** Offsets the lifted event may reach, in px. */
   bounds: DragBounds;
-  /** The drag started (after the long press). */
-  onDragStart: () => void;
   /** Released at snapped offsets (px); `(0, 0)` means no move. */
-  onDragEnd: (dx: number, dy: number) => void;
-  /** The gesture was cancelled by the system. */
+  onEnd: (dx: number, dy: number) => void;
+}
+
+/** Resizing from an edge (`resizable`, time grids). */
+export interface DragResizeSpec {
+  /** Vertical step in px (`resizeSnapMinutes`). */
+  snapY: number;
+  /** Offsets the top edge may reach (px); absent: the top cannot move. */
+  top?: AxisBounds;
+  /** Offsets the bottom edge may reach (px); absent: it cannot move. */
+  bottom?: AxisBounds;
+  /** Released with the edge's snapped offset (px); `0` means no change. */
+  onEnd: (edge: ResizeEdge, dy: number) => void;
+}
+
+/**
+ * Props the main package gives a draggable or resizable event's wrapper. A
+ * long press near the top or bottom edge resizes (when `resize` allows that
+ * edge); anywhere else it moves (when `move` is set).
+ */
+export interface DragWrapperProps {
+  /** The event's own element; it fills the wrapper. */
+  children: ReactNode;
+  /** The event's absolute frame; the wrapper draws itself there. */
+  style: StyleProp<ViewStyle>;
+  move?: DragMoveSpec;
+  resize?: DragResizeSpec;
+  /** A move or resize started (after the long press). */
+  onDragStart: () => void;
+  /** It ended without a change, or the system cancelled it. */
   onDragCancel: () => void;
 }
 

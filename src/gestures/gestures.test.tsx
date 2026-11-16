@@ -5,7 +5,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Calendar } from "../components/Calendar";
 import { renderCalendar } from "../test-utils/renderCalendar";
 import { useFrozenClock } from "../test-utils/clock";
-import { CalendarGestures, snapOffset } from ".";
+import { CalendarGestures, pickMode, snapOffset } from ".";
 
 // Gesture-handler installs UI-runtime bindings on load; the JS worklets
 // implementation has no UI runtime, so give it an empty holder.
@@ -44,6 +44,24 @@ describe("snapOffset", () => {
   });
 });
 
+describe("pickMode", () => {
+  // 0 nothing, 1 move, 2 top edge, 3 bottom edge.
+  it("resizes from the edge zones and moves elsewhere", () => {
+    expect(pickMode(5, 120, true, true, true)).toBe(2);
+    expect(pickMode(-8, 120, true, true, true)).toBe(2); // in the hit slop
+    expect(pickMode(60, 120, true, true, true)).toBe(1);
+    expect(pickMode(110, 120, true, true, true)).toBe(3);
+  });
+
+  it("shrinks the zones on short events and respects what is allowed", () => {
+    // 30 pt tall: zones are 7.5 pt, the middle still moves.
+    expect(pickMode(10, 30, true, true, true)).toBe(1);
+    expect(pickMode(5, 120, true, false, true)).toBe(1);
+    expect(pickMode(110, 120, false, true, true)).toBe(3);
+    expect(pickMode(60, 120, false, true, true)).toBe(0);
+  });
+});
+
 it("CalendarGestures draws draggable events inside the gesture wrapper", async () => {
   await renderCalendar(
     <GestureHandlerRootView>
@@ -67,7 +85,7 @@ it("CalendarGestures draws draggable events inside the gesture wrapper", async (
   );
   const item = screen.getByTestId("calendar-m-day-event-item");
   // The event fills the wrapper, which carries the frame (top 540 at 60/h).
-  expect(item).toHaveStyle({ top: 0, height: 60 });
+  expect(item).toHaveStyle({ top: 0, bottom: 0 });
   let wrapper = item.parent;
   while (wrapper && wrapper.type !== "View") wrapper = wrapper.parent;
   while (

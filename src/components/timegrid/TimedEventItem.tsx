@@ -77,7 +77,8 @@ function TimedEventItemImpl<E extends CalendarEvent = CalendarEvent>({
     { zIndex: frame.zIndex },
     flip ? { right: frame.left } : { left: frame.left },
   ];
-  const fill = { top: 0, left: 0, height: frame.height, width: frame.width };
+  // Inside a wrapper the event fills it, so it follows a live resize.
+  const fill = { top: 0, bottom: 0, left: 0, right: 0 };
 
   return draggable.wrap(
     [styles.slot, place],

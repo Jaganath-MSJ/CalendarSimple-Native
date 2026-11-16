@@ -40,7 +40,7 @@ export const SCREENS: {
   },
   { key: "localization", title: "Localization", component: LocalizationScreen },
   { key: "recurring", title: "Recurring events", component: RecurringScreen },
-  { key: "drag", title: "Move events", component: DragScreen },
+  { key: "drag", title: "Move & resize events", component: DragScreen },
   {
     key: "accessibility",
     title: "Accessibility",

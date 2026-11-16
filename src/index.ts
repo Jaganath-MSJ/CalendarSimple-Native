@@ -35,6 +35,7 @@ export type {
   CalendarStyleKey,
   CalendarStyles,
   EventDropInfo,
+  EventResizeInfo,
   RenderDateCellProps,
   RenderHeaderProps,
   SafeAreaInsets,

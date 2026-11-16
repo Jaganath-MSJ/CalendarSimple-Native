@@ -7,8 +7,17 @@ export {
   CalendarGestures,
   type CalendarGesturesProps,
 } from "./CalendarGestures";
-export { DraggableEvent, LONG_PRESS_MS, snapOffset } from "./DraggableEvent";
+export {
+  DraggableEvent,
+  EDGE_SLOP,
+  EDGE_ZONE,
+  LONG_PRESS_MS,
+  pickMode,
+  snapOffset,
+} from "./DraggableEvent";
 export type {
+  DragMoveSpec,
+  DragResizeSpec,
   DragWrapperProps,
   GestureAdapter,
 } from "../context/GestureAdapterContext";

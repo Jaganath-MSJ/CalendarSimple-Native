@@ -59,6 +59,10 @@ export interface CalendarMessages {
   movePreviousDay: string;
   /** "Move to the next day" (accessibility action, `draggable`) */
   moveNextDay: string;
+  /** "Make 15 minutes longer" (accessibility action, `resizable`) */
+  makeLonger: (minutes: number) => string;
+  /** "Make 15 minutes shorter" (accessibility action, `resizable`) */
+  makeShorter: (minutes: number) => string;
 }
 
 /** English defaults for every message. */
@@ -100,6 +104,8 @@ export const DEFAULT_MESSAGES: CalendarMessages = {
   moveLater: (m) => `Move ${m} minutes later`,
   movePreviousDay: "Move to the previous day",
   moveNextDay: "Move to the next day",
+  makeLonger: (m) => `Make ${m} minutes longer`,
+  makeShorter: (m) => `Make ${m} minutes shorter`,
 };
 
 /**

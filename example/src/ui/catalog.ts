@@ -105,8 +105,8 @@ const events = [
   },
   {
     key: "drag",
-    title: "Move events",
-    description: "Long-press and drag in time grids and month",
+    title: "Move & resize events",
+    description: "Long-press to drag an event, or its top or bottom edge",
     group: "features",
     view: ECalendarViewType.week,
     code: `import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -119,7 +119,9 @@ import { CalendarGestures } from "calendar-simple-native/gestures";
       events={events}
       view="week"
       draggable
-      onEventDrop={({ event, start, end }) => moveEvent(event.id, start, end)}
+      onEventDrop={({ event, start, end }) => update(event.id, start, end)}
+      resizable
+      onEventResize={({ event, start, end }) => update(event.id, start, end)}
     />
   </CalendarGestures>
 </GestureHandlerRootView>`,

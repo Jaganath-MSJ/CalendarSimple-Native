@@ -63,3 +63,29 @@ export function moveEvent(
   const nextEnd = end ? end.plus({ days, minutes }) : nextStart;
   return { start: nextStart, end: nextEnd };
 }
+
+/** Which edge of a timed event is dragged. */
+export type ResizeEdge = "top" | "bottom";
+
+/**
+ * The event's new start and end after its `edge` moves by `minutes`. The
+ * length never drops below `minMinutes`; an event without `end` is treated
+ * as ending at its start.
+ */
+export function resizeEvent(
+  start: DateTime,
+  end: DateTime | undefined,
+  edge: ResizeEdge,
+  minutes: number,
+  minMinutes: number,
+): { start: DateTime; end: DateTime } {
+  const last = end ?? start;
+  if (edge === "top") {
+    const latest = last.minus({ minutes: minMinutes });
+    const next = start.plus({ minutes });
+    return { start: next > latest ? latest : next, end: last };
+  }
+  const earliest = start.plus({ minutes: minMinutes });
+  const next = last.plus({ minutes });
+  return { start, end: next < earliest ? earliest : next };
+}

@@ -1,7 +1,8 @@
 /**
- * @file Moving events: long-press an event and drag it (`draggable`,
- * `onEventDrop`, `<CalendarGestures>`). The screen owns the events and
- * applies each drop, as an app would.
+ * @file Moving and resizing events: long-press an event and drag it, or
+ * long-press near its top or bottom edge and drag that edge (`draggable`,
+ * `onEventDrop`, `resizable`, `onEventResize`, `<CalendarGestures>`). The
+ * screen owns the events and applies each change, as an app would.
  */
 import { useCallback, useState } from "react";
 import { DateTime } from "luxon";
@@ -9,6 +10,7 @@ import Calendar, {
   ECalendarViewType,
   type CalendarEvent,
   type EventDropInfo,
+  type EventResizeInfo,
 } from "../../../src";
 import { CalendarGestures } from "../../../src/gestures";
 import ScenarioScreen, { type Scenario } from "../components/ScenarioScreen";
@@ -43,7 +45,7 @@ const INITIAL: CalendarEvent[] = [
   },
   {
     id: "locked",
-    title: "Locked (not draggable)",
+    title: "Locked",
     startDate: "2026-10-22T15:00:00",
     endDate: "2026-10-22T16:00:00",
     style: { backgroundColor: "#4b5563" },
@@ -51,12 +53,16 @@ const INITIAL: CalendarEvent[] = [
 ];
 
 /** The new start and end in the event's own format (date-only or local time). */
-function moved(event: CalendarEvent, info: EventDropInfo): CalendarEvent {
-  const fmt = info.allDay ? "yyyy-MM-dd" : "yyyy-MM-dd'T'HH:mm:ss";
+function moved(
+  event: CalendarEvent,
+  info: EventDropInfo | EventResizeInfo,
+): CalendarEvent {
+  const fmt =
+    "allDay" in info && info.allDay ? "yyyy-MM-dd" : "yyyy-MM-dd'T'HH:mm:ss";
   return {
     ...event,
     startDate: DateTime.fromJSDate(info.start).toFormat(fmt),
-    ...(event.endDate
+    ...(event.endDate || "edge" in info
       ? { endDate: DateTime.fromJSDate(info.end).toFormat(fmt) }
       : {}),
   };
@@ -76,6 +82,19 @@ export default function DragScreen() {
     [],
   );
 
+  const onResize = useCallback(
+    (info: EventResizeInfo, log: (m: string) => void) => {
+      setEvents((list) =>
+        list.map((e) => (e.id === info.event.id ? moved(e, info) : e)),
+      );
+      const t = (d: Date) => DateTime.fromJSDate(d).toFormat("HH:mm");
+      log(
+        `${info.event.title} ⇕ ${t(info.start)}–${t(info.end)} (${info.edge})`,
+      );
+    },
+    [],
+  );
+
   const scenario = (name: string, view?: ECalendarViewType): Scenario => ({
     name,
     props: (log) => ({
@@ -85,6 +104,8 @@ export default function DragScreen() {
       customDays: view === ECalendarViewType.customDays ? 3 : undefined,
       draggable: (e) => e.id !== "locked",
       onEventDrop: (info) => onDrop(info, log),
+      resizable: (e) => e.id !== "locked",
+      onEventResize: (info) => onResize(info, log),
     }),
     render: (props) => (
       <CalendarGestures>

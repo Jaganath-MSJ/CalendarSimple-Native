@@ -61,22 +61,24 @@ function chipDrag<E extends CalendarEvent>(
   const x = getAxisBounds(col, row.length, cellWidth, mover.reversed);
   const y = getAxisBounds(rowIndex, matrix.length, rowHeight);
   const from = row[col]?.currentDate;
-  const move = (days: number, minutes: number) =>
+  const shift = (days: number, minutes: number) =>
     mover.move(event, days, minutes);
   return {
-    snapX: cellWidth,
-    snapY: rowHeight,
-    bounds: { minX: x.min, maxX: x.max, minY: y.min, maxY: y.max },
-    drop: (dx, dy) => {
-      const target =
-        matrix[rowIndex + stepsMoved(dy, rowHeight)]?.[
-          col + cellsMoved(dx, cellWidth, mover.reversed)
-        ];
-      if (!target || !from) return;
-      move(Math.round(target.currentDate.diff(from, "days").days), 0);
+    move: {
+      snapX: cellWidth,
+      snapY: rowHeight,
+      bounds: { minX: x.min, maxX: x.max, minY: y.min, maxY: y.max },
+      drop: (dx, dy) => {
+        const target =
+          matrix[rowIndex + stepsMoved(dy, rowHeight)]?.[
+            col + cellsMoved(dx, cellWidth, mover.reversed)
+          ];
+        if (!target || !from) return;
+        shift(Math.round(target.currentDate.diff(from, "days").days), 0);
+      },
+      shift,
+      stepMinutes: 0,
     },
-    move,
-    stepMinutes: 0,
   };
 }
 
