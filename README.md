@@ -88,11 +88,73 @@ export function MyCalendar() {
 | `startDate` | `string`             | `"YYYY-MM-DD"` (all-day) or `"YYYY-MM-DDTHH:mm:ss"` (timed)                           |
 | `endDate`   | `string`             | optional, same formats; a date-only end is inclusive, a timed end at 00:00 is not     |
 | `style`     | `CalendarEventStyle` | colours only: `backgroundColor`, `color`, `borderColor`, `opacity`                    |
+| `rrule`     | `string`             | optional recurrence rule; see [Recurring events](#recurring-events)                   |
+| `exdates`   | `string[]`           | optional occurrences to skip: dates (`"2026-11-26"`) or exact start times             |
 | any other   | `unknown`            | kept and returned unchanged in callbacks (see [Typed events](#typed-events-generics)) |
 
 Events with an unparseable `startDate` or `endDate` are dropped and, in
 development, listed in one console warning. A timed event without `endDate`
 is one minute long and drawn at the minimum height.
+
+### Recurring events
+
+Give an event an RFC 5545 `rrule`. Its `startDate` is the first occurrence
+and sets the time of day and the length (`endDate`). The calendar shows every
+occurrence in view as its own event, and keeps the time of day across
+daylight-saving changes.
+
+```tsx
+import Calendar, { type CalendarEvent } from "calendar-simple-native";
+
+const events: CalendarEvent[] = [
+  {
+    id: "standup",
+    title: "Standup",
+    startDate: "2026-10-05T09:30:00",
+    endDate: "2026-10-05T09:45:00",
+    rrule: "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR",
+    exdates: ["2026-10-16"],
+  },
+  {
+    id: "demo-day",
+    title: "Demo day",
+    startDate: "2026-10-30T16:00:00",
+    rrule: "FREQ=MONTHLY;BYDAY=-1FR;COUNT=6",
+  },
+];
+
+export function TeamCalendar() {
+  return (
+    <Calendar
+      events={events}
+      onEventClick={(e) => console.log(e.recurringEventId, e.occurrenceDate)}
+    />
+  );
+}
+```
+
+| Part         | Supported                                                                              |
+| ------------ | -------------------------------------------------------------------------------------- |
+| `FREQ`       | `DAILY`, `WEEKLY`, `MONTHLY`, `YEARLY`                                                 |
+| `INTERVAL`   | every _n_ periods                                                                      |
+| `COUNT`      | number of occurrences, counted from `startDate`                                        |
+| `UNTIL`      | last day (`20261231`) or time (`20261231T170000`, `…Z` for UTC)                        |
+| `BYDAY`      | `MO`…`SU`; with an ordinal (`1MO`, `-1FR`) in `MONTHLY`, or in `YEARLY` with `BYMONTH` |
+| `BYMONTHDAY` | `1`…`31`, or from the end: `-1`…`-31`                                                  |
+| `BYMONTH`    | `1`…`12`                                                                               |
+| `WKST`       | week start for `WEEKLY` with `INTERVAL` (default `MO`)                                 |
+
+- Each occurrence is a copy of the event with its own `startDate` and
+  `endDate`, `id` `"<id>::<occurrence start>"`, `recurringEventId` (the
+  series `id`) and `occurrenceDate`. Callbacks receive the occurrence, so you
+  can offer "this event" or "the whole series".
+- Months without the day (the 31st, 29 February) are skipped, as RFC 5545
+  says.
+- A rule with any other part (`BYSETPOS`, `HOURLY`, …) shows the event once,
+  with a development warning. At most 1,000 occurrences per event are shown
+  around the visible dates.
+- Recurring events are not expanded with `enableEnrichedEvents`; pass the
+  occurrences in `enrichedEventsByDate` yourself.
 
 ## Props
 
