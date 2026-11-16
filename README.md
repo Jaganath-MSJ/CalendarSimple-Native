@@ -131,6 +131,7 @@ All props are optional. Dates in props and callbacks are JS `Date` objects.
 | `scheduleDays`                                | `number`                   | `30`                      | length of the Schedule window from the selected date       |
 | `swipeNavigation`                             | `boolean`                  | `true` (`false` on web)   | swipe between periods in month and time grids              |
 | `showMorePopover`                             | `boolean`                  | `true`                    | `false` lets `onMoreClick` handle "+N more" alone          |
+| `keyboardNavigation`                          | `boolean`                  | `true`                    | web keys; see [Keyboard (web)](#keyboard-web)              |
 | `maxFontSizeMultiplier`                       | `number`                   | `1.5`                     | caps system font scaling for calendar text                 |
 
 ### Layout
@@ -425,6 +426,26 @@ Parts: `Calendar.Header`, `Calendar.View` (the current view),
 - Paging and fade animations are skipped when Reduce Motion is on.
 - The day sheet is modal for screen readers, and focus returns to the cell
   that opened a popover or sheet.
+
+### Keyboard (web)
+
+On web, `keyboardNavigation` (default `true`) adds these keys. iOS and
+Android ignore the prop.
+
+| Where      | Key                    | Action                                                        |
+| ---------- | ---------------------- | ------------------------------------------------------------- |
+| Month grid | ← → ↑ ↓                | Move a day or a week; leaving the month navigates             |
+| Month grid | Home / End             | First or last day of the week                                 |
+| Month grid | PageUp / PageDown      | Previous or next month (with Shift: year)                     |
+| Month grid | Enter / Space          | Press the day (select, create or open the day sheet)          |
+| Time grids | ← → / PageUp, PageDown | Previous or next period                                       |
+| Schedule   | ↑ ↓ / PageUp, PageDown | Move between rows / move the window                           |
+| All views  | T                      | Today                                                         |
+| Overlays   | Escape                 | Close the popover, sheet or menu; focus returns to its opener |
+
+The month grid is one Tab stop (the focused day). Event chips stay in reading
+order, after their week's days. ← and → swap in right-to-left layouts. Keys
+typed into a text field inside a custom renderer are ignored.
 
 ## Performance
 

@@ -27,6 +27,7 @@ import {
 } from "../../context/LayoutContext";
 import { useAllDayBanner } from "../../hooks/useAllDayBanner";
 import { useDayEventLayout } from "../../hooks/useDayEventLayout";
+import { usePeriodKeys } from "../../hooks/useKeyboardNavigation";
 import { useNow } from "../../hooks/useNow";
 import { useReduceMotion } from "../../hooks/useReduceMotion";
 import { useScreenReader } from "../../hooks/useScreenReader";
@@ -61,6 +62,7 @@ export function TimeGridView({
   const screenReader = useScreenReader();
   const now = useNow();
   const today = now.toISODate() ?? "";
+  const onKeyDown = usePeriodKeys(cfg.keyboardNavigation, { arrows: true });
 
   const { hourHeight } = metrics.timeGrid;
   const { minHour, maxHour, showCurrentTime, autoScrollToCurrentTime } = cfg;
@@ -190,6 +192,8 @@ export function TimeGridView({
   return (
     <View
       testID={id(testIDSuffix)}
+      onKeyDown={onKeyDown}
+      tabIndex={onKeyDown ? -1 : undefined}
       style={[styles.root, { backgroundColor: palette.bg }, cfg.styles.table]}
     >
       <View

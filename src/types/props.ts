@@ -121,6 +121,8 @@ export interface CalendarProps<TEvent extends CalendarEvent = CalendarEvent> {
   scheduleDays?: number;
   swipeNavigation?: boolean;
   showMorePopover?: boolean;
+  /** Web only: arrow keys, Home/End, PageUp/PageDown and T (default `true`). */
+  keyboardNavigation?: boolean;
   maxFontSizeMultiplier?: number;
   // Layout
   width?: DimensionValue;
@@ -205,6 +207,7 @@ export type ResolvedConfig<TEvent extends CalendarEvent = CalendarEvent> = Omit<
   | "scheduleDays"
   | "slotPressMode"
   | "showMorePopover"
+  | "keyboardNavigation"
   | "testID"
 > &
   Required<Pick<CalendarProps<TEvent>, DefaultedKey>> & {
@@ -217,5 +220,6 @@ export type ResolvedConfig<TEvent extends CalendarEvent = CalendarEvent> = Omit<
     scheduleDays: number;
     slotPressMode: SlotPressMode;
     showMorePopover: boolean;
+    keyboardNavigation: boolean;
     testID: string;
   };

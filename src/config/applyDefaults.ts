@@ -15,6 +15,7 @@ import type { CalendarEvent, CalendarProps, ResolvedConfig } from "../types";
 const NATIVE_DEFAULTS = {
   slotPressMode: "press",
   showMorePopover: true,
+  keyboardNavigation: true,
   maxFontSizeMultiplier: 1.5,
   testID: "calendar",
   styles: {},

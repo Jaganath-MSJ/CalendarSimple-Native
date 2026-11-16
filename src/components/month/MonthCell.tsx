@@ -2,7 +2,7 @@
  * @file One day of the month grid: background, date label and state colours
  * (port spec §4.2, TDD §8.3).
  */
-import { memo, useRef, type ComponentRef } from "react";
+import { memo, useEffect, useRef, type ComponentRef } from "react";
 import { StyleSheet, View, type Pressable } from "react-native";
 import {
   DATE_FORMATS,
@@ -33,6 +33,15 @@ export interface MonthCellProps<E extends CalendarEvent = CalendarEvent> {
   selected?: boolean;
   /** Theme state colours resolved by the view; resolved here when omitted. */
   resolved?: ThemeScheme;
+  /**
+   * Web keyboard navigation: `true` for the grid's single tab stop, `false`
+   * for the other cells, `undefined` when keyboard navigation is off.
+   */
+  tabStop?: boolean;
+  /** Changes when a key moves focus here; the cell then focuses itself. */
+  focusToken?: number;
+  /** Keeps the grid's tab stop on the cell that has focus. */
+  onFocus?: (info: CalendarDayInfo<E>) => void;
 }
 
 function MonthCellImpl<E extends CalendarEvent = CalendarEvent>({
@@ -43,8 +52,14 @@ function MonthCellImpl<E extends CalendarEvent = CalendarEvent>({
   onLongPress,
   selected = false,
   resolved: resolvedProp,
+  tabStop,
+  focusToken,
+  onFocus,
 }: MonthCellProps<E>) {
   const ref = useRef<ComponentRef<typeof Pressable>>(null);
+  useEffect(() => {
+    if (tabStop && focusToken) ref.current?.focus();
+  }, [tabStop, focusToken]);
   const cfg = useViewConfig();
   const { colorScheme } = useCalendarConfig();
   const { palette, metrics, flip } = useCalendarTheme();
@@ -124,6 +139,8 @@ function MonthCellImpl<E extends CalendarEvent = CalendarEvent>({
       onPress={onPress && (() => onPress(info, ref.current))}
       onLongPress={onLongPress && (() => onLongPress(info))}
       delayLongPress={500}
+      tabIndex={tabStop === undefined ? undefined : tabStop ? 0 : -1}
+      onFocus={onFocus && (() => onFocus(info))}
       accessibilityRole="button"
       accessibilityLabel={`${formatDate(currentDate, DATE_FORMATS.MONTH_DAY_YEAR, locale)}, ${messages.eventCount(totalEvents)}`}
       accessibilityState={{ selected }}
