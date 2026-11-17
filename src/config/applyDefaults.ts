@@ -19,6 +19,8 @@ const NATIVE_DEFAULTS = {
   dragSnapMinutes: 15,
   resizeSnapMinutes: 15,
   minEventDurationMinutes: 15,
+  minHourHeight: 30,
+  maxHourHeight: 180,
   maxFontSizeMultiplier: 1.5,
   testID: "calendar",
   styles: {},

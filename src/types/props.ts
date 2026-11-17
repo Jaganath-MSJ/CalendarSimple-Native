@@ -183,6 +183,23 @@ export interface CalendarProps<TEvent extends CalendarEvent = CalendarEvent> {
   resizeSnapMinutes?: number;
   /** Shortest length a resize leaves, in minutes (default 15). */
   minEventDurationMinutes?: number;
+  /**
+   * Pinch the time grid to change the hour height (with `<CalendarGestures>`
+   * from `calendar-simple-native/gestures`). Default `false`.
+   */
+  pinchToZoom?: boolean;
+  /**
+   * Height of one hour in the time grids, in pt. Set it to control the zoom
+   * (update it from `onHourHeightChange`); leave it out to let pinching
+   * change it. Default: the theme's 60.
+   */
+  hourHeight?: number;
+  /** Smallest hour height a pinch reaches (default 30). */
+  minHourHeight?: number;
+  /** Largest hour height a pinch reaches (default 180). */
+  maxHourHeight?: number;
+  /** A pinch ended at a new hour height. */
+  onHourHeightChange?: (hourHeight: number) => void;
   onMoreClick?: (date: Date, hiddenEvents: TEvent[]) => void;
   onNavigate?: (date: Date) => void;
   onViewChange?: (view: ECalendarViewType) => void;
@@ -262,6 +279,8 @@ export type ResolvedConfig<TEvent extends CalendarEvent = CalendarEvent> = Omit<
   | "dragSnapMinutes"
   | "resizeSnapMinutes"
   | "minEventDurationMinutes"
+  | "minHourHeight"
+  | "maxHourHeight"
   | "testID"
 > &
   Required<Pick<CalendarProps<TEvent>, DefaultedKey>> & {
@@ -278,5 +297,7 @@ export type ResolvedConfig<TEvent extends CalendarEvent = CalendarEvent> = Omit<
     dragSnapMinutes: number;
     resizeSnapMinutes: number;
     minEventDurationMinutes: number;
+    minHourHeight: number;
+    maxHourHeight: number;
     testID: string;
   };

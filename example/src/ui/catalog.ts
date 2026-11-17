@@ -105,8 +105,8 @@ const events = [
   },
   {
     key: "drag",
-    title: "Move & resize events",
-    description: "Long-press to drag an event, or its top or bottom edge",
+    title: "Gestures",
+    description: "Move and resize events with a long press; pinch to zoom",
     group: "features",
     view: ECalendarViewType.week,
     code: `import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -122,6 +122,7 @@ import { CalendarGestures } from "calendar-simple-native/gestures";
       onEventDrop={({ event, start, end }) => update(event.id, start, end)}
       resizable
       onEventResize={({ event, start, end }) => update(event.id, start, end)}
+      pinchToZoom
     />
   </CalendarGestures>
 </GestureHandlerRootView>`,

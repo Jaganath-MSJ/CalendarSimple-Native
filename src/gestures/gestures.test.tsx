@@ -5,7 +5,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Calendar } from "../components/Calendar";
 import { renderCalendar } from "../test-utils/renderCalendar";
 import { useFrozenClock } from "../test-utils/clock";
-import { CalendarGestures, pickMode, snapOffset } from ".";
+import { CalendarGestures, pickMode, snapOffset, zoomedHourHeight } from ".";
 
 // Gesture-handler installs UI-runtime bindings on load; the JS worklets
 // implementation has no UI runtime, so give it an empty holder.
@@ -15,10 +15,20 @@ jest.mock("react-native-worklets", () => ({
 }));
 
 // The detector needs the native UI runtime; layout is what is tested here
-// (gesture recognition is checked on devices).
+// (gesture recognition is checked on devices). Each render's gesture is kept.
+const mockGestures: unknown[] = [];
 jest.mock("react-native-gesture-handler", () => ({
   ...jest.requireActual<object>("react-native-gesture-handler"),
-  GestureDetector: ({ children }: { children: unknown }) => children,
+  GestureDetector: ({
+    children,
+    gesture,
+  }: {
+    children: unknown;
+    gesture: unknown;
+  }) => {
+    mockGestures.push(gesture);
+    return children;
+  },
 }));
 
 // eslint-disable-next-line react-hooks/rules-of-hooks -- not a React hook
@@ -94,4 +104,73 @@ it("CalendarGestures draws draggable events inside the gesture wrapper", async (
   )
     wrapper = wrapper.parent;
   expect(wrapper).toHaveStyle({ position: "absolute", top: 540, height: 60 });
+});
+
+describe("zoomedHourHeight", () => {
+  it("scales, rounds and stays inside the limits", () => {
+    expect(zoomedHourHeight(60, 1.5, 30, 180)).toBe(90);
+    expect(zoomedHourHeight(60, 1.234, 30, 180)).toBe(74);
+    expect(zoomedHourHeight(60, 10, 30, 180)).toBe(180);
+    expect(zoomedHourHeight(60, 0.1, 30, 180)).toBe(30);
+  });
+});
+
+it("CalendarGestures wraps the time grid when pinchToZoom is on", async () => {
+  await renderCalendar(
+    <GestureHandlerRootView>
+      <CalendarGestures>
+        <Calendar
+          view="week"
+          selectedDate={new Date(2026, 9, 22)}
+          events={[
+            {
+              id: "m",
+              title: "Meeting",
+              startDate: "2026-10-22T09:00:00",
+              endDate: "2026-10-22T10:00:00",
+            },
+          ]}
+          pinchToZoom
+          hourHeight={90}
+        />
+      </CalendarGestures>
+    </GestureHandlerRootView>,
+  );
+  expect(screen.getByTestId("calendar-m-day-event-item")).toHaveStyle({
+    top: 810,
+    height: 90,
+  });
+});
+
+it("the pinch activates as soon as two fingers are down", async () => {
+  mockGestures.length = 0;
+  await renderCalendar(
+    <GestureHandlerRootView>
+      <CalendarGestures>
+        <Calendar view="day" selectedDate={new Date(2026, 9, 22)} pinchToZoom />
+      </CalendarGestures>
+    </GestureHandlerRootView>,
+  );
+  type Touches = { numberOfTouches: number; allTouches: { y: number }[] };
+  type Handler = (e: Touches, m: { activate: () => void }) => void;
+  const pinch = mockGestures.at(-1) as {
+    config: { manualActivation?: boolean };
+    handlers: { onTouchesDown: Handler; onTouchesMove: Handler };
+  };
+  // It must not wait for its own threshold: the scroll views would take the
+  // touch first and cancel it.
+  expect(pinch.config.manualActivation).toBe(true);
+  const manager = { activate: jest.fn() };
+  pinch.handlers.onTouchesDown(
+    { numberOfTouches: 1, allTouches: [{ y: 100 }] },
+    manager,
+  );
+  expect(manager.activate).not.toHaveBeenCalled();
+  // Android begins a pinch after the second finger's down event: the first
+  // move with two fingers activates it too.
+  pinch.handlers.onTouchesMove(
+    { numberOfTouches: 2, allTouches: [{ y: 100 }, { y: 300 }] },
+    manager,
+  );
+  expect(manager.activate).toHaveBeenCalledTimes(1);
 });

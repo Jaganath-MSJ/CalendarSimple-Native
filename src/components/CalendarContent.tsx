@@ -20,6 +20,7 @@ import { useCalendar } from "../context/CalendarContext";
 import {
   DragStateProvider,
   useGestureAdapter,
+  ZoomStateProvider,
 } from "../context/GestureAdapterContext";
 import { CalendarLayoutProvider, PageProvider } from "../context/LayoutContext";
 import { useContainerLayout } from "../hooks/useContainerLayout";
@@ -96,14 +97,15 @@ export function CalendarContent({
   const { EventWrapper } = useGestureAdapter();
   const editable =
     (Boolean(config.draggable) && Boolean(config.onEventDrop)) ||
-    (Boolean(config.resizable) && Boolean(config.onEventResize));
+    (Boolean(config.resizable) && Boolean(config.onEventResize)) ||
+    Boolean(config.pinchToZoom);
   const withoutGestures = editable && !EventWrapper;
   useEffect(() => {
     if (__DEV__ && withoutGestures)
       console.warn(
-        "[calendar] draggable / resizable: wrap the calendar in " +
-          '<CalendarGestures> from "calendar-simple-native/gestures" to drag ' +
-          "events; without it only the screen-reader actions work.",
+        "[calendar] draggable / resizable / pinchToZoom: wrap the calendar " +
+          'in <CalendarGestures> from "calendar-simple-native/gestures" for ' +
+          "the gestures; without it only the screen-reader actions work.",
       );
   }, [withoutGestures]);
 
@@ -176,38 +178,40 @@ export function CalendarContent({
     >
       <CalendarThemeProvider value={theme}>
         <DragStateProvider>
-          <CalendarLayoutProvider value={layout}>
-            <CalendarErrorBoundary>
-              {children !== undefined ? (
-                measured ? (
-                  children
-                ) : null
-              ) : (
-                <>
-                  <View
-                    onLayout={(e) =>
-                      setHeaderHeight(e.nativeEvent.layout.height)
-                    }
-                  >
-                    {header}
-                  </View>
-                  {measured ? (
-                    <PeriodPager
-                      enabled={
-                        config.swipeNavigation && state.view !== "schedule"
+          <ZoomStateProvider>
+            <CalendarLayoutProvider value={layout}>
+              <CalendarErrorBoundary>
+                {children !== undefined ? (
+                  measured ? (
+                    children
+                  ) : null
+                ) : (
+                  <>
+                    <View
+                      onLayout={(e) =>
+                        setHeaderHeight(e.nativeEvent.layout.height)
                       }
-                      width={width}
-                      testID={testId}
-                      renderPage={renderPage}
-                      renderPlaceholder={renderPlaceholder}
-                      onPage={navigate}
-                      flip={flip}
-                    />
-                  ) : null}
-                </>
-              )}
-            </CalendarErrorBoundary>
-          </CalendarLayoutProvider>
+                    >
+                      {header}
+                    </View>
+                    {measured ? (
+                      <PeriodPager
+                        enabled={
+                          config.swipeNavigation && state.view !== "schedule"
+                        }
+                        width={width}
+                        testID={testId}
+                        renderPage={renderPage}
+                        renderPlaceholder={renderPlaceholder}
+                        onPage={navigate}
+                        flip={flip}
+                      />
+                    ) : null}
+                  </>
+                )}
+              </CalendarErrorBoundary>
+            </CalendarLayoutProvider>
+          </ZoomStateProvider>
         </DragStateProvider>
       </CalendarThemeProvider>
     </View>

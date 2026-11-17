@@ -57,11 +57,28 @@ export interface DragWrapperProps {
   onDragCancel: () => void;
 }
 
+/** Props the main package gives the time grid's pinch wrapper. */
+export interface ZoomWrapperProps {
+  /** The grid's content (hour rows and day columns). */
+  children: ReactNode;
+  /** Current hour height (pt). */
+  hourHeight: number;
+  minHourHeight: number;
+  maxHourHeight: number;
+  /** A pinch started (scrolling pauses). */
+  onZoomStart: () => void;
+  /**
+   * Released at `hourHeight` (pt, inside the limits; unchanged when
+   * cancelled), with the pinch's focal point `focalY` in the content (pt).
+   */
+  onZoomEnd: (hourHeight: number, focalY: number) => void;
+}
+
 export interface GestureAdapter {
   /** Wraps each draggable event (time grids, month chips). */
   EventWrapper?: ComponentType<DragWrapperProps>;
-  /** Wraps the time grid's content (pinch to zoom, v1.1). */
-  TimeGridWrapper?: ComponentType<{ children: ReactNode }>;
+  /** Wraps the time grid's content (`pinchToZoom`). */
+  TimeGridWrapper?: ComponentType<ZoomWrapperProps>;
 }
 
 const EMPTY: GestureAdapter = {};
@@ -111,4 +128,28 @@ export function DragStateProvider({ children }: { children: ReactNode }) {
 
 export function useDragState(): DragState {
   return useContext(DragStateContext);
+}
+
+/** Hour height set by pinching, shared by every page of the calendar. */
+interface ZoomState {
+  /** `undefined` until a pinch sets it. */
+  hourHeight?: number;
+  setHourHeight: (hourHeight: number) => void;
+}
+
+const ZoomStateContext = createContext<ZoomState>({ setHourHeight: () => {} });
+
+/** Provided once per calendar (`CalendarContent`). */
+export function ZoomStateProvider({ children }: { children: ReactNode }) {
+  const [hourHeight, setHourHeight] = useState<number | undefined>();
+  const value = useMemo(() => ({ hourHeight, setHourHeight }), [hourHeight]);
+  return (
+    <ZoomStateContext.Provider value={value}>
+      {children}
+    </ZoomStateContext.Provider>
+  );
+}
+
+export function useZoomState(): ZoomState {
+  return useContext(ZoomStateContext);
 }

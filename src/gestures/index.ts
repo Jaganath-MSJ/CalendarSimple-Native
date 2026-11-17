@@ -15,9 +15,11 @@ export {
   pickMode,
   snapOffset,
 } from "./DraggableEvent";
+export { PinchZoom, zoomedHourHeight } from "./PinchZoom";
 export type {
   DragMoveSpec,
   DragResizeSpec,
   DragWrapperProps,
   GestureAdapter,
+  ZoomWrapperProps,
 } from "../context/GestureAdapterContext";

@@ -1,8 +1,9 @@
 /**
- * @file Moving and resizing events: long-press an event and drag it, or
- * long-press near its top or bottom edge and drag that edge (`draggable`,
- * `onEventDrop`, `resizable`, `onEventResize`, `<CalendarGestures>`). The
- * screen owns the events and applies each change, as an app would.
+ * @file Gestures: long-press an event and drag it, or long-press near its
+ * top or bottom edge and drag that edge; pinch the hours to zoom
+ * (`draggable`, `onEventDrop`, `resizable`, `onEventResize`,
+ * `pinchToZoom`, `<CalendarGestures>`). The screen owns the events and
+ * applies each change, as an app would.
  */
 import { useCallback, useState } from "react";
 import { DateTime } from "luxon";
@@ -106,6 +107,8 @@ export default function DragScreen() {
       onEventDrop: (info) => onDrop(info, log),
       resizable: (e) => e.id !== "locked",
       onEventResize: (info) => onResize(info, log),
+      pinchToZoom: true,
+      onHourHeightChange: (h) => log(`Hour height: ${h}`),
     }),
     render: (props) => (
       <CalendarGestures>

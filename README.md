@@ -47,7 +47,7 @@ npm install calendar-simple-native
 There are no native modules, so no `pod install` or rebuild is needed beyond
 what your app already has. `luxon` comes in as a dependency. Dragging events
 is optional and uses gesture-handler and Reanimated (see
-[Moving and resizing events](#moving-and-resizing-events)).
+[Moving and resizing events](#gestures-move-resize-zoom)).
 
 ## Quick start
 
@@ -176,32 +176,35 @@ All props are optional. Dates in props and callbacks are JS `Date` objects.
 
 ### Behaviour
 
-| Prop                                            | Type                            | Default                   | Notes                                                                                      |
-| ----------------------------------------------- | ------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------ |
-| `is12Hour`                                      | `boolean \| "locale"`           | `false`                   | `"locale"` follows the locale's hour cycle                                                 |
-| `selectable`                                    | `boolean`                       | `false`                   | dates can be selected (`onDateClick`)                                                      |
-| `creatable`                                     | `boolean`                       | `false`                   | empty slots and cells call `onSlotClick`                                                   |
-| `slotPressMode`                                 | `"press" \| "longPress"`        | `"press"`                 | gesture that creates (hour slots and month cells)                                          |
-| `maxEvents`                                     | `number`                        | fits the cell             | events per month cell before "+N more"                                                     |
-| `dayType`                                       | `EDayType`                      | `"half"`                  | weekday name length                                                                        |
-| `pastYearLength` / `futureYearLength`           | `number`                        | `5` / `5`                 | years in the year picker; navigation itself is not limited                                 |
-| `showCurrentTime` / `autoScrollToCurrentTime`   | `boolean`                       | `false` / `false`         | now line; scroll it into view in time grids                                                |
-| `minHour` / `maxHour`                           | `number`                        | `0` / `24`                | hours shown in time grids                                                                  |
-| `weekStartsOn`                                  | `WeekdayIndex \| "locale"`      | `0` (Sunday)              | `"locale"` uses the locale's first day                                                     |
-| `weekEndsOn`                                    | `WeekdayIndex`                  | day before `weekStartsOn` | for work weeks, e.g. `1`–`5`                                                               |
-| `showAdjacentMonths` / `showWeekNumbers`        | `boolean`                       | `true` / `false`          | month view                                                                                 |
-| `resetDateOnViewChange`                         | `boolean`                       | `false`                   | jump back to today when the view changes                                                   |
-| `showAllDayRow`                                 | `boolean`                       | `true`                    | all-day banner in time grids                                                               |
-| `eventOverlapOffset`                            | `number`                        | `0`                       | percent of the column width; > 0 stacks overlapping events                                 |
-| `scheduleDays`                                  | `number`                        | `30`                      | length of the Schedule window from the selected date                                       |
-| `swipeNavigation`                               | `boolean`                       | `true` (`false` on web)   | swipe between periods in month and time grids                                              |
-| `showMorePopover`                               | `boolean`                       | `true`                    | `false` lets `onMoreClick` handle "+N more" alone                                          |
-| `draggable`                                     | `boolean \| (event) => boolean` | `false`                   | events can be moved; see [Moving and resizing events](#moving-and-resizing-events)         |
-| `dragSnapMinutes`                               | `number`                        | `15`                      | minutes per step when moving in time grids                                                 |
-| `resizable`                                     | `boolean \| (event) => boolean` | `false`                   | timed events can be resized; see [Moving and resizing events](#moving-and-resizing-events) |
-| `resizeSnapMinutes` / `minEventDurationMinutes` | `number` / `number`             | `15` / `15`               | minutes per resize step / shortest length a resize leaves                                  |
-| `keyboardNavigation`                            | `boolean`                       | `true`                    | web keys; see [Keyboard (web)](#keyboard-web)                                              |
-| `maxFontSizeMultiplier`                         | `number`                        | `1.5`                     | caps system font scaling for calendar text                                                 |
+| Prop                                            | Type                            | Default                   | Notes                                                                                     |
+| ----------------------------------------------- | ------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------- |
+| `is12Hour`                                      | `boolean \| "locale"`           | `false`                   | `"locale"` follows the locale's hour cycle                                                |
+| `selectable`                                    | `boolean`                       | `false`                   | dates can be selected (`onDateClick`)                                                     |
+| `creatable`                                     | `boolean`                       | `false`                   | empty slots and cells call `onSlotClick`                                                  |
+| `slotPressMode`                                 | `"press" \| "longPress"`        | `"press"`                 | gesture that creates (hour slots and month cells)                                         |
+| `maxEvents`                                     | `number`                        | fits the cell             | events per month cell before "+N more"                                                    |
+| `dayType`                                       | `EDayType`                      | `"half"`                  | weekday name length                                                                       |
+| `pastYearLength` / `futureYearLength`           | `number`                        | `5` / `5`                 | years in the year picker; navigation itself is not limited                                |
+| `showCurrentTime` / `autoScrollToCurrentTime`   | `boolean`                       | `false` / `false`         | now line; scroll it into view in time grids                                               |
+| `minHour` / `maxHour`                           | `number`                        | `0` / `24`                | hours shown in time grids                                                                 |
+| `weekStartsOn`                                  | `WeekdayIndex \| "locale"`      | `0` (Sunday)              | `"locale"` uses the locale's first day                                                    |
+| `weekEndsOn`                                    | `WeekdayIndex`                  | day before `weekStartsOn` | for work weeks, e.g. `1`–`5`                                                              |
+| `showAdjacentMonths` / `showWeekNumbers`        | `boolean`                       | `true` / `false`          | month view                                                                                |
+| `resetDateOnViewChange`                         | `boolean`                       | `false`                   | jump back to today when the view changes                                                  |
+| `showAllDayRow`                                 | `boolean`                       | `true`                    | all-day banner in time grids                                                              |
+| `eventOverlapOffset`                            | `number`                        | `0`                       | percent of the column width; > 0 stacks overlapping events                                |
+| `scheduleDays`                                  | `number`                        | `30`                      | length of the Schedule window from the selected date                                      |
+| `swipeNavigation`                               | `boolean`                       | `true` (`false` on web)   | swipe between periods in month and time grids                                             |
+| `showMorePopover`                               | `boolean`                       | `true`                    | `false` lets `onMoreClick` handle "+N more" alone                                         |
+| `draggable`                                     | `boolean \| (event) => boolean` | `false`                   | events can be moved; see [Moving and resizing events](#gestures-move-resize-zoom)         |
+| `dragSnapMinutes`                               | `number`                        | `15`                      | minutes per step when moving in time grids                                                |
+| `resizable`                                     | `boolean \| (event) => boolean` | `false`                   | timed events can be resized; see [Moving and resizing events](#gestures-move-resize-zoom) |
+| `resizeSnapMinutes` / `minEventDurationMinutes` | `number` / `number`             | `15` / `15`               | minutes per resize step / shortest length a resize leaves                                 |
+| `pinchToZoom`                                   | `boolean`                       | `false`                   | pinch the time grid to change the hour height (gestures entry)                            |
+| `hourHeight`                                    | `number`                        | theme (60)                | pt per hour in time grids; set it to control the zoom                                     |
+| `minHourHeight` / `maxHourHeight`               | `number` / `number`             | `30` / `180`              | limits for pinching                                                                       |
+| `keyboardNavigation`                            | `boolean`                       | `true`                    | web keys; see [Keyboard (web)](#keyboard-web)                                             |
+| `maxFontSizeMultiplier`                         | `number`                        | `1.5`                     | caps system font scaling for calendar text                                                |
 
 ### Layout
 
@@ -219,6 +222,7 @@ All props are optional. Dates in props and callbacks are JS `Date` objects.
 | `onEventLongPress`         | `(event: TEvent) => void`                                   | an event is long-pressed                            |
 | `onEventDrop`              | `(info: EventDropInfo<TEvent>) => void`                     | an event is moved (with `draggable`)                |
 | `onEventResize`            | `(info: EventResizeInfo<TEvent>) => void`                   | an event edge is dragged (with `resizable`)         |
+| `onHourHeightChange`       | `(hourHeight: number) => void`                              | a pinch ends at a new hour height                   |
 | `onMoreClick`              | `(date: Date, hiddenEvents: TEvent[]) => void`              | "+N more" is pressed                                |
 | `onNavigate`               | `(date: Date) => void`                                      | the period changes                                  |
 | `onViewChange`             | `(view: ECalendarViewType) => void`                         | the view changes                                    |
@@ -300,7 +304,7 @@ export function Meetings() {
 }
 ```
 
-## Moving and resizing events
+## Gestures: move, resize, zoom
 
 Set `draggable` and `onEventDrop` to move events, and `resizable` and
 `onEventResize` to resize them. The calendar never changes `events`
@@ -375,8 +379,41 @@ export function PlannerCalendar({ initial }: { initial: CalendarEvent[] }) {
 - Not yet: dragging into the next week or month, and between the all-day
   row and the hours.
 
+### Pinch to zoom
+
+With `pinchToZoom` (inside `<CalendarGestures>`), pinching a time grid
+changes the hour height between `minHourHeight` and `maxHourHeight`. During
+the pinch the grid stretches around your fingers; on release it is laid out
+at the new height, keeping the hour under your fingers in place, and
+`onHourHeightChange` fires. The height is shared by every page and view of
+the calendar.
+
+To control it (for example to save it, or to add zoom buttons), pass
+`hourHeight` and update it from `onHourHeightChange`. `hourHeight` also
+works on its own, without `pinchToZoom` or the gestures entry.
+
+```tsx
+import { useState } from "react";
+import Calendar from "calendar-simple-native";
+import { CalendarGestures } from "calendar-simple-native/gestures";
+
+export function ZoomableWeek() {
+  const [hourHeight, setHourHeight] = useState(60);
+  return (
+    <CalendarGestures>
+      <Calendar
+        view="week"
+        pinchToZoom
+        hourHeight={hourHeight}
+        onHourHeightChange={setHourHeight}
+      />
+    </CalendarGestures>
+  );
+}
+```
+
 The main entry does not import the gesture libraries, so apps that do not
-drag do not need them.
+use gestures do not need them.
 
 ## Loading events by range
 

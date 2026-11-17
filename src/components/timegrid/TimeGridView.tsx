@@ -21,9 +21,14 @@ import {
   type ScrollViewInstance,
 } from "react-native";
 import { ECalendarViewType, type DateType } from "../../core";
-import { useDragState } from "../../context/GestureAdapterContext";
+import {
+  useDragState,
+  useGestureAdapter,
+  useZoomState,
+} from "../../context/GestureAdapterContext";
 import {
   useCalendarLayout,
+  useIsCurrentPage,
   useTestID,
   useViewConfig,
 } from "../../context/LayoutContext";
@@ -82,9 +87,13 @@ export function TimeGridView({
         : undefined,
     [mover, days],
   );
-  const { dragging } = useDragState();
+  const { dragging, setDragging } = useDragState();
 
-  const { hourHeight } = metrics.timeGrid;
+  // Hour height: the prop (controlled), else the pinched value shared by
+  // every page, else the theme's.
+  const zoom = useZoomState();
+  const hourHeight =
+    cfg.hourHeight ?? zoom.hourHeight ?? metrics.timeGrid.hourHeight;
   const { minHour, maxHour, showCurrentTime, autoScrollToCurrentTime } = cfg;
   const { colWidth, scrollable, snap } = getColumnLayout({
     width: layout.width,
@@ -181,6 +190,42 @@ export function TimeGridView({
       r.current?.scrollToEnd({ animated: false });
   }, [startAtEnd]);
 
+  // Pinch to zoom: the wrapper scales the content during the pinch; on
+  // release the new height is committed once and the scroll offset moves so
+  // the hour under the fingers stays put.
+  const { TimeGridWrapper } = useGestureAdapter();
+  const current = useIsCurrentPage();
+  const Pinch = cfg.pinchToZoom && current ? TimeGridWrapper : undefined;
+  const scrollY = useRef(0);
+  const onVScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      scrollY.current = e.nativeEvent.contentOffset.y;
+    },
+    [],
+  );
+  const pendingFocus = useRef<{ y: number; from: number } | null>(null);
+  const { onHourHeightChange } = cfg;
+  const controlled = cfg.hourHeight !== undefined;
+  const { setHourHeight } = zoom;
+  const onZoomStart = useCallback(() => setDragging(true), [setDragging]);
+  const onZoomEnd = useCallback(
+    (next: number, focalY: number) => {
+      setDragging(false);
+      if (next === hourHeight) return;
+      pendingFocus.current = { y: focalY, from: hourHeight };
+      if (!controlled) setHourHeight(next);
+      onHourHeightChange?.(next);
+    },
+    [setDragging, hourHeight, controlled, setHourHeight, onHourHeightChange],
+  );
+  useLayoutEffect(() => {
+    const focus = pendingFocus.current;
+    if (!focus || focus.from === hourHeight) return;
+    pendingFocus.current = null;
+    const y = scrollY.current + focus.y * (hourHeight / focus.from - 1);
+    scrollRef.current?.scrollTo({ y: Math.max(0, y), animated: false });
+  }, [hourHeight]);
+
   const row = flip ? styles.rowFlipped : styles.row;
   const header = (
     <DayHeaderRow
@@ -207,6 +252,30 @@ export function TimeGridView({
           />
         );
       })}
+    </View>
+  );
+
+  const grid = (
+    <View style={row}>
+      <TimeColumn hourHeight={hourHeight} />
+      {scrollable ? (
+        <ScrollView
+          ref={hscrollRef}
+          testID={id("time-grid-hscroll")}
+          horizontal
+          scrollEnabled={!dragging}
+          onContentSizeChange={onHContentSize}
+          onScroll={onHScroll}
+          scrollEventThrottle={16}
+          snapToInterval={snap ? colWidth : undefined}
+          decelerationRate={snap ? "fast" : undefined}
+          showsHorizontalScrollIndicator={false}
+        >
+          {columns}
+        </ScrollView>
+      ) : (
+        columns
+      )}
     </View>
   );
 
@@ -255,29 +324,23 @@ export function TimeGridView({
         testID={id("time-grid-scroll")}
         onLayout={onScrollLayout}
         scrollEnabled={!dragging}
+        onScroll={onVScroll}
+        scrollEventThrottle={16}
         style={styles.root}
       >
-        <View style={row}>
-          <TimeColumn hourHeight={hourHeight} />
-          {scrollable ? (
-            <ScrollView
-              ref={hscrollRef}
-              testID={id("time-grid-hscroll")}
-              horizontal
-              scrollEnabled={!dragging}
-              onContentSizeChange={onHContentSize}
-              onScroll={onHScroll}
-              scrollEventThrottle={16}
-              snapToInterval={snap ? colWidth : undefined}
-              decelerationRate={snap ? "fast" : undefined}
-              showsHorizontalScrollIndicator={false}
-            >
-              {columns}
-            </ScrollView>
-          ) : (
-            columns
-          )}
-        </View>
+        {Pinch ? (
+          <Pinch
+            hourHeight={hourHeight}
+            minHourHeight={cfg.minHourHeight}
+            maxHourHeight={cfg.maxHourHeight}
+            onZoomStart={onZoomStart}
+            onZoomEnd={onZoomEnd}
+          >
+            {grid}
+          </Pinch>
+        ) : (
+          grid
+        )}
       </ScrollView>
     </View>
   );
