@@ -36,6 +36,7 @@ export type {
   CalendarStyles,
   EventDropInfo,
   EventResizeInfo,
+  HapticKind,
   RenderDateCellProps,
   RenderHeaderProps,
   SafeAreaInsets,

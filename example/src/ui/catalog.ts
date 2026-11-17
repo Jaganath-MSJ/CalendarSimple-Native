@@ -106,10 +106,12 @@ const events = [
   {
     key: "drag",
     title: "Gestures",
-    description: "Move and resize events with a long press; pinch to zoom",
+    description:
+      "Move and resize events with a long press; pinch to zoom; haptics",
     group: "features",
     view: ECalendarViewType.week,
-    code: `import { GestureHandlerRootView } from "react-native-gesture-handler";
+    code: `import * as Haptics from "expo-haptics";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Calendar from "calendar-simple-native";
 import { CalendarGestures } from "calendar-simple-native/gestures";
 
@@ -122,6 +124,11 @@ import { CalendarGestures } from "calendar-simple-native/gestures";
       onEventDrop={({ event, start, end }) => update(event.id, start, end)}
       resizable
       onEventResize={({ event, start, end }) => update(event.id, start, end)}
+      onHaptic={(kind) =>
+        kind === "snap"
+          ? Haptics.selectionAsync()
+          : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+      }
       pinchToZoom
     />
   </CalendarGestures>

@@ -55,6 +55,8 @@ export interface DragWrapperProps {
   onDragStart: () => void;
   /** It ended without a change, or the system cancelled it. */
   onDragCancel: () => void;
+  /** The snapped offset changed by a step while dragging (haptics). */
+  onStep?: () => void;
 }
 
 /** Props the main package gives the time grid's pinch wrapper. */

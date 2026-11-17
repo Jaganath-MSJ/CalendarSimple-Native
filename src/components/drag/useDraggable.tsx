@@ -2,12 +2,13 @@
  * @file What a draggable or resizable event needs: the gestures wrapper
  * (when an adapter is provided) and the screen-reader actions (always).
  */
-import type { ReactNode } from "react";
-import type {
-  AccessibilityActionEvent,
-  AccessibilityActionInfo,
-  StyleProp,
-  ViewStyle,
+import { useRef, type ReactNode } from "react";
+import {
+  Platform,
+  type AccessibilityActionEvent,
+  type AccessibilityActionInfo,
+  type StyleProp,
+  type ViewStyle,
 } from "react-native";
 import type { AxisBounds, DragBounds, ResizeEdge } from "../../core";
 import {
@@ -15,6 +16,10 @@ import {
   useGestureAdapter,
 } from "../../context/GestureAdapterContext";
 import { useViewConfig } from "../../context/LayoutContext";
+import type { HapticKind } from "../../types";
+
+/** Shortest gap between two `"snap"` haptics, in ms. */
+export const SNAP_HAPTIC_MS = 50;
 
 /** Moving the whole event (built by its column or week row). */
 export interface MoveSpec {
@@ -60,7 +65,8 @@ const NONE: Draggable = { wrapped: false, wrap: (_, node) => node };
 export function useDraggable(spec: DragSpec | undefined): Draggable {
   const { EventWrapper } = useGestureAdapter();
   const { setDragging } = useDragState();
-  const { messages } = useViewConfig();
+  const { messages, onHaptic } = useViewConfig();
+  const lastSnap = useRef(0);
   const { move, resize } = spec ?? {};
   if (!move && !resize) return NONE;
 
@@ -107,6 +113,17 @@ export function useDraggable(spec: DragSpec | undefined): Draggable {
       onAccessibilityAction,
     };
 
+  // Haptics are a native-app concern; web never gets them.
+  const haptic = (kind: HapticKind) => {
+    if (onHaptic && Platform.OS !== "web") onHaptic(kind);
+  };
+  const onStep = () => {
+    const now = Date.now();
+    if (now - lastSnap.current < SNAP_HAPTIC_MS) return;
+    lastSnap.current = now;
+    haptic("snap");
+  };
+
   return {
     wrapped: true,
     wrap: (frame, node) => (
@@ -119,6 +136,7 @@ export function useDraggable(spec: DragSpec | undefined): Draggable {
             bounds: move.bounds,
             onEnd: (dx, dy) => {
               setDragging(false);
+              haptic("drop");
               move.drop(dx, dy);
             },
           }
@@ -130,12 +148,20 @@ export function useDraggable(spec: DragSpec | undefined): Draggable {
             bottom: resize.bottom,
             onEnd: (edge, dy) => {
               setDragging(false);
+              haptic("resize");
               resize.drop(edge, dy);
             },
           }
         }
-        onDragStart={() => setDragging(true)}
-        onDragCancel={() => setDragging(false)}
+        onDragStart={() => {
+          setDragging(true);
+          haptic("lift");
+        }}
+        onDragCancel={() => {
+          setDragging(false);
+          haptic("cancel");
+        }}
+        onStep={onHaptic && Platform.OS !== "web" ? onStep : undefined}
       >
         {node}
       </EventWrapper>

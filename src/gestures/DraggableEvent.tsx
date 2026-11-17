@@ -78,6 +78,7 @@ export function DraggableEvent({
   resize,
   onDragStart,
   onDragCancel,
+  onStep,
 }: DragWrapperProps) {
   const tx = useSharedValue(0);
   const ty = useSharedValue(0);
@@ -138,14 +139,23 @@ export function DraggableEvent({
         runOnJS(onDragStart)();
       })
       .onUpdate((e) => {
+        let stepped = false;
         if (mode.value === MOVE) {
-          tx.value = snapOffset(e.translationX, mSnapX, minX, maxX);
-          ty.value = snapOffset(e.translationY, mSnapY, minY, maxY);
+          const x = snapOffset(e.translationX, mSnapX, minX, maxX);
+          const y = snapOffset(e.translationY, mSnapY, minY, maxY);
+          stepped = x !== tx.value || y !== ty.value;
+          tx.value = x;
+          ty.value = y;
         } else if (mode.value === TOP) {
-          dTop.value = snapOffset(e.translationY, rSnap, topMin, topMax);
+          const d = snapOffset(e.translationY, rSnap, topMin, topMax);
+          stepped = d !== dTop.value;
+          dTop.value = d;
         } else if (mode.value === BOTTOM) {
-          dBottom.value = snapOffset(e.translationY, rSnap, botMin, botMax);
+          const d = snapOffset(e.translationY, rSnap, botMin, botMax);
+          stepped = d !== dBottom.value;
+          dBottom.value = d;
         }
+        if (stepped && onStep) runOnJS(onStep)();
       })
       .onEnd(() => {
         const m = mode.value;
@@ -207,6 +217,7 @@ export function DraggableEvent({
     onDragCancel,
     onMoveEnd,
     onResizeEnd,
+    onStep,
     tx,
     ty,
     dTop,

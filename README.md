@@ -223,6 +223,7 @@ All props are optional. Dates in props and callbacks are JS `Date` objects.
 | `onEventDrop`              | `(info: EventDropInfo<TEvent>) => void`                     | an event is moved (with `draggable`)                |
 | `onEventResize`            | `(info: EventResizeInfo<TEvent>) => void`                   | an event edge is dragged (with `resizable`)         |
 | `onHourHeightChange`       | `(hourHeight: number) => void`                              | a pinch ends at a new hour height                   |
+| `onHaptic`                 | `(kind: HapticKind) => void`                                | a drag lifts, snaps, drops, resizes or cancels      |
 | `onMoreClick`              | `(date: Date, hiddenEvents: TEvent[]) => void`              | "+N more" is pressed                                |
 | `onNavigate`               | `(date: Date) => void`                                      | the period changes                                  |
 | `onViewChange`             | `(view: ECalendarViewType) => void`                         | the view changes                                    |
@@ -406,6 +407,56 @@ export function ZoomableWeek() {
         pinchToZoom
         hourHeight={hourHeight}
         onHourHeightChange={setHourHeight}
+      />
+    </CalendarGestures>
+  );
+}
+```
+
+### Haptics
+
+`onHaptic` tells you when to give haptic feedback during a drag or resize
+with `<CalendarGestures>`; the calendar itself has no haptics dependency,
+so you call your own. It is never called on web.
+
+| `kind`     | When                                                    |
+| ---------- | ------------------------------------------------------- |
+| `"lift"`   | the long press picks the event (or its edge) up         |
+| `"snap"`   | it crosses a snap step (at most every 50 ms)            |
+| `"drop"`   | a moved event is released at a new time                 |
+| `"resize"` | a resized edge is released at a new time                |
+| `"cancel"` | it is released where it started, or the system stops it |
+
+With `expo-haptics` (`npx expo install expo-haptics`):
+
+```tsx
+import * as Haptics from "expo-haptics";
+import Calendar, {
+  type CalendarEvent,
+  type EventDropInfo,
+  type HapticKind,
+} from "calendar-simple-native";
+import { CalendarGestures } from "calendar-simple-native/gestures";
+
+function haptic(kind: HapticKind) {
+  if (kind === "snap") return Haptics.selectionAsync();
+  if (kind === "drop" || kind === "resize")
+    return Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+}
+
+export function HapticWeek(props: {
+  events: CalendarEvent[];
+  onEventDrop: (info: EventDropInfo) => void;
+}) {
+  return (
+    <CalendarGestures>
+      <Calendar
+        view="week"
+        events={props.events}
+        draggable
+        onEventDrop={props.onEventDrop}
+        onHaptic={(kind) => void haptic(kind)}
       />
     </CalendarGestures>
   );

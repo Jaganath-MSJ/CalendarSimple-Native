@@ -86,6 +86,13 @@ export type DimensionValue = number | `${number}%`;
 
 export type SlotPressMode = "press" | "longPress";
 
+/**
+ * A moment in a drag or resize for `onHaptic`: the event lifts, it crosses
+ * a snap step, it is dropped, a resize is released, or the drag ends without
+ * a change.
+ */
+export type HapticKind = "lift" | "snap" | "drop" | "resize" | "cancel";
+
 /** What `onEventResize` receives when an event is resized. */
 export interface EventResizeInfo<TEvent extends CalendarEvent = CalendarEvent> {
   /** The event as shown (an occurrence for a recurring event). */
@@ -183,6 +190,13 @@ export interface CalendarProps<TEvent extends CalendarEvent = CalendarEvent> {
   resizeSnapMinutes?: number;
   /** Shortest length a resize leaves, in minutes (default 15). */
   minEventDurationMinutes?: number;
+  /**
+   * Moments to give haptic feedback for while dragging or resizing with
+   * `<CalendarGestures>` (`"snap"` at most every 50 ms). The calendar has
+   * no haptics dependency: call your own (e.g. `expo-haptics`). Never
+   * called on web.
+   */
+  onHaptic?: (kind: HapticKind) => void;
   /**
    * Pinch the time grid to change the hour height (with `<CalendarGestures>`
    * from `calendar-simple-native/gestures`). Default `false`.

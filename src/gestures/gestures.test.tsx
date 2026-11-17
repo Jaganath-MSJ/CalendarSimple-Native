@@ -1,6 +1,6 @@
 import "react-native-gesture-handler/jestSetup";
 import { StyleSheet, type ViewStyle } from "react-native";
-import { screen } from "@testing-library/react-native";
+import { act, screen } from "@testing-library/react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Calendar } from "../components/Calendar";
 import { renderCalendar } from "../test-utils/renderCalendar";
@@ -173,4 +173,58 @@ it("the pinch activates as soon as two fingers are down", async () => {
     manager,
   );
   expect(manager.activate).toHaveBeenCalledTimes(1);
+});
+
+it("reports a haptic snap only when the snapped offset changes", async () => {
+  mockGestures.length = 0;
+  const onHaptic = jest.fn<void, [string]>();
+  const now = jest.spyOn(Date, "now");
+  await renderCalendar(
+    <GestureHandlerRootView>
+      <CalendarGestures>
+        <Calendar
+          view="day"
+          selectedDate={new Date(2026, 9, 22)}
+          events={[
+            {
+              id: "m",
+              title: "Meeting",
+              startDate: "2026-10-22T09:00:00",
+              endDate: "2026-10-22T10:00:00",
+            },
+          ]}
+          draggable
+          onEventDrop={() => {}}
+          onHaptic={onHaptic}
+        />
+      </CalendarGestures>
+    </GestureHandlerRootView>,
+  );
+  type Pan = {
+    handlers: {
+      onStart: (e: { y: number }) => void;
+      onUpdate: (e: { translationX: number; translationY: number }) => void;
+    };
+  };
+  // The event's pan (the time grid has no pinch here).
+  const pan = mockGestures.find(
+    (g) => (g as { handlerName?: string }).handlerName === "PanGestureHandler",
+  ) as Pan;
+  pan.handlers.onStart({ y: 30 });
+  const update = async (dy: number, ms: number) => {
+    now.mockReturnValue(ms);
+    pan.handlers.onUpdate({ translationX: 0, translationY: dy });
+    // runOnJS calls back on a timer (fake here).
+    await act(() => jest.runOnlyPendingTimers());
+  };
+  await update(4, 1000); // still 0: no step
+  await update(9, 1100); // 15: a step
+  await update(12, 1200); // still 15
+  await update(-1, 1300); // back to 0: a step
+  now.mockRestore();
+  expect(onHaptic.mock.calls.map((c) => c[0])).toEqual([
+    "lift",
+    "snap",
+    "snap",
+  ]);
 });
