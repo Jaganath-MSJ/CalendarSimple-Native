@@ -3,7 +3,7 @@
  * over 150 ms on the native driver; instant under Reduce Motion.
  */
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Animated, StyleSheet } from "react-native";
+import { Animated, Platform, StyleSheet } from "react-native";
 import { useReduceMotion } from "../../hooks/useReduceMotion";
 
 const FADE_MS = 150;
@@ -27,7 +27,8 @@ export function FadeIn({ trigger, children }: FadeInProps) {
     const anim = Animated.timing(opacity, {
       toValue: 1,
       duration: FADE_MS,
-      useNativeDriver: true,
+      // No native driver on web (react-native-web warns and uses JS).
+      useNativeDriver: Platform.OS !== "web",
     });
     anim.start();
     return () => {

@@ -1,9 +1,9 @@
 import { StyleSheet, View } from "react-native";
 import Calendar from "../../../src";
-import { OCT_2026_EVENTS } from "../../../src/core/test/fixtures";
+import { DEMO_DATE, DEMO_EVENTS } from "../fixtures/demoEvents";
 import { useExampleScheme } from "../launch";
 
-/** Custom Days view (3 days) with the prototype October 2026 data set. */
+/** Custom Days view (3 days) with the demo data (the prototype October 2026 set plus generated weeks). */
 export default function CustomDaysScreen() {
   const scheme = useExampleScheme();
   return (
@@ -12,8 +12,8 @@ export default function CustomDaysScreen() {
         colorScheme={scheme}
         view="customDays"
         customDays={3}
-        events={OCT_2026_EVENTS}
-        selectedDate={new Date(2026, 9, 22)}
+        events={DEMO_EVENTS}
+        selectedDate={DEMO_DATE}
         showCurrentTime
         autoScrollToCurrentTime
         creatable

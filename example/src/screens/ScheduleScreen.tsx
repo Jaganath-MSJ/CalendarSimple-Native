@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import Calendar from "../../../src";
-import { OCT_2026_EVENTS } from "../../../src/core/test/fixtures";
+import { DEMO_DATE, DEMO_EVENTS } from "../fixtures/demoEvents";
 import { useExampleScheme } from "../launch";
 
 /** Schedule view: pull-to-refresh (1 s) and end reached (logged). */
@@ -22,8 +22,8 @@ export default function ScheduleScreen() {
       <Calendar
         colorScheme={scheme}
         view="schedule"
-        events={OCT_2026_EVENTS}
-        selectedDate={new Date(2026, 9, 22)}
+        events={DEMO_EVENTS}
+        selectedDate={DEMO_DATE}
         onRefresh={onRefresh}
         refreshing={refreshing}
         onEndReached={onEndReached}

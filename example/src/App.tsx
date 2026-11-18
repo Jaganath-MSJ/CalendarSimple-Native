@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import {
   BackHandler,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,6 +14,7 @@ import {
   View,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ECalendarViewType } from "../../src";
 import { SCREENS } from "./screens";
 import { forcedScheme, initialScreen, SchemeContext } from "./launch";
@@ -251,8 +253,10 @@ export default function App() {
     setState({ tab: "playground", demo: null });
   };
 
+  // Android's hardware back leaves a demo; web and iOS have no such button
+  // (react-native-web logs an error if BackHandler is used).
   useEffect(() => {
-    if (!demo) return;
+    if (!demo || Platform.OS !== "android") return;
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
       back();
       return true;
@@ -276,40 +280,42 @@ export default function App() {
     );
 
   return (
-    <SchemeContext.Provider value={SCHEME}>
-      <StatusBar style={c.dark ? "light" : "dark"} />
-      {wide ? (
-        <View style={[a.fill, a.wide, { backgroundColor: c.bgMuted }]}>
-          <Sidebar
-            current={tab === "playground" ? "playground" : (demo ?? "home")}
-            onSelect={(key) => {
-              if (key === "playground") toPlayground();
-              else if (key === "home")
-                setState({ tab: "showcase", demo: null });
-              else
-                setState({
-                  tab:
-                    entry(key)?.group === "developer"
-                      ? "developer"
-                      : "showcase",
-                  demo: key,
-                });
-            }}
-          />
-          <View style={a.fill}>{page}</View>
-        </View>
-      ) : (
-        <View style={[a.fill, { backgroundColor: c.bg }]}>
-          <View style={a.fill}>{page}</View>
-          {!item && (
-            <TabBar
-              tab={tab}
-              onChange={(t) => setState({ tab: t, demo: null })}
+    <GestureHandlerRootView style={a.fill}>
+      <SchemeContext.Provider value={SCHEME}>
+        <StatusBar style={c.dark ? "light" : "dark"} />
+        {wide ? (
+          <View style={[a.fill, a.wide, { backgroundColor: c.bgMuted }]}>
+            <Sidebar
+              current={tab === "playground" ? "playground" : (demo ?? "home")}
+              onSelect={(key) => {
+                if (key === "playground") toPlayground();
+                else if (key === "home")
+                  setState({ tab: "showcase", demo: null });
+                else
+                  setState({
+                    tab:
+                      entry(key)?.group === "developer"
+                        ? "developer"
+                        : "showcase",
+                    demo: key,
+                  });
+              }}
             />
-          )}
-        </View>
-      )}
-    </SchemeContext.Provider>
+            <View style={a.fill}>{page}</View>
+          </View>
+        ) : (
+          <View style={[a.fill, { backgroundColor: c.bg }]}>
+            <View style={a.fill}>{page}</View>
+            {!item && (
+              <TabBar
+                tab={tab}
+                onChange={(t) => setState({ tab: t, demo: null })}
+              />
+            )}
+          </View>
+        )}
+      </SchemeContext.Provider>
+    </GestureHandlerRootView>
   );
 }
 
