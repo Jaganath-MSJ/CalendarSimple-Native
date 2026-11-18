@@ -6,8 +6,12 @@ import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, View, type LayoutChangeEvent } from "react-native";
 import {
   calculateMaxEvents,
+  dateFn,
   DATE_FORMATS,
+  ECalendarViewType,
   formatDate,
+  getMonthKeyTarget,
+  isVisibleWeekday,
   MONTH_METRICS,
   resolveTheme,
   type CalendarDayInfo,
@@ -23,6 +27,13 @@ import {
   ViewConfigProvider,
 } from "../../context/LayoutContext";
 import { useCalendarProps } from "../../hooks/useCalendarProps";
+import {
+  readKey,
+  useKeyboardEnabled,
+  type WebKeyEvent,
+} from "../../hooks/useKeyboardNavigation";
+import { useNavigate } from "../../hooks/useNavigate";
+import { useEventMover } from "../../hooks/useEventMover";
 import { useMonthGrid } from "../../hooks/useMonthGrid";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent, CalendarProps, CalendarStyles } from "../../types";
@@ -74,7 +85,7 @@ export type MonthViewProps = Partial<
 export function MonthView({ date, ...local }: MonthViewProps) {
   const cfg = useCalendarProps(local);
   const { state, dispatch } = useCalendarState();
-  const { metrics, breakpoint } = useCalendarTheme();
+  const { metrics, breakpoint, flip } = useCalendarTheme();
   const layout = useCalendarLayout();
   const id = useTestID();
   const { colorScheme } = useCalendarConfig();
@@ -178,6 +189,70 @@ export function MonthView({ date, ...local }: MonthViewProps) {
     [creatable, createAt],
   );
 
+  // Web keyboard (keyboardNavigation): one cell is the tab stop (roving
+  // focus); keys move it, and leaving the month navigates.
+  const keyboard = useKeyboardEnabled(cfg.keyboardNavigation);
+  const navigate = useNavigate();
+  const { weekStartsOn, weekEndsOn } = cfg;
+  const [focusDay, setFocusDay] = useState<DateType | null>(null);
+  const [focusToken, setFocusToken] = useState(0);
+  const rovingDay = useMemo(() => {
+    const inMonth = (d: DateType | null): d is DateType =>
+      d !== null && d.hasSame(shown, "month");
+    const today = dateFn();
+    let day = inMonth(focusDay)
+      ? focusDay
+      : inMonth(selectedDate)
+        ? selectedDate
+        : inMonth(today)
+          ? today
+          : shown.startOf("month");
+    for (
+      let i = 0;
+      i < 7 && !isVisibleWeekday(day, weekStartsOn, weekEndsOn);
+      i++
+    )
+      day = day.plus({ days: 1 });
+    return day.startOf("day");
+  }, [focusDay, selectedDate, shown, weekStartsOn, weekEndsOn]);
+  const onCellFocus = useCallback(
+    (info: CalendarDayInfo<CalendarEvent>) => setFocusDay(info.currentDate),
+    [],
+  );
+  // Moving chips (draggable): one stable object for every week row.
+  const mover = useEventMover(cfg, ECalendarViewType.month);
+  const monthDrag = useMemo(
+    () => (mover ? { mover, matrix, rowHeight } : undefined),
+    [mover, matrix, rowHeight],
+  );
+
+  const rovingIso = rovingDay.toISODate() ?? "";
+  const gridKeyboard = useMemo(
+    () =>
+      keyboard
+        ? { focusIso: rovingIso, focusToken, onFocus: onCellFocus }
+        : undefined,
+    [keyboard, rovingIso, focusToken, onCellFocus],
+  );
+  const onKeyDown = useCallback(
+    (e: WebKeyEvent) => {
+      const key = readKey(e);
+      if (!key) return;
+      const target = getMonthKeyTarget(key, rovingDay, {
+        weekStartsOn,
+        weekEndsOn,
+        flip,
+        today: dateFn(),
+      });
+      if (!target) return;
+      e.preventDefault();
+      setFocusDay(target);
+      setFocusToken((n) => n + 1);
+      if (!target.hasSame(shown, "month")) navigate(target);
+    },
+    [rovingDay, weekStartsOn, weekEndsOn, flip, shown, navigate],
+  );
+
   const [popover, setPopover] = useState<{
     day: CalendarDayInfo<CalendarEvent>;
     anchor: Frame | null;
@@ -214,6 +289,7 @@ export function MonthView({ date, ...local }: MonthViewProps) {
           cfg.locale,
         )}
         onLayout={onLayout}
+        onKeyDown={keyboard ? onKeyDown : undefined}
         style={[styles.root, cfg.styles.table]}
       >
         {width > 0 ? (
@@ -231,6 +307,8 @@ export function MonthView({ date, ...local }: MonthViewProps) {
                 slotPressMode === "longPress" ? onCellLongPress : undefined,
               onMorePress,
               resolved,
+              keyboard: gridKeyboard,
+              drag: monthDrag,
             }}
           />
         ) : null}

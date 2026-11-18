@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DateTime, Info } from "luxon";
-import { clearNameCache, monthNames, weekdayNames } from "./names";
+import {
+  clearNameCache,
+  monthNames,
+  nameSource,
+  registerLocaleNames,
+  weekdayNames,
+} from "./names";
 import { formatDate } from "../utils/date";
 import { getDayListNames, getMonthList } from "../utils/formatting";
 import { buildLabelCache } from "../format/labels";
@@ -53,7 +59,88 @@ function emptyIntlNames(): void {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  registerLocaleNames("fr", undefined);
+  registerLocaleNames("fr-CA", undefined);
   clearNameCache();
+});
+
+const FR = {
+  months: [
+    "janv-L",
+    "févr-L",
+    "mars-L",
+    "avr-L",
+    "mai-L",
+    "juin-L",
+    "juil-L",
+    "août-L",
+    "sept-L",
+    "oct-L",
+    "nov-L",
+    "déc-L",
+  ],
+  monthsShort: ["j", "f", "m", "a", "m", "j", "j", "a", "s", "o", "n", "d"],
+  weekdays: ["dim-L", "lun-L", "mar-L", "mer-L", "jeu-L", "ven-L", "sam-L"],
+  weekdaysShort: ["di", "lu", "ma", "me", "je", "ve", "sa"],
+};
+
+describe("registerLocaleNames", () => {
+  it("wins over Luxon, Intl and English", () => {
+    registerLocaleNames("fr", FR);
+    expect(monthNames("long", "fr")[9]).toBe("oct-L");
+    expect(monthNames("short", "fr")[9]).toBe("o");
+    emptyLuxonNames();
+    emptyIntlNames();
+    clearNameCache();
+    expect(monthNames("long", "fr")[0]).toBe("janv-L");
+  });
+
+  it("takes weekdays Sunday first and returns them Monday first", () => {
+    registerLocaleNames("fr", FR);
+    expect(weekdayNames("long", "fr")[0]).toBe("lun-L");
+    expect(weekdayNames("short", "fr")[6]).toBe("di");
+    expect(getDayListNames(EDayType.half, "fr")[0]).toBe("di");
+  });
+
+  it("applies the language names to a region, and a region's own first", () => {
+    registerLocaleNames("fr", FR);
+    expect(monthNames("long", "fr-CA")[0]).toBe("janv-L");
+    registerLocaleNames("fr-CA", {
+      ...FR,
+      months: FR.months.map((m) => `${m}!`),
+    });
+    expect(monthNames("long", "fr-CA")[0]).toBe("janv-L!");
+    expect(monthNames("long", "fr")[0]).toBe("janv-L");
+  });
+
+  it("fills formatDate tokens even when Luxon has names", () => {
+    registerLocaleNames("fr", FR);
+    const d = DateTime.fromISO("2026-10-22T09:30:00");
+    expect(formatDate(d, "EEEE d MMMM yyyy", "fr")).toBe("jeu-L 22 oct-L 2026");
+  });
+
+  it("ignores an incomplete list", () => {
+    registerLocaleNames("fr", { months: ["only one"] });
+    expect(monthNames("long", "fr")[0]).toBe("janvier");
+  });
+
+  it("removes the names with undefined", () => {
+    registerLocaleNames("fr", FR);
+    registerLocaleNames("fr", undefined);
+    expect(monthNames("long", "fr")[0]).toBe("janvier");
+  });
+});
+
+describe("nameSource", () => {
+  it("reports each tier", () => {
+    expect(nameSource("month", "long", "fr")).toBe("luxon");
+    emptyLuxonNames();
+    expect(nameSource("month", "long", "fr")).toBe("intl");
+    emptyIntlNames();
+    expect(nameSource("weekday", "short", "ja")).toBe("english");
+    registerLocaleNames("fr", FR);
+    expect(nameSource("month", "long", "fr")).toBe("custom");
+  });
 });
 
 describe("name fallbacks", () => {

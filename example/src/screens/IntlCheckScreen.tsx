@@ -7,6 +7,39 @@ import {
   probeWeekdaysShort,
   probeWeekStart,
 } from "../intl/probes";
+import {
+  monthNames,
+  nameSource,
+  weekdayNames,
+} from "../../../src/core/i18n/names";
+
+/** Locales whose month and weekday names are checked on each engine. */
+const NAME_LOCALES = [
+  "fr",
+  "ja",
+  "de",
+  "es",
+  "ko",
+  "zh",
+  "ar-EG",
+  "he",
+  "hi",
+  "ru",
+  "pt-BR",
+  "th",
+];
+
+/** One line per locale: the source used and October / Monday as shown. */
+function nameRows(): { locale: string; text: string }[] {
+  return NAME_LOCALES.map((locale) => {
+    const months = nameSource("month", "long", locale);
+    const days = nameSource("weekday", "short", locale);
+    const text =
+      `months ${months}, weekdays ${days}: ` +
+      `${monthNames("long", locale)[9]} / ${weekdayNames("short", locale)[0]}`;
+    return { locale, text };
+  });
+}
 
 type Row = { label: string; value: string; expected: string };
 
@@ -67,6 +100,17 @@ export default function IntlCheckScreen() {
           </View>
         );
       })}
+      <Text style={styles.heading}>Names (custom, luxon, intl, english)</Text>
+      {nameRows().map((r) => (
+        <View
+          key={r.locale}
+          style={styles.row}
+          testID={`intl-names-${r.locale}`}
+        >
+          <Text style={styles.label}>{r.locale}</Text>
+          <Text style={styles.value}>{r.text}</Text>
+        </View>
+      ))}
     </ScrollView>
   );
 }
@@ -74,6 +118,7 @@ export default function IntlCheckScreen() {
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 12 },
   row: { gap: 2 },
+  heading: { fontSize: 16, fontWeight: "700", marginTop: 8 },
   label: { fontWeight: "600" },
   value: { fontSize: 14 },
 });

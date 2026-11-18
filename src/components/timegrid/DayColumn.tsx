@@ -10,11 +10,18 @@ import {
   type GestureResponderEvent,
 } from "react-native";
 import {
+  cellsMoved,
+  dateFn,
   DATE_FORMATS,
   formatDate,
+  getAxisBounds,
+  stepsMoved,
   type DateType,
   type DayEventLayout,
+  type ResizeEdge,
 } from "../../core";
+import type { EventMover } from "../../hooks/useEventMover";
+import type { DragSpec } from "../drag/useDraggable";
 import { useTestID, useViewConfig } from "../../context/LayoutContext";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
@@ -34,6 +41,8 @@ export interface DayColumnProps<E extends CalendarEvent = CalendarEvent> {
   nowTop: number | null;
   /** One labelled `Pressable` per hour instead of one column press target. */
   screenReader: boolean;
+  /** Moving events (`draggable`): the mover and this column's place. */
+  drag?: { mover: EventMover<E>; index: number; count: number };
 }
 
 /** One hour cell; memoised so `renderHourCell` runs once per slot. */
@@ -65,6 +74,7 @@ function DayColumnImpl<E extends CalendarEvent = CalendarEvent>({
   hourHeight,
   nowTop,
   screenReader,
+  drag,
 }: DayColumnProps<E>) {
   const cfg = useViewConfig<E>();
   const { palette } = useCalendarTheme();
@@ -148,6 +158,86 @@ function DayColumnImpl<E extends CalendarEvent = CalendarEvent>({
     () => layouts.map((l) => positionEvent(l, colWidth, hourHeight)),
     [layouts, colWidth, hourHeight],
   );
+  // Stable drag specs (TimedEventItem is memoised). Moving: up and down in
+  // dragSnapMinutes steps inside the grid, sideways across the visible days.
+  // Resizing: an edge moves in resizeSnapMinutes steps, inside the grid and
+  // never below minEventDurationMinutes; only edges inside this column.
+  const { minEventDurationMinutes } = cfg;
+  const specs = useMemo(() => {
+    if (!drag) return undefined;
+    const { mover, index, count } = drag;
+    const step = (hourHeight * mover.snapMinutes) / 60;
+    const resizeStep = (hourHeight * mover.resizeMinutes) / 60;
+    const minHeight = (hourHeight * minEventDurationMinutes) / 60;
+    const across = count > 1 ? colWidth : 0;
+    const x = getAxisBounds(index, count, colWidth, mover.reversed);
+    const gridStart = day.set({ hour: minHour });
+    const gridEnd = day.plus({ hours: maxHour });
+    return layouts.map((l, i): DragSpec | undefined => {
+      const ev = l.event;
+      const canMove = mover.canMove(ev);
+      const canResize = mover.canResize(ev);
+      if (!canMove && !canResize) return undefined;
+      const f = frames[i]!;
+      const shift = (days: number, minutes: number) =>
+        mover.move(ev, days, minutes);
+      const stretch = (edge: ResizeEdge, minutes: number) =>
+        mover.resize(ev, edge, minutes);
+      const start = dateFn(ev.startDate);
+      const end = ev.endDate ? dateFn(ev.endDate) : start;
+      const room = Math.max(0, f.height - minHeight);
+      return {
+        move: canMove
+          ? {
+              snapX: across,
+              snapY: step,
+              bounds: {
+                minX: across ? x.min : 0,
+                maxX: across ? x.max : 0,
+                minY: -f.top,
+                maxY: Math.max(0, height - f.top - f.height),
+              },
+              drop: (dx, dy) =>
+                shift(
+                  cellsMoved(dx, across, mover.reversed),
+                  stepsMoved(dy, step) * mover.snapMinutes,
+                ),
+              shift,
+              stepMinutes: mover.snapMinutes,
+            }
+          : undefined,
+        resize: canResize
+          ? {
+              snapY: resizeStep,
+              top: start >= gridStart ? { min: -f.top, max: room } : undefined,
+              bottom:
+                end <= gridEnd
+                  ? {
+                      min: -room,
+                      max: Math.max(0, height - f.top - f.height),
+                    }
+                  : undefined,
+              drop: (edge, dy) =>
+                stretch(edge, stepsMoved(dy, resizeStep) * mover.resizeMinutes),
+              stretch,
+              stepMinutes: mover.resizeMinutes,
+            }
+          : undefined,
+      };
+    });
+  }, [
+    drag,
+    layouts,
+    frames,
+    colWidth,
+    hourHeight,
+    height,
+    day,
+    minHour,
+    maxHour,
+    minEventDurationMinutes,
+  ]);
+
   const events = layouts.map((l, i) => {
     const base = l.event.id ?? `${l.event.startDate}-${i}`;
     return (
@@ -156,6 +246,7 @@ function DayColumnImpl<E extends CalendarEvent = CalendarEvent>({
         event={l.event}
         frame={frames[i]!}
         testID={id(`${base}-day-event-item`)}
+        drag={specs?.[i]}
       />
     );
   });

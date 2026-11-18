@@ -1,0 +1,7 @@
+{
+  "name": "calendar-simple-native/gestures",
+  "private": true,
+  "main": "../lib/module/gestures/index.js",
+  "types": "../lib/typescript/src/gestures/index.d.ts",
+  "react-native": "../src/gestures/index.ts"
+}
