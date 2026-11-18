@@ -1,7 +1,7 @@
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
-import reactPlugin from 'eslint-plugin-react'
+import eslintReact from '@eslint-react/eslint-plugin'
 import tseslint from 'typescript-eslint'
 import eslintConfigPrettier from 'eslint-config-prettier'
 
@@ -23,13 +23,16 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {
+    ...eslintReact.configs['recommended-type-checked'],
+    files: ['**/*.{js,jsx,ts,tsx}'],
+  },
+  {
     files: ['**/*.{js,jsx,ts,tsx}'],
     plugins: {
-      react: reactPlugin,
       'react-hooks': reactHooks,
     },
     settings: {
-      react: {
+      'react-x': {
         version: '19.2',
       },
     },
@@ -48,8 +51,6 @@ export default tseslint.config(
       },
     },
     rules: {
-      ...reactPlugin.configs.recommended.rules,
-      ...reactPlugin.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/explicit-module-boundary-types': 'off',
@@ -57,6 +58,20 @@ export default tseslint.config(
       '@typescript-eslint/no-empty-object-type': 'off',
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/refs': 'warn',
+      // Hooks are checked by eslint-plugin-react-hooks (above).
+      '@eslint-react/rules-of-hooks': 'off',
+      '@eslint-react/exhaustive-deps': 'off',
+      '@eslint-react/set-state-in-effect': 'off',
+      '@eslint-react/static-components': 'off',
+      // Style rules the project has not adopted (React 19 APIs, ref names).
+      '@eslint-react/no-use-context': 'off',
+      '@eslint-react/no-context-provider': 'off',
+      '@eslint-react/naming-convention-ref-name': 'off',
+      '@eslint-react/no-unnecessary-use-prefix': 'off',
+      // Positional lists (week rows, bar lanes, hour slots) never reorder.
+      '@eslint-react/no-array-index-key': 'off',
+      // Test probes are defined inside their tests on purpose.
+      '@eslint-react/no-nested-component-definitions': 'off',
     },
   },
   {
