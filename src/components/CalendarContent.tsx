@@ -219,6 +219,9 @@ export function CalendarContent({
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, overflow: "hidden" },
+  // Fill the parent but never outgrow it: on web, CSS sizes a non-shrinking
+  // box by its content (Yoga does not), which left the time grid and the
+  // schedule list as tall as their content, with nothing to scroll.
+  container: { flexGrow: 1, flexShrink: 1, overflow: "hidden" },
   body: { flex: 1 },
 });
