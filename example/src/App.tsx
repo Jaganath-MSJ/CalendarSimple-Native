@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import {
   BackHandler,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -252,8 +253,10 @@ export default function App() {
     setState({ tab: "playground", demo: null });
   };
 
+  // Android's hardware back leaves a demo; web and iOS have no such button
+  // (react-native-web logs an error if BackHandler is used).
   useEffect(() => {
-    if (!demo) return;
+    if (!demo || Platform.OS !== "android") return;
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
       back();
       return true;
