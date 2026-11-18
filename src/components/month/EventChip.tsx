@@ -9,6 +9,7 @@ import type { CalendarEvent } from "../../types";
 import { pickEventStyle } from "../eventStyle";
 import { CalendarText } from "../ui/CalendarText";
 import { CalendarPressable } from "../ui/CalendarPressable";
+import { useDraggable, type DragSpec } from "../drag/useDraggable";
 
 export interface EventChipProps<E extends CalendarEvent = CalendarEvent> {
   /** The app's own event object. */
@@ -20,6 +21,8 @@ export interface EventChipProps<E extends CalendarEvent = CalendarEvent> {
   width: number;
   height: number;
   testID?: string;
+  /** Set when the chip may move (`draggable`, chip variant). */
+  drag?: DragSpec;
 }
 
 export function EventChip<E extends CalendarEvent = CalendarEvent>({
@@ -30,7 +33,9 @@ export function EventChip<E extends CalendarEvent = CalendarEvent>({
   width,
   height,
   testID,
+  drag,
 }: EventChipProps<E>) {
+  const draggable = useDraggable(drag);
   const cfg = useViewConfig<E>();
   const { palette, metrics, flip } = useCalendarTheme();
   const { messages, renderEvent, onEventClick, onEventLongPress } = cfg;
@@ -42,19 +47,19 @@ export function EventChip<E extends CalendarEvent = CalendarEvent>({
     cfg.locale,
   );
   const bar = variant === "bar";
-  const frame = [
-    styles.chip,
+  const place = [
     flip ? { right: start } : { left: start },
+    { top, width, height },
+  ];
+  const look = [
     {
-      top,
-      width,
-      height,
       borderRadius: bar ? height / 2 : 4,
       borderWidth: colours.borderColor ? 1 : 0,
     },
     colours,
     cfg.styles.event,
   ];
+  const frame = [styles.chip, place, look];
   // Phone bars are decoration only: the cell opens the day sheet, whose rows
   // carry the event callbacks and labels.
   if (bar) {
@@ -67,15 +72,22 @@ export function EventChip<E extends CalendarEvent = CalendarEvent>({
       />
     );
   }
-  return (
+  return draggable.wrap(
+    [styles.slot, place],
     <CalendarPressable
       feedback="ring"
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={`${event.title || messages.noTitle}, ${tooltip}`}
+      accessibilityActions={draggable.accessibilityActions}
+      onAccessibilityAction={draggable.onAccessibilityAction}
       onPress={() => onEventClick?.(event)}
       onLongPress={() => onEventLongPress?.(event)}
-      style={frame}
+      style={
+        draggable.wrapped
+          ? [styles.chip, { top: 0, left: 0, width, height }, look]
+          : frame
+      }
     >
       {renderEvent ? (
         renderEvent(event)
@@ -90,11 +102,12 @@ export function EventChip<E extends CalendarEvent = CalendarEvent>({
           {event.title}
         </CalendarText>
       )}
-    </CalendarPressable>
+    </CalendarPressable>,
   );
 }
 
 const styles = StyleSheet.create({
+  slot: { position: "absolute", zIndex: 2 },
   chip: {
     position: "absolute",
     justifyContent: "center",

@@ -1,5 +1,5 @@
 import { I18nManager, Text } from "react-native";
-import { render, screen } from "@testing-library/react-native";
+import { act, render, screen } from "@testing-library/react-native";
 import Calendar from "../../index";
 import {
   momentumEndOn,
@@ -81,21 +81,30 @@ it("renders the neighbour pages after the first idle period", async () => {
 });
 
 it("renders the placeholder on neighbour pages until idle (TDD §8.5)", async () => {
-  await render(
-    <PeriodPager
-      enabled
-      width={W}
-      testID="t"
-      renderPage={page}
-      renderPlaceholder={(o) => <Text>{`skeleton ${o}`}</Text>}
-      onPage={jest.fn()}
-    />,
-  );
-  expect(screen.getByText("page 0")).toBeOnTheScreen();
-  expect(screen.getByText("skeleton 1")).toBeOnTheScreen();
-  expect(screen.queryByText("page 1")).toBeNull();
-  expect(await screen.findByText("page 1")).toBeOnTheScreen();
-  expect(screen.queryByText("skeleton 1")).toBeNull();
+  // Jest has no requestIdleCallback, so the idle gate is a 0 ms timer. With
+  // real timers it can fire while `render` is awaited (slow CI runners), so
+  // the test holds it until it has seen the placeholder.
+  jest.useFakeTimers();
+  try {
+    await render(
+      <PeriodPager
+        enabled
+        width={W}
+        testID="t"
+        renderPage={page}
+        renderPlaceholder={(o) => <Text>{`skeleton ${o}`}</Text>}
+        onPage={jest.fn()}
+      />,
+    );
+    expect(screen.getByText("page 0")).toBeOnTheScreen();
+    expect(screen.getByText("skeleton 1")).toBeOnTheScreen();
+    expect(screen.queryByText("page 1")).toBeNull();
+    await act(() => jest.runOnlyPendingTimers());
+    expect(screen.getByText("page 1")).toBeOnTheScreen();
+    expect(screen.queryByText("skeleton 1")).toBeNull();
+  } finally {
+    jest.useRealTimers();
+  }
 });
 
 it("review focus 4: five swipes through the Calendar land five months on", async () => {

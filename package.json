@@ -11,11 +11,17 @@
       "types": "./lib/typescript/src/index.d.ts",
       "default": "./lib/module/index.js"
     },
+    "./gestures": {
+      "calendar-simple-native-source": "./src/gestures/index.ts",
+      "types": "./lib/typescript/src/gestures/index.d.ts",
+      "default": "./lib/module/gestures/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
     "lib",
     "src",
+    "gestures",
     "MIGRATION.md",
     "!**/__tests__",
     "!**/*.test.*",
@@ -26,7 +32,7 @@
   ],
   "scripts": {
     "example": "npm exec --workspace calendar-simple-native-example -- expo",
-    "clean": "del-cli lib",
+    "clean": "node -e \"require('node:fs').rmSync('lib', { recursive: true, force: true })\"",
     "build": "bob build",
     "prepare": "husky && bob build",
     "typecheck": "tsc",
@@ -65,11 +71,12 @@
     "access": "public"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.5.3",
-    "@commitlint/config-conventional": "^20.5.3",
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@eslint-react/eslint-plugin": "5.28.8",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.64.1",
-    "@react-native/babel-preset": "0.88.0",
+    "@react-native/babel-preset": "0.88.1",
     "@semantic-release/changelog": "^7.0.0",
     "@semantic-release/git": "^11.0.1",
     "@size-limit/preset-small-lib": "^14.3.0",
@@ -77,37 +84,40 @@
     "@types/jest": "^30.0.0",
     "@types/luxon": "^3.7.1",
     "@types/react": "^19.2.0",
-    "@types/react-test-renderer": "^19.3.0",
+    "@types/react-test-renderer": "^19.3.1",
     "calendarize": "^1.1.1",
     "cldr-core": "^49.0.0",
-    "del-cli": "^8.0.1",
-    "eslint": "^10.13.0",
+    "eslint": "^10.15.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "expect-type": "^1.4.0",
     "expo": "~58.0.25",
-    "globals": "^17.13.0",
+    "globals": "^17.14.0",
     "husky": "^9.1.7",
     "jest": "^30.5.2",
-    "jest-expo": "^58.0.12",
-    "lint-staged": "^16.4.0",
+    "jest-expo": "^58.0.14",
+    "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
     "react": "19.3.0",
     "react-native": "0.88.1",
     "react-native-builder-bob": "^0.44.1",
-    "react-test-renderer": "^19.3.0",
+    "react-native-gesture-handler": "~3.3.0",
+    "react-native-reanimated": "4.7.1",
+    "react-native-worklets": "0.13.0",
+    "react-test-renderer": "19.3.0",
     "semantic-release": "^25.0.9",
     "serve": "^14.2.6",
     "size-limit": "^14.3.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.72.0",
-    "vitest": "^4.1.12"
+    "typescript-eslint": "^8.73.0",
+    "vitest": "^5.1.0"
   },
   "peerDependencies": {
     "react": ">=19",
     "react-native": ">=0.78",
-    "react-native-web": "*"
+    "react-native-web": "*",
+    "react-native-gesture-handler": ">=2.20.0",
+    "react-native-reanimated": ">=3.16.0"
   },
   "workspaces": [
     "example"
@@ -144,14 +154,16 @@
   "peerDependenciesMeta": {
     "react-native-web": {
       "optional": true
+    },
+    "react-native-gesture-handler": {
+      "optional": true
+    },
+    "react-native-reanimated": {
+      "optional": true
     }
   },
   "dependencies": {
     "luxon": "^3.7.2"
-  },
-  "overrides": {
-    "eslint": "$eslint",
-    "zod@<4.6.6": "^4.6.7"
   },
   "lint-staged": {
     "*.{js,ts,jsx,tsx}": [

@@ -15,7 +15,7 @@ ideas and pull requests are all welcome. By taking part you agree to the
 
 ## Setup
 
-Requires Node 20 or later and npm.
+Requires Node 22.22 or later (24 LTS recommended) and npm; the Git hooks (commitlint, lint-staged) and Vitest need it.
 
 ```sh
 git clone https://github.com/Jaganath-MSJ/CalendarSimple-Native.git

@@ -9,9 +9,22 @@ import { useTestID, useViewConfig } from "../../context/LayoutContext";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
 import { MonthCell } from "./MonthCell";
-import { WeekBarsOverlay, type WeekBarsOverlayProps } from "./WeekBarsOverlay";
+import {
+  WeekBarsOverlay,
+  type MonthDrag,
+  type WeekBarsOverlayProps,
+} from "./WeekBarsOverlay";
 import { CalendarText } from "../ui/CalendarText";
 import type { FocusAnchor } from "../ui/focusReturn";
+
+/** Web roving focus: the tab-stop day and the move counter (MonthView). */
+export interface GridKeyboard<E extends CalendarEvent = CalendarEvent> {
+  /** ISO date of the cell that is the tab stop. */
+  focusIso: string;
+  /** Increases on each key move; the tab-stop cell then takes focus. */
+  focusToken: number;
+  onFocus: (info: CalendarDayInfo<E>) => void;
+}
 
 export interface WeekRowProps<E extends CalendarEvent = CalendarEvent> {
   row: CalendarDayInfo<E>[];
@@ -29,6 +42,10 @@ export interface WeekRowProps<E extends CalendarEvent = CalendarEvent> {
   onMorePress?: WeekBarsOverlayProps<E>["onMorePress"];
   /** Theme state colours, resolved once by the view. */
   resolved?: ThemeScheme;
+  /** Web keyboard navigation; `undefined` when off. */
+  keyboard?: GridKeyboard<E>;
+  /** Moving chips (`draggable`); `undefined` when off. */
+  drag?: MonthDrag<E>;
 }
 
 function WeekRowImpl<E extends CalendarEvent = CalendarEvent>({
@@ -44,6 +61,8 @@ function WeekRowImpl<E extends CalendarEvent = CalendarEvent>({
   onCellLongPress,
   onMorePress,
   resolved,
+  keyboard,
+  drag,
 }: WeekRowProps<E>) {
   const cfg = useViewConfig<E>();
   const { palette, metrics, flip } = useCalendarTheme();
@@ -79,20 +98,29 @@ function WeekRowImpl<E extends CalendarEvent = CalendarEvent>({
           </CalendarText>
         </View>
       ) : null}
-      {row.map((info) => (
-        <MonthCell
-          key={info.currentDate.toISODate()}
-          info={info}
-          width={cellWidth}
-          height={height}
-          selected={isSelected(info)}
-          onPress={onCellPress}
-          onLongPress={onCellLongPress}
-          resolved={resolved}
-        />
-      ))}
+      {row.map((info) => {
+        const iso = info.currentDate.toISODate();
+        const focused = keyboard ? iso === keyboard.focusIso : undefined;
+        return (
+          <MonthCell
+            key={iso}
+            info={info}
+            width={cellWidth}
+            height={height}
+            selected={isSelected(info)}
+            onPress={onCellPress}
+            onLongPress={onCellLongPress}
+            resolved={resolved}
+            tabStop={focused}
+            focusToken={focused ? keyboard?.focusToken : undefined}
+            onFocus={keyboard?.onFocus}
+          />
+        );
+      })}
       <WeekBarsOverlay
         row={row}
+        rowIndex={rowIndex}
+        drag={drag}
         cellWidth={cellWidth}
         gutter={gutter}
         variant={variant}

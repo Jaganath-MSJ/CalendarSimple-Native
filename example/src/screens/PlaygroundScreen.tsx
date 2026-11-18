@@ -12,7 +12,7 @@ import Calendar, {
   type ColorScheme,
   type WeekdayIndex,
 } from "../../../src";
-import { OCT_2026_EVENTS } from "../../../src/core/test/fixtures";
+import { DEMO_DATE, DEMO_EVENTS } from "../fixtures/demoEvents";
 import { PALETTE } from "../../../src/theme/palette";
 import type { CalendarStyles, SlotPressMode } from "../../../src/types/props";
 import { fixtureList, largeDataset_1k } from "../fixtures/webFixtures";
@@ -64,7 +64,7 @@ const STYLE_SAMPLES: [string, CalendarStyles | undefined, string][] = [
     '{ dayNumber: { fontWeight: "700" }, tableDate: { fontWeight: "700" } }',
   ],
 ];
-const SAMPLE_DATE = new Date(2026, 9, 22);
+const SAMPLE_DATE = DEMO_DATE;
 const TABS = ["View", "Look", "Locale", "Data"] as const;
 type Tab = (typeof TABS)[number];
 
@@ -191,7 +191,7 @@ export default function PlaygroundScreen({
 
   const events = useMemo(() => {
     if (data === "none") return [];
-    if (data === "sample") return OCT_2026_EVENTS;
+    if (data === "sample") return DEMO_EVENTS;
     if (data === "1k") return largeDataset_1k();
     return fixtureList[data]?.fn() ?? [];
   }, [data]);
@@ -400,7 +400,7 @@ export default function PlaygroundScreen({
               label="Sample data"
               options={[
                 ["none", "0"],
-                ["sample", `${OCT_2026_EVENTS.length}`],
+                ["sample", `${DEMO_EVENTS.length}`],
                 ["1k", "1,000"],
               ]}
               value={typeof data === "number" ? null : data}

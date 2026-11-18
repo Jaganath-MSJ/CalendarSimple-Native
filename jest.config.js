@@ -8,6 +8,9 @@ const shared = {
   testMatch: ["<rootDir>/src/**/*.test.ts?(x)"],
   testPathIgnorePatterns: ["<rootDir>/src/core/"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
+  // Reanimated 4 / worklets run their JS implementation in Jest (gestures
+  // entry tests); this resolver skips their native-only files.
+  resolver: "react-native-reanimated/jest/resolver",
 };
 
 /** @type {import('jest').Config} */

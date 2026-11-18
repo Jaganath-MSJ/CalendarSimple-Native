@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Animated,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   useWindowDimensions,
@@ -84,7 +85,8 @@ export function AnchoredPopover({
     const anim = Animated.timing(progress, {
       toValue: 1,
       duration: 200,
-      useNativeDriver: true,
+      // No native driver on web (react-native-web warns and uses JS).
+      useNativeDriver: Platform.OS !== "web",
     });
     anim.start();
     return () => anim.stop();
