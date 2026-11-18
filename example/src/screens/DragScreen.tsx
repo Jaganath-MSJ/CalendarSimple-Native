@@ -144,6 +144,8 @@ export default function DragScreen() {
       customDays: view === ECalendarViewType.customDays ? 3 : undefined,
       draggable: (e) => e.id !== "locked",
       onEventDrop: (info) => onDrop(info, log),
+      // Like an app that opens the event: a drag must not also be a click.
+      onEventClick: (e) => log(`Opened ${e.title}`),
       resizable: (e) => e.id !== "locked",
       onEventResize: (info) => onResize(info, log),
       onHaptic: (kind) => {

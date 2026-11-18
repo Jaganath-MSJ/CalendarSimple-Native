@@ -58,15 +58,37 @@ export interface Draggable {
   wrap: (frame: StyleProp<ViewStyle>, node: ReactNode) => ReactNode;
   accessibilityActions?: AccessibilityActionInfo[];
   onAccessibilityAction?: (e: AccessibilityActionEvent) => void;
+  /**
+   * The event's press handlers. On web the press still ends after a drag
+   * (native gesture handlers cancel it); that one is not a click.
+   */
+  press: (onPress: () => void, onLongPress: () => void) => PressHandlers;
 }
 
-const NONE: Draggable = { wrapped: false, wrap: (_, node) => node };
+interface PressHandlers {
+  onPressIn?: () => void;
+  onPress: () => void;
+  onLongPress: () => void;
+}
+
+const passThrough = (onPress: () => void, onLongPress: () => void) => ({
+  onPress,
+  onLongPress,
+});
+
+const NONE: Draggable = {
+  wrapped: false,
+  wrap: (_, node) => node,
+  press: passThrough,
+};
 
 export function useDraggable(spec: DragSpec | undefined): Draggable {
   const { EventWrapper } = useGestureAdapter();
   const { setDragging } = useDragState();
   const { messages, onHaptic } = useViewConfig();
   const lastSnap = useRef(0);
+  // A drag began during the current press.
+  const dragged = useRef(false);
   const { move, resize } = spec ?? {};
   if (!move && !resize) return NONE;
 
@@ -111,6 +133,7 @@ export function useDraggable(spec: DragSpec | undefined): Draggable {
       wrap: NONE.wrap,
       accessibilityActions: actions,
       onAccessibilityAction,
+      press: passThrough,
     };
 
   // Haptics are a native-app concern; web never gets them.
@@ -154,6 +177,7 @@ export function useDraggable(spec: DragSpec | undefined): Draggable {
           }
         }
         onDragStart={() => {
+          dragged.current = true;
           setDragging(true);
           haptic("lift");
         }}
@@ -168,5 +192,16 @@ export function useDraggable(spec: DragSpec | undefined): Draggable {
     ),
     accessibilityActions: actions,
     onAccessibilityAction,
+    press: (onPress, onLongPress) => ({
+      onPressIn: () => {
+        dragged.current = false;
+      },
+      onPress: () => {
+        if (!dragged.current) onPress();
+      },
+      onLongPress: () => {
+        if (!dragged.current) onLongPress();
+      },
+    }),
   };
 }

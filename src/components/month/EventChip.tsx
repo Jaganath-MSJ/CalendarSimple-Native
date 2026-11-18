@@ -81,8 +81,10 @@ export function EventChip<E extends CalendarEvent = CalendarEvent>({
       accessibilityLabel={`${event.title || messages.noTitle}, ${tooltip}`}
       accessibilityActions={draggable.accessibilityActions}
       onAccessibilityAction={draggable.onAccessibilityAction}
-      onPress={() => onEventClick?.(event)}
-      onLongPress={() => onEventLongPress?.(event)}
+      {...draggable.press(
+        () => onEventClick?.(event),
+        () => onEventLongPress?.(event),
+      )}
       style={
         draggable.wrapped
           ? [styles.chip, { top: 0, left: 0, width, height }, look]
