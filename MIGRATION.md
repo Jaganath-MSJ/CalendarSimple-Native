@@ -90,3 +90,31 @@ export function Purple() {
   );
 }
 ```
+
+## Upgrading from calendar-simple-native 1.0
+
+Changes in 1.1 that can need edits in an app written for 1.0.
+
+### Event type: pass it explicitly
+
+The event type is no longer inferred from `events` or the callbacks (same as
+calendar-simple). Pass it as a type argument; without one, callbacks get a
+plain `CalendarEvent` (extra fields read as `unknown`).
+
+```tsx
+import Calendar, { type CalendarEvent } from "calendar-simple-native";
+
+interface Meeting extends CalendarEvent {
+  room: string;
+}
+
+export function Rooms({ meetings }: { meetings: Meeting[] }) {
+  // 1.0 also inferred Meeting from `events`; 1.1 needs <Meeting>.
+  return (
+    <Calendar<Meeting>
+      events={meetings}
+      onEventClick={(meeting) => console.log(meeting.room)}
+    />
+  );
+}
+```

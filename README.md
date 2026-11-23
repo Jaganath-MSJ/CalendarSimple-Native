@@ -267,7 +267,9 @@ All props are optional. Dates in props and callbacks are JS `Date` objects.
 ## Typed events (generics)
 
 `Calendar` is generic over the event type, so callbacks get your own fields
-back without casts.
+back without casts. Pass the type argument (`<Calendar<Meeting> …>`): the event
+type is never inferred from `events` or the callbacks, so without it every
+callback gets a plain `CalendarEvent` (same as calendar-simple).
 
 ```tsx
 import { Text } from "react-native";

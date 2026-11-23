@@ -121,11 +121,25 @@ export interface EventDropInfo<TEvent extends CalendarEvent = CalendarEvent> {
   view: ECalendarViewType;
 }
 
-/** Props of `<Calendar>` (TDD §6.3). */
+/**
+ * Blocks inference from a position, like TypeScript 5.4+ `NoInfer`, but works
+ * on older compilers: the deferred conditional index stops `T` being inferred.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type NoInferCompat<T> = [T][T extends any ? 0 : never];
+
+/**
+ * Props of `<Calendar>` (TDD §6.3).
+ *
+ * @typeParam TEvent - Your event shape (extends `CalendarEvent`). Types
+ * `events` and every callback and render prop that receives events. Set it
+ * with an explicit type argument (`<Calendar<Meeting> …>`); it is never
+ * inferred from `events` or the callbacks (same as calendar-simple).
+ */
 export interface CalendarProps<TEvent extends CalendarEvent = CalendarEvent> {
   children?: ReactNode;
   // Data
-  events?: TEvent[];
+  events?: NoInferCompat<TEvent>[];
   selectedDate?: Date;
   view?: ECalendarViewType;
   customDays?: number;
@@ -165,16 +179,16 @@ export interface CalendarProps<TEvent extends CalendarEvent = CalendarEvent> {
   safeAreaInsets?: SafeAreaInsets;
   // Callbacks
   onDateClick?: (date: Date) => void;
-  onEventClick?: (event: TEvent) => void;
-  onEventLongPress?: (event: TEvent) => void;
+  onEventClick?: (event: NoInferCompat<TEvent>) => void;
+  onEventLongPress?: (event: NoInferCompat<TEvent>) => void;
   /**
    * Lets events be moved: by long-press drag with `<CalendarGestures>` from
    * `calendar-simple-native/gestures`, and always by the screen-reader move
    * actions. A function decides per event. Needs `onEventDrop`.
    */
-  draggable?: boolean | ((event: TEvent) => boolean);
+  draggable?: boolean | ((event: NoInferCompat<TEvent>) => boolean);
   /** A moved event's new times. The calendar never changes `events` itself. */
-  onEventDrop?: (info: EventDropInfo<TEvent>) => void;
+  onEventDrop?: (info: EventDropInfo<NoInferCompat<TEvent>>) => void;
   /** Minutes per step when moving in time grids (default 15). */
   dragSnapMinutes?: number;
   /**
@@ -183,9 +197,9 @@ export interface CalendarProps<TEvent extends CalendarEvent = CalendarEvent> {
    * and by the screen-reader actions. A function decides per event. Needs
    * `onEventResize`.
    */
-  resizable?: boolean | ((event: TEvent) => boolean);
+  resizable?: boolean | ((event: NoInferCompat<TEvent>) => boolean);
   /** A resized event's new times. The calendar never changes `events`. */
-  onEventResize?: (info: EventResizeInfo<TEvent>) => void;
+  onEventResize?: (info: EventResizeInfo<NoInferCompat<TEvent>>) => void;
   /** Minutes per step when resizing (default 15). */
   resizeSnapMinutes?: number;
   /** Shortest length a resize leaves, in minutes (default 15). */
@@ -214,7 +228,7 @@ export interface CalendarProps<TEvent extends CalendarEvent = CalendarEvent> {
   maxHourHeight?: number;
   /** A pinch ended at a new hour height. */
   onHourHeightChange?: (hourHeight: number) => void;
-  onMoreClick?: (date: Date, hiddenEvents: TEvent[]) => void;
+  onMoreClick?: (date: Date, hiddenEvents: NoInferCompat<TEvent>[]) => void;
   onNavigate?: (date: Date) => void;
   onViewChange?: (view: ECalendarViewType) => void;
   onSlotClick?: (start: Date, end: Date) => void;
@@ -234,7 +248,7 @@ export interface CalendarProps<TEvent extends CalendarEvent = CalendarEvent> {
   locale?: string;
   localeMessages?: Partial<CalendarMessages>;
   // Render props
-  renderEvent?: (event: TEvent) => ReactNode;
+  renderEvent?: (event: NoInferCompat<TEvent>) => ReactNode;
   renderHeader?: (props: RenderHeaderProps) => ReactNode;
   renderDateCell?: (props: RenderDateCellProps) => ReactNode;
   renderHourCell?: (slotStart: Date) => ReactNode;
@@ -242,9 +256,10 @@ export interface CalendarProps<TEvent extends CalendarEvent = CalendarEvent> {
   // Performance
   eventsAreSorted?: boolean;
   enableEnrichedEvents?: boolean;
-  enrichedEventsByDate?: Record<string, TEvent[]>;
+  enrichedEventsByDate?: Record<string, NoInferCompat<TEvent>[]>;
   isEventOrderingEnabled?: boolean;
-  sortedMonthView?: boolean | ((a: TEvent, b: TEvent) => number);
+  sortedMonthView?:
+    boolean | ((a: NoInferCompat<TEvent>, b: NoInferCompat<TEvent>) => number);
 }
 
 /** Keys that `applyDefaults` always fills. */
