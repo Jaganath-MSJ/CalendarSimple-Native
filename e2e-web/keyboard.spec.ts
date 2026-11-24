@@ -128,3 +128,28 @@ test("phone: Enter opens the day sheet, Escape closes it", async ({ page }) => {
   await page.keyboard.press(" ");
   await expect(byID(page, "calendar-day-sheet")).toBeVisible();
 });
+
+test("event keys: Alt+arrows move, Alt+Shift+↓ resizes, focus stays", async ({
+  page,
+}) => {
+  await page.goto("/?screen=drag&scheme=light");
+  const item = byID(page, "calendar-review-day-event-item");
+  await item.focus();
+  await expect(item).toHaveAttribute(
+    "aria-keyshortcuts",
+    "Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight Alt+Shift+ArrowUp Alt+Shift+ArrowDown",
+  );
+  await page.keyboard.press("Alt+ArrowDown");
+  await expect(
+    page.getByText("Design review → Thu 22 Oct 10:15 (week)"),
+  ).toBeVisible();
+  await expect(item).toBeFocused();
+  // Redrawn in the next day's column: the new element takes focus.
+  await page.keyboard.press("Alt+ArrowRight");
+  await expect(
+    page.getByText("Design review → Fri 23 Oct 10:15 (week)"),
+  ).toBeVisible();
+  await expect(byID(page, "calendar-review-day-event-item")).toBeFocused();
+  await page.keyboard.press("Alt+Shift+ArrowDown");
+  await expect(page.getByText(/Design review ⇕ 10:15–11:30/)).toBeVisible();
+});

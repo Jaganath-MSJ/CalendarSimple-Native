@@ -2,10 +2,11 @@
  * @file Event chip with arrows on the sides where the event continues
  * (popover items and the all-day banner).
  */
-import type { ReactNode } from "react";
+import type { ComponentRef, ReactNode, Ref } from "react";
 import {
   StyleSheet,
   View,
+  type Pressable,
   type PressableProps,
   type StyleProp,
   type ViewStyle,
@@ -15,8 +16,12 @@ import { CalendarPressable } from "./CalendarPressable";
 
 /** Width of the arrow point, in px. */
 export const ARROW = 10;
-/** Padding on a clipped side (arrow point plus 4 px). */
-export const CLIPPED_PADDING = 14;
+/**
+ * Padding on a clipped side, from the arrow's base: the arrow sits outside
+ * the body, so the text starts `ARROW + 4` px from its point (14 px, as in
+ * calendar-simple).
+ */
+export const CLIPPED_PADDING = 4;
 const PADDING = 6;
 
 export interface ArrowChipProps extends Omit<
@@ -31,6 +36,7 @@ export interface ArrowChipProps extends Omit<
   height: number;
   style?: StyleProp<ViewStyle>;
   children: ReactNode;
+  ref?: Ref<ComponentRef<typeof Pressable>>;
 }
 
 function Arrow({
@@ -59,6 +65,12 @@ function Arrow({
       ]}
     />
   );
+}
+
+function squareCorners(side: "left" | "right"): ViewStyle {
+  return side === "left"
+    ? { borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }
+    : { borderTopRightRadius: 0, borderBottomRightRadius: 0 };
 }
 
 /** Mirrored when the calendar flips. */
@@ -91,6 +103,9 @@ export function ArrowChip({
           [flip ? "marginLeft" : "marginRight"]: clippedEnd ? ARROW : 0,
           [flip ? "paddingRight" : "paddingLeft"]: pad(clippedStart),
           [flip ? "paddingLeft" : "paddingRight"]: pad(clippedEnd),
+          // Square corners where an arrow joins, so no notch shows.
+          ...(clippedStart && squareCorners(startSide)),
+          ...(clippedEnd && squareCorners(endSide)),
         },
         style,
       ]}

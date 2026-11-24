@@ -126,3 +126,62 @@ export function getPeriodKeyAction(
       return null;
   }
 }
+
+/** What an event can do with the keyboard (web), from its drag setup. */
+export interface EventKeyOptions {
+  /** It can be moved; `stepMinutes` > 0 moves in time grids by minutes. */
+  move?: { stepMinutes: number; rowDays?: number; reversed?: boolean };
+  /** Its bottom edge can be resized, by this many minutes. */
+  resizeMinutes?: number;
+}
+
+/** A keyboard move (days, minutes) or bottom-edge resize (minutes). */
+export type EventKeyAction =
+  | { type: "move"; days: number; minutes: number }
+  | { type: "resize"; minutes: number };
+
+/**
+ * The move or resize for a key on a focused event, or `null` (calendar-simple
+ * keys): Alt+←/→ a day (mirrored when columns run right to left), Alt+↑/↓
+ * one time step (time grids) or `rowDays` days (Month: a week),
+ * Alt+Shift+↑/↓ the end by `resizeMinutes`.
+ */
+export function getEventKeyAction(
+  input: KeyInput,
+  options: EventKeyOptions,
+): EventKeyAction | null {
+  if (input.altKey !== true || input.ctrlKey || input.metaKey) return null;
+  const up = input.key === "ArrowUp";
+  const down = input.key === "ArrowDown";
+  if (input.shiftKey) {
+    const r = options.resizeMinutes;
+    if (!r || !(up || down)) return null;
+    return { type: "resize", minutes: up ? -r : r };
+  }
+  const m = options.move;
+  if (!m) return null;
+  if (input.key === "ArrowLeft" || input.key === "ArrowRight") {
+    const later = (input.key === "ArrowRight") !== (m.reversed === true);
+    return { type: "move", days: later ? 1 : -1, minutes: 0 };
+  }
+  if (!(up || down)) return null;
+  const sign = up ? -1 : 1;
+  if (m.stepMinutes > 0)
+    return { type: "move", days: 0, minutes: sign * m.stepMinutes };
+  if (m.rowDays) return { type: "move", days: sign * m.rowDays, minutes: 0 };
+  return null;
+}
+
+/** `aria-keyshortcuts` for an event with `options`, or `undefined`. */
+export function getEventKeyShortcuts(
+  options: EventKeyOptions,
+): string | undefined {
+  const list: string[] = [];
+  const m = options.move;
+  if (m && (m.stepMinutes > 0 || m.rowDays))
+    list.push("Alt+ArrowUp", "Alt+ArrowDown");
+  if (m) list.push("Alt+ArrowLeft", "Alt+ArrowRight");
+  if (options.resizeMinutes)
+    list.push("Alt+Shift+ArrowUp", "Alt+Shift+ArrowDown");
+  return list.length ? list.join(" ") : undefined;
+}

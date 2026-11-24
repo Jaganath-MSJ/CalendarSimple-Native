@@ -31,9 +31,7 @@ import type {
 import { DATE_FORMATS, TIME_CONSTANTS } from "../constants";
 import { buildMonthMatrix } from "./monthMatrix";
 
-type InternalCalendarEvent<E extends BaseCalendarEvent> = E & {
-  _tempId?: string;
-};
+type InternalCalendarEvent<E extends BaseCalendarEvent> = E;
 
 /**
  * Generates the grid of days and events for the monthly view.
@@ -160,6 +158,9 @@ export function buildMonthGrid<E extends BaseCalendarEvent>(
       ));
 
     let weekEvents: InternalCalendarEvent<E>[] = [];
+    // Slot ids kept beside the events: the events passed in are never
+    // written to (as calendar-simple 4b0423b).
+    const tempIds = new Map<E, string>();
 
     if (enableEnrichedEvents && enrichedEventsByDate) {
       const addedEventIds = new Set<string>();
@@ -265,8 +266,8 @@ export function buildMonthGrid<E extends BaseCalendarEvent>(
         }
       }
 
-      // Store the ID on the event object temporarily for step 5
-      event._tempId = eventId;
+      // Remember the slot id for step 5
+      tempIds.set(event, eventId);
     });
 
     // -------------------------------------------------------------------------
@@ -287,13 +288,13 @@ export function buildMonthGrid<E extends BaseCalendarEvent>(
 
       let maxDaySlot = -1;
       activeEvents.forEach((e) => {
-        const s = eventSlots.get(e._tempId!);
+        const s = eventSlots.get(tempIds.get(e)!);
         if (s !== undefined && s > maxDaySlot) maxDaySlot = s;
       });
 
       for (let s = 0; s <= maxDaySlot; s++) {
         const event = activeEvents.find(
-          (e) => eventSlots.get(e._tempId!) === s,
+          (e) => eventSlots.get(tempIds.get(e)!) === s,
         );
         if (event) {
           const { s: startOrd, e: endOrd } = span(event);

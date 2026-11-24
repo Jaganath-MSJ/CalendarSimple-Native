@@ -9,7 +9,7 @@ import {
   useState,
   type ReactElement,
 } from "react";
-import { dateFn, type ECalendarViewType } from "../core";
+import { dateFn, type CustomDaysCount, type ECalendarViewType } from "../core";
 import { applyDefaults } from "../config/applyDefaults";
 import { CalendarProvider, useCalendarState } from "../context/CalendarContext";
 import { useDateRangeNotifier } from "../hooks/useDateRangeNotifier";
@@ -89,7 +89,7 @@ function PropSync({
 }: {
   selectedDate?: Date;
   view?: ECalendarViewType;
-  customDays?: number;
+  customDays?: CustomDaysCount;
 }) {
   const { dispatch } = useCalendarState();
   const time = selectedDate?.getTime();

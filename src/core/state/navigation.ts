@@ -2,6 +2,7 @@
  * @file Shared navigation maths for the reducer and the pager's neighbour pages.
  */
 import type { DateType } from "../utils/date";
+import { clampCustomDays } from "../utils/customDays";
 import { ECalendarViewType } from "../types";
 import type { CalendarState } from "./calendarReducer";
 
@@ -9,7 +10,7 @@ import type { CalendarState } from "./calendarReducer";
  * Returns the date `NEXT` (`direction = 1`) or `PREV` (`-1`) moves to.
  * Navigation units map directly to Luxon duration keys (`month`, `week`, `day`);
  * `schedule` reuses `day` since it paginates one day at a time, and
- * `customDays` moves by `customDays` (default 3). Never clamped to the year
+ * `customDays` moves by `customDays` (1–7, default 3). Never clamped to the year
  * list (#12A).
  */
 export function getNavigatedDate(
@@ -18,7 +19,7 @@ export function getNavigatedDate(
 ): DateType {
   if (state.view === ECalendarViewType.customDays) {
     return state.selectedDate.plus({
-      days: direction * (state.customDays || 3),
+      days: direction * clampCustomDays(state.customDays),
     });
   }
   const unit = state.view === ECalendarViewType.schedule ? "day" : state.view;

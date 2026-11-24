@@ -8,6 +8,9 @@ export type ColorScheme = "light" | "dark" | "auto";
 /** Day of the week index: 0 = Sunday … 6 = Saturday. */
 export type WeekdayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
+/** Days the Custom Days view shows (`customDays`): 1–7. */
+export type CustomDaysCount = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
 /** Layout direction. */
 export type Direction = "ltr" | "rtl";
 

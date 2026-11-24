@@ -1,7 +1,8 @@
 /**
- * @file Custom Days view: `customDays` days from the selected date; renders
- * only for 1–10 days (port spec §4.3).
+ * @file Custom Days view: `customDays` days from the selected date. Any
+ * value is clamped to 1–7 (default 3), so the view always draws.
  */
+import { clampCustomDays } from "../../core";
 import { useCalendarState } from "../../context/CalendarContext";
 import { ViewConfigProvider } from "../../context/LayoutContext";
 import { useCalendarProps } from "../../hooks/useCalendarProps";
@@ -11,9 +12,6 @@ import type { CustomDaysViewProps } from "./WeekView";
 
 export type { CustomDaysViewProps } from "./WeekView";
 
-const MAX_CUSTOM_DAYS = 10;
-const DEFAULT_CUSTOM_DAYS = 3;
-
 export function CustomDaysView({
   date,
   customDays: localDays,
@@ -21,13 +19,12 @@ export function CustomDaysView({
 }: CustomDaysViewProps) {
   const cfg = useCalendarProps(local);
   const { state } = useCalendarState();
-  const customDays = localDays ?? state.customDays ?? DEFAULT_CUSTOM_DAYS;
+  const customDays = clampCustomDays(localDays ?? state.customDays);
   const days = useVisibleDays("customDays", date ?? state.selectedDate, {
     weekStartsOn: cfg.weekStartsOn,
     weekEndsOn: cfg.weekEndsOn,
     customDays,
   });
-  if (!(customDays >= 1 && customDays <= MAX_CUSTOM_DAYS)) return null;
   return (
     <ViewConfigProvider value={cfg}>
       <TimeGridView

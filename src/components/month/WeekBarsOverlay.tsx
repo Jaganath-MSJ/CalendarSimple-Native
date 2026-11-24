@@ -64,6 +64,7 @@ function chipDrag<E extends CalendarEvent>(
   const shift = (days: number, minutes: number) =>
     mover.move(event, days, minutes);
   return {
+    focusKey: event.id,
     move: {
       snapX: cellWidth,
       snapY: rowHeight,
@@ -78,6 +79,9 @@ function chipDrag<E extends CalendarEvent>(
       },
       shift,
       stepMinutes: 0,
+      // Alt+↑/↓ move a week (one row); Alt+←/→ follow the columns.
+      rowDays: 7,
+      reversed: mover.reversed,
     },
   };
 }

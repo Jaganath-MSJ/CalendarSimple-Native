@@ -30,6 +30,25 @@ describe("calendarReducer", () => {
       key(calendarReducer(s("2026-10-22", "customDays"), { type: "PREV" })),
     ).toBe("2026-10-19");
   });
+  it("custom days are clamped to 1–7 when set (calendar-simple)", () => {
+    expect(s("2026-10-22", "customDays", 12).customDays).toBe(7);
+    expect(s("2026-10-22", "customDays").customDays).toBeUndefined();
+    const set = (payload: number | undefined) =>
+      calendarReducer(s("2026-10-22", "customDays", 3), {
+        type: "SET_CUSTOM_DAYS",
+        payload,
+      }).customDays;
+    expect([set(0), set(4.4), set(9), set(undefined)]).toEqual([
+      1,
+      4,
+      7,
+      undefined,
+    ]);
+    // Moves by the clamped count.
+    expect(
+      key(calendarReducer(s("2026-10-22", "customDays", 30), { type: "NEXT" })),
+    ).toBe("2026-10-29");
+  });
   it("schedule moves one day", () =>
     expect(
       key(calendarReducer(s("2026-10-22", "schedule"), { type: "NEXT" })),

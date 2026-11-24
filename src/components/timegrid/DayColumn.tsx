@@ -187,6 +187,7 @@ function DayColumnImpl<E extends CalendarEvent = CalendarEvent>({
       const end = ev.endDate ? dateFn(ev.endDate) : start;
       const room = Math.max(0, f.height - minHeight);
       return {
+        focusKey: ev.id,
         move: canMove
           ? {
               snapX: across,
@@ -204,6 +205,7 @@ function DayColumnImpl<E extends CalendarEvent = CalendarEvent>({
                 ),
               shift,
               stepMinutes: mover.snapMinutes,
+              reversed: mover.reversed,
             }
           : undefined,
         resize: canResize

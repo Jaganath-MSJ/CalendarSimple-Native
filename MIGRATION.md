@@ -118,3 +118,19 @@ export function Rooms({ meetings }: { meetings: Meeting[] }) {
   );
 }
 ```
+
+### `customDays` takes 1–7
+
+`customDays` is now typed `CustomDaysCount` (`1 | 2 | 3 | 4 | 5 | 6 | 7`,
+exported), as in calendar-simple. Other numbers (from JavaScript or stored
+settings) are rounded and clamped to 1–7 (`NaN` gives 3), so the view always
+draws; 1.0 drew nothing outside 1–10. In TypeScript, a `number` variable
+needs narrowing:
+
+```tsx
+import Calendar, { type CustomDaysCount } from "calendar-simple-native";
+
+export function Planner({ days }: { days: number }) {
+  return <Calendar view="customDays" customDays={days as CustomDaysCount} />;
+}
+```

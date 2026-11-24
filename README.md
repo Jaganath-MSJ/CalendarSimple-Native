@@ -8,7 +8,7 @@ v2.1 and keeps its props, callbacks and render props.
 [Live demo](https://calendar-simple-native.netlify.app/) ·
 [Try it in Expo Snack](https://snack.expo.dev/@msj_jagan/calendar-simple-native-demo)
 
-- Month, Week, Day, Custom Days (1–10) and Schedule views
+- Month, Week, Day, Custom Days (1–7) and Schedule views
 - Swipe paging, pull-to-refresh and "load more" in Schedule
 - Light, dark and automatic colour schemes, palette and per-state theme
 - Locale-aware names, times, week start and right-to-left layout
@@ -173,7 +173,7 @@ All props are optional. Dates in props and callbacks are JS `Date` objects.
 | `events`                      | `TEvent[]`                    | `[]`         |                                                     |
 | `selectedDate`                | `Date`                        | today        | synced into the calendar whenever its value changes |
 | `view`                        | `ECalendarViewType`           | `"month"`    | `month`, `week`, `day`, `customDays`, `schedule`    |
-| `customDays`                  | `number`                      | 3            | days in the Custom Days view, 1–10                  |
+| `customDays`                  | `CustomDaysCount` (1–7)       | 3            | days in the Custom Days view; other values clamp    |
 | `testID`                      | `string`                      | `"calendar"` | prefix of every test ID                             |
 | `isLoading` / `renderLoading` | `boolean` / `() => ReactNode` | `false` / —  | skeleton when empty, overlay over existing events   |
 
@@ -374,6 +374,8 @@ export function PlannerCalendar({ initial }: { initial: CalendarEvent[] }) {
 - **Month:** chips move by days and weeks inside the grid; a timed event
   keeps its time. On phones the month view shows bars, so drag in the time
   grids there.
+- **All-day row (Week, Day, Custom Days):** chips move sideways by whole
+  days inside the visible days; a timed multi-day event keeps its times.
 - `onEventDrop` receives `{ event, start, end, allDay, view }`; `end` keeps
   the length (equal to `start` when the event has no `endDate`). A recurring
   event's occurrence is passed as shown (see `recurringEventId`).
@@ -382,8 +384,10 @@ export function PlannerCalendar({ initial }: { initial: CalendarEvent[] }) {
   shorter" on resizable ones, with or without `<CalendarGestures>`. Their
   labels come from `localeMessages` (`moveEarlier`, `moveLater`,
   `movePreviousDay`, `moveNextDay`, `makeLonger`, `makeShorter`).
+- On web, a focused event also moves with Alt + arrow keys and resizes with
+  Alt + Shift + ↑ / ↓ (see [Keyboard](#keyboard-web)).
 - Not yet: dragging into the next week or month, and between the all-day
-  row and the hours.
+  row and the hours (same as calendar-simple).
 
 ### Pinch to zoom
 
@@ -684,10 +688,18 @@ Android ignore the prop.
 | Schedule   | ↑ ↓ / PageUp, PageDown | Move between rows / move the window                           |
 | All views  | T                      | Today                                                         |
 | Overlays   | Escape                 | Close the popover, sheet or menu; focus returns to its opener |
+| Event      | Alt + ↑ ↓              | Move by `dragSnapMinutes` (Month: a week), with `draggable`   |
+| Event      | Alt + ← →              | Move a day, with `draggable`                                  |
+| Event      | Alt + Shift + ↑ ↓      | Move the end by `resizeSnapMinutes`, with `resizable`         |
 
 The month grid is one Tab stop (the focused day). Event chips stay in reading
 order, after their week's days. ← and → swap in right-to-left layouts. Keys
 typed into a text field inside a custom renderer are ignored.
+
+The event keys work on any focused draggable or resizable event, with or
+without `<CalendarGestures>`, and are listed in its `aria-keyshortcuts`.
+After a move the event keeps focus, also when it is redrawn in another
+column. They report through `onEventDrop` / `onEventResize` like a drag.
 
 ## Performance
 

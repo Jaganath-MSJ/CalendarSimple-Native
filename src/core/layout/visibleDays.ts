@@ -3,6 +3,7 @@
  */
 import { getDayOfWeek, type DateType } from "../utils/date";
 import { TIME_CONSTANTS } from "../constants";
+import { clampCustomDays } from "../utils/customDays";
 
 /** Options for `getVisibleDays`. */
 export interface VisibleDaysOptions {
@@ -15,7 +16,7 @@ export interface VisibleDaysOptions {
  * Returns the visible days at start of day.
  * - `week`: from the day aligned to `weekStartsOn` through `weekEndsOn`.
  * - `day`: `[selectedDate]`.
- * - `customDays`: `customDays` (default 3) days from `selectedDate`.
+ * - `customDays`: `customDays` (1–7, default 3) days from `selectedDate`.
  */
 export function getVisibleDays(
   view: "week" | "day" | "customDays",
@@ -26,7 +27,7 @@ export function getVisibleDays(
   const day = selectedDate.startOf("day");
   if (view === "day") return [day];
   if (view === "customDays") {
-    return Array.from({ length: customDays ?? 3 }, (_, i) =>
+    return Array.from({ length: clampCustomDays(customDays) }, (_, i) =>
       day.plus({ days: i }),
     );
   }

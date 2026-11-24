@@ -8,6 +8,7 @@ import type {
   CalendarMessages,
   CalendarTheme,
   ColorScheme,
+  CustomDaysCount,
   Direction,
   ECalendarViewType,
   EDayType,
@@ -142,7 +143,8 @@ export interface CalendarProps<TEvent extends CalendarEvent = CalendarEvent> {
   events?: NoInferCompat<TEvent>[];
   selectedDate?: Date;
   view?: ECalendarViewType;
-  customDays?: number;
+  /** Days the Custom Days view shows: 1–7 (default 3). */
+  customDays?: CustomDaysCount;
   testID?: string;
   isLoading?: boolean;
   renderLoading?: () => ReactNode;

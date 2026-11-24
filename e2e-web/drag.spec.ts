@@ -73,3 +73,17 @@ test("week: drag the top edge to start earlier", async ({ page }) => {
     page.getByText("Design review ⇕ 09:00–11:00 (top)"),
   ).toBeVisible();
 });
+
+test("week: drag an all-day chip a day later (sideways only)", async ({
+  page,
+}) => {
+  const chip = page.locator('[data-testid="calendar-release-all-day-event"]');
+  const column = (await page
+    .locator('[data-testid="calendar-review-day-event-item"]')
+    .boundingBox())!.width;
+  // Vertical movement is ignored; one column right is one day later.
+  await drag(page, chip, column + 2, 40);
+  await expect(
+    page.getByText("Release → Wed 21 Oct 00:00 (week)"),
+  ).toBeVisible();
+});

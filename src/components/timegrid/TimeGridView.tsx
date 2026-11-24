@@ -317,6 +317,7 @@ export function TimeGridView({
           onToggle={onToggleBanner}
           banner={banner}
           scrollRef={bannerRef}
+          mover={mover}
         />
       ) : null}
       <ScrollView

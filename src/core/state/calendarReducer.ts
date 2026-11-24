@@ -2,7 +2,8 @@
  * @file Calendar state reducer (ported from web `context/CalendarContext.tsx`).
  */
 import { dateFn, type DateType } from "../utils/date";
-import type { ECalendarViewType } from "../types";
+import { clampCustomDays } from "../utils/customDays";
+import type { CustomDaysCount, ECalendarViewType } from "../types";
 import { CALENDAR_ACTIONS } from "../constants";
 import { getNavigatedDate } from "./navigation";
 
@@ -14,8 +15,8 @@ export interface CalendarState {
   selectedDate: DateType;
   /** The active view mode. */
   view: ECalendarViewType;
-  /** Number of days shown when view is `customDays`. */
-  customDays?: number;
+  /** Days shown when view is `customDays` (1–7; unset means 3). */
+  customDays?: CustomDaysCount;
   /** Days added to the schedule window by `EXTEND_SCHEDULE`; reset by navigation and view change. */
   scheduleExtraDays: number;
 }
@@ -46,7 +47,13 @@ export function createInitialState(
   view: ECalendarViewType,
   customDays?: number,
 ): CalendarState {
-  return { selectedDate, view, customDays, scheduleExtraDays: 0 };
+  return {
+    selectedDate,
+    view,
+    customDays:
+      customDays === undefined ? undefined : clampCustomDays(customDays),
+    scheduleExtraDays: 0,
+  };
 }
 
 /**
@@ -71,7 +78,13 @@ export function calendarReducer(
     case CALENDAR_ACTIONS.SET_VIEW:
       return { ...state, view: action.payload, scheduleExtraDays: 0 };
     case CALENDAR_ACTIONS.SET_CUSTOM_DAYS:
-      return { ...state, customDays: action.payload };
+      return {
+        ...state,
+        customDays:
+          action.payload === undefined
+            ? undefined
+            : clampCustomDays(action.payload),
+      };
     case CALENDAR_ACTIONS.NEXT:
       return {
         ...state,

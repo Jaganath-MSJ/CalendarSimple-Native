@@ -3,14 +3,17 @@
  * stacked all-day and multi-day chips and "+N" chips (port spec §4.4,
  * TDD §8.3).
  */
-import type { RefObject } from "react";
+import type { ReactNode, RefObject } from "react";
 import {
   ScrollView,
   StyleSheet,
   View,
   type ScrollViewInstance,
+  type StyleProp,
+  type ViewStyle,
 } from "react-native";
 import {
+  cellsMoved,
   ECalendarViewType,
   generateTooltipText,
   getGmtOffset,
@@ -20,8 +23,15 @@ import {
 import { useTestID, useViewConfig } from "../../context/LayoutContext";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
+import type { EventMover } from "../../hooks/useEventMover";
+import { useDraggable, type DragSpec } from "../drag/useDraggable";
 import { pickEventStyle } from "../eventStyle";
-import { ARROW, ArrowChip, CLIPPED_PADDING } from "../ui/ArrowChip";
+import {
+  ARROW,
+  ArrowChip,
+  CLIPPED_PADDING,
+  type ArrowChipProps,
+} from "../ui/ArrowChip";
 import { TIME_GUTTER } from "./columnLayout";
 import { CalendarText } from "../ui/CalendarText";
 import { CalendarPressable } from "../ui/CalendarPressable";
@@ -51,6 +61,8 @@ export interface AllDayBannerProps<E extends CalendarEvent = CalendarEvent> {
   banner: BannerLayout<E>;
   /** The body's horizontal ScrollView in column mode (synced by the grid). */
   scrollRef?: RefObject<ScrollViewInstance | null>;
+  /** Moving chips sideways by whole days (`draggable`). */
+  mover?: EventMover<E>;
 }
 
 /** Banner height for the layout, in scaled metrics (port spec §4.4). */
@@ -79,11 +91,12 @@ export function AllDayBanner<E extends CalendarEvent = CalendarEvent>({
   onToggle,
   banner,
   scrollRef,
+  mover,
 }: AllDayBannerProps<E>) {
   const cfg = useViewConfig<E>();
   const { palette, metrics, flip } = useCalendarTheme();
   const id = useTestID();
-  const { messages, renderEvent, onEventClick, onEventLongPress } = cfg;
+  const { messages, renderEvent } = cfg;
   const { chipHeight, rowHeight, fontSize, gmtFontSize, minHeight } =
     metrics.banner;
   const height = Math.max(
@@ -145,9 +158,44 @@ export function AllDayBanner<E extends CalendarEvent = CalendarEvent>({
       (clipStart ? CLIPPED_PADDING : PADDING) -
       (clipEnd ? CLIPPED_PADDING : PADDING);
     const title = event.title || messages.noTitle;
+    // Sideways by whole days only (calendar-simple): times are kept.
+    const drag: DragSpec | undefined =
+      mover && mover.canMove(event)
+        ? {
+            focusKey: event.id,
+            move: {
+              snapX: colWidth,
+              snapY: 0,
+              bounds: {
+                ...chipBounds(
+                  l.startIndex,
+                  l.endIndex,
+                  days.length,
+                  colWidth,
+                  mover.reversed,
+                ),
+                minY: 0,
+                maxY: 0,
+              },
+              drop: (dx) =>
+                mover.move(event, cellsMoved(dx, colWidth, mover.reversed), 0),
+              shift: (d) => mover.move(event, d, 0),
+              stepMinutes: 0,
+              reversed: mover.reversed,
+            },
+          }
+        : undefined;
     return (
-      <ArrowChip
+      <AllDayChip
         key={`${event.id ?? event.startDate}-${i}`}
+        event={event}
+        drag={drag}
+        frame={{
+          top: l.row * rowHeight + 2,
+          [side]: left,
+          width: Math.max(0, chipWidth),
+          height: chipHeight,
+        }}
         testID={id(`${event.id ?? `${event.startDate}-${i}`}-all-day-event`)}
         clippedStart={clipStart}
         clippedEnd={clipEnd}
@@ -155,16 +203,9 @@ export function AllDayBanner<E extends CalendarEvent = CalendarEvent>({
         height={chipHeight}
         hitSlop={chipSlop}
         accessibilityLabel={`${title}, ${tooltip}`}
-        onPress={() => onEventClick?.(event)}
-        onLongPress={() => onEventLongPress?.(event)}
         delayLongPress={500}
         style={[
-          styles.chip,
           {
-            top: l.row * rowHeight + 2,
-            [side]: left,
-            width: Math.max(0, chipWidth),
-            height: chipHeight,
             marginLeft: 0,
             marginRight: 0,
             [flip ? "paddingRight" : "paddingLeft"]: clipStart
@@ -189,7 +230,7 @@ export function AllDayBanner<E extends CalendarEvent = CalendarEvent>({
             {title}
           </CalendarText>
         ) : null}
-      </ArrowChip>
+      </AllDayChip>
     );
   });
 
@@ -304,6 +345,62 @@ export function AllDayBanner<E extends CalendarEvent = CalendarEvent>({
   );
 }
 
+/**
+ * On-screen x offsets a chip covering columns `start`–`end` (day order) may
+ * move by, staying on the visible days; mirrored when columns run right to
+ * left.
+ */
+function chipBounds(
+  start: number,
+  end: number,
+  count: number,
+  size: number,
+  reversed: boolean,
+): { minX: number; maxX: number } {
+  const before = start;
+  const after = count - 1 - end;
+  return reversed
+    ? { minX: -after * size, maxX: before * size }
+    : { minX: -before * size, maxX: after * size };
+}
+
+type AllDayChipProps<E extends CalendarEvent> = Omit<
+  ArrowChipProps,
+  "onPress" | "onLongPress"
+> & {
+  event: E;
+  drag?: DragSpec;
+  /** Where the chip sits in the banner. */
+  frame: StyleProp<ViewStyle>;
+  children: ReactNode;
+};
+
+/** One all-day chip: pressable, and draggable by days with `draggable`. */
+function AllDayChip<E extends CalendarEvent>({
+  event,
+  drag,
+  frame,
+  style,
+  ...chip
+}: AllDayChipProps<E>) {
+  const { onEventClick, onEventLongPress } = useViewConfig<E>();
+  const draggable = useDraggable(drag);
+  return draggable.wrap(
+    [styles.chip, frame],
+    <ArrowChip
+      {...chip}
+      accessibilityActions={draggable.accessibilityActions}
+      onAccessibilityAction={draggable.onAccessibilityAction}
+      {...draggable.press(
+        () => onEventClick?.(event),
+        () => onEventLongPress?.(event),
+      )}
+      {...draggable.keys}
+      style={[draggable.wrapped ? [styles.fill] : [styles.chip, frame], style]}
+    />,
+  );
+}
+
 const styles = StyleSheet.create({
   row: { flexDirection: "row" },
   rowFlipped: { flexDirection: "row-reverse" },
@@ -338,6 +435,7 @@ const styles = StyleSheet.create({
     borderStartWidth: StyleSheet.hairlineWidth,
   },
   chip: { position: "absolute" },
+  fill: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 },
   text: { fontWeight: "500" },
   more: {
     position: "absolute",

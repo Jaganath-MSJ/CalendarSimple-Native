@@ -3,7 +3,7 @@
     "name": "calendar-simple-native (own code)",
     "path": "lib/module/index.js",
     "ignore": ["react", "react-native", "luxon"],
-    "limit": "30.4 kB"
+    "limit": "31.2 kB"
   },
   {
     "name": "calendar-simple-native/gestures (own code)",

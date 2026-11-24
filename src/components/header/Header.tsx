@@ -17,6 +17,7 @@ import {
   getMonthList,
   getYearList,
   VIEW_ORDER,
+  clampCustomDays,
   type ECalendarViewType,
   getVisibleDays,
   getVisibleRange,
@@ -157,9 +158,9 @@ export function Header(props: HeaderProps) {
       value: v,
       selected: v === view,
     }));
-    if (customDaysOption && customDaysOption > 0 && customDaysOption < 11) {
+    if (customDaysOption !== undefined) {
       list.push({
-        label: `${customDaysOption} ${messages.days}`,
+        label: `${clampCustomDays(customDaysOption)} ${messages.days}`,
         value: "customDays",
         selected: view === "customDays",
       });
