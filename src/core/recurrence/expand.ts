@@ -226,7 +226,9 @@ function expandOne<E extends BaseCalendarEvent>(
       out.push({
         ...event,
         id: `${event.id ?? event.startDate}::${startText}`,
-        recurringEventId: event.id,
+        // Always set, so an occurrence fed back is never a series again; a
+        // series without an id is named by its start.
+        recurringEventId: event.id ?? String(event.startDate),
         occurrenceDate: startText,
         startDate: startText,
         ...(end ? { endDate: format(occEnd, allDay, withOffset) } : {}),
@@ -239,6 +241,15 @@ function expandOne<E extends BaseCalendarEvent>(
 }
 
 /**
+ * A recurring series: it has an `rrule` and is not itself an occurrence
+ * (occurrences carry `recurringEventId`, so one fed back is shown as is).
+ */
+export const isSeries = (e: BaseCalendarEvent): boolean =>
+  typeof e.rrule === "string" &&
+  e.rrule !== "" &&
+  e.recurringEventId === undefined;
+
+/**
  * Replaces each event with an `rrule` by its occurrences inside `window`;
  * other events pass through. An unusable rule shows the event once, with a
  * warning. With `sorted`, the result is sorted by start (stable).
@@ -249,16 +260,17 @@ export function expandRecurringEvents<E extends BaseCalendarEvent>(
   options: ExpandOptions = {},
 ): ExpandResult<E> {
   const warnings: string[] = [];
-  if (!events.some((e) => typeof e.rrule === "string" && e.rrule))
-    return { events, warnings };
+  if (!events.some(isSeries)) return { events, warnings };
 
   const out: E[] = [];
   for (const event of events) {
-    if (typeof event.rrule !== "string" || !event.rrule) {
+    // Plain events and occurrences (the app's own, or ours fed back) pass
+    // through unexpanded.
+    if (!isSeries(event)) {
       out.push(event);
       continue;
     }
-    const parsed = parseRRule(event.rrule);
+    const parsed = parseRRule(event.rrule as string);
     if (!parsed.ok) {
       warnings.push(
         `[calendar] event ${nameOf(event)}: rrule ignored (${parsed.reason}); showing it once.`,

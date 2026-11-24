@@ -23,6 +23,7 @@ import {
   expandRecurringEvents,
   getExpansionWindow,
   getVisibleRange,
+  isSeries,
   type CalendarAction,
   type CalendarState,
   type DateType,
@@ -71,10 +72,7 @@ function useExpandedConfig(
   state: CalendarState,
 ): ResolvedConfig {
   const { events, enableEnrichedEvents, eventsAreSorted } = config;
-  const recurring = useMemo(
-    () => events.some((e) => typeof e.rrule === "string" && e.rrule !== ""),
-    [events],
-  );
+  const recurring = useMemo(() => events.some(isSeries), [events]);
   let windowKey = "";
   if (recurring && !enableEnrichedEvents) {
     const w = getExpansionWindow(

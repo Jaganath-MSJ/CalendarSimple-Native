@@ -149,12 +149,15 @@ export function TeamCalendar() {
 
 - Each occurrence is a copy of the event with its own `startDate` and
   `endDate`, `id` `"<id>::<occurrence start>"`, `recurringEventId` (the
-  series `id`) and `occurrenceDate`. Callbacks receive the occurrence, so you
-  can offer "this event" or "the whole series".
+  series `id`, or its `startDate` when it has none) and `occurrenceDate`.
+  Callbacks receive the occurrence, so you can offer "this event" or "the
+  whole series". An event with `recurringEventId` is shown as is, never
+  expanded again, so you can store a moved occurrence back in `events`.
 - Months without the day (the 31st, 29 February) are skipped, as RFC 5545
   says.
-- A rule with any other part (`BYSETPOS`, `HOURLY`, …) shows the event once,
-  with a development warning. At most 1,000 occurrences per event are shown
+- A rule with any other part (`BYSETPOS`, `HOURLY`, …), or one RFC 5545
+  forbids (`BYMONTHDAY` with `FREQ=WEEKLY`), shows the event once, with a
+  development warning. At most 1,000 occurrences per event are shown
   around the visible dates.
 - Recurring events are not expanded with `enableEnrichedEvents`; pass the
   occurrences in `enrichedEventsByDate` yourself.

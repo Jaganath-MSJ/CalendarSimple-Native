@@ -5,6 +5,7 @@ import type { BaseCalendarEvent } from "../types";
 import {
   expandRecurringEvents,
   getExpansionWindow,
+  isSeries,
   MAX_OCCURRENCES,
 } from "./expand";
 import { parseRRule } from "./parseRRule";
@@ -397,5 +398,56 @@ describe("getExpansionWindow", () => {
     const b = getExpansionWindow(range("2026-10-25", "2026-10-31"));
     expect(a.start.toISODate()).toBe(b.start.toISODate());
     expect(a.end.toISODate()).toBe(b.end.toISODate());
+  });
+});
+
+describe("occurrences fed back (calendar-simple 4b0423b)", () => {
+  const window = range("2026-11-01", "2026-11-30");
+
+  it("a series without an id names its occurrences by its start", () => {
+    const series: BaseCalendarEvent = {
+      title: "Standup",
+      startDate: "2026-11-02T09:00:00",
+      rrule: "FREQ=DAILY;COUNT=5",
+    };
+    const { events } = expandRecurringEvents([series], window);
+    expect(events).toHaveLength(5);
+    for (const occ of events) {
+      expect(occ.recurringEventId).toBe("2026-11-02T09:00:00");
+      expect(isSeries(occ)).toBe(false);
+    }
+  });
+
+  it("an occurrence passed back in events is shown as is, never expanded", () => {
+    for (const id of ["s", undefined]) {
+      const series: BaseCalendarEvent = {
+        ...(id ? { id } : {}),
+        title: "Standup",
+        startDate: "2026-11-02T09:00:00",
+        rrule: "FREQ=DAILY;COUNT=5",
+      };
+      const [, , , fourth] = expandRecurringEvents([series], window).events;
+      // The app stores one occurrence (still carrying the rrule) and moves it.
+      const moved = { ...fourth!, startDate: "2026-11-05T10:00:00" };
+      const again = expandRecurringEvents([moved], window).events;
+      expect(again).toEqual([moved]);
+    }
+  });
+
+  it("isSeries: an rrule and no recurringEventId", () => {
+    const base = { title: "A", startDate: "2026-11-02" };
+    expect(isSeries({ ...base, rrule: "FREQ=DAILY" })).toBe(true);
+    expect(isSeries({ ...base, rrule: "" })).toBe(false);
+    expect(isSeries(base)).toBe(false);
+    expect(
+      isSeries({ ...base, rrule: "FREQ=DAILY", recurringEventId: "s" }),
+    ).toBe(false);
+  });
+});
+
+describe("WEEKLY with BYMONTHDAY (RFC 5545)", () => {
+  it("is rejected; MONTHLY with BYMONTHDAY is fine", () => {
+    expect(parseRRule("FREQ=WEEKLY;BYMONTHDAY=1").ok).toBe(false);
+    expect(parseRRule("FREQ=MONTHLY;BYMONTHDAY=1").ok).toBe(true);
   });
 });
