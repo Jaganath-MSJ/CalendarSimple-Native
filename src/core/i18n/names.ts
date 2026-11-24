@@ -344,14 +344,20 @@ export function formatMonthYear(
   const registered = custom.has(loc) || custom.has(loc.split("-")[0] ?? "");
   const dtf = registered ? null : monthYearFormat(loc, length);
   if (dtf) {
+    // Mid-month at noon UTC: the same month in every time zone.
+    const date = new Date(Date.UTC(dt.year, dt.month - 1, 15, 12));
     try {
-      // Mid-month at noon UTC: the same month in every time zone.
-      const parts = dtf.formatToParts(
-        new Date(Date.UTC(dt.year, dt.month - 1, 15, 12)),
-      );
+      const parts = dtf.formatToParts(date);
       const month = parts.find((p) => p.type === "month")?.value ?? "";
       // An empty month part means this engine has no names for the locale.
       if (month.trim()) return parts.map((p) => p.value).join("");
+    } catch {
+      // No formatToParts (iOS Hermes): try format below.
+    }
+    try {
+      // Accept it only with a month name (a letter) and the year in it.
+      const text = dtf.format(date).trim();
+      if (/\p{L}/u.test(text) && text.includes(String(dt.year))) return text;
     } catch {
       // Fall through to the pattern.
     }

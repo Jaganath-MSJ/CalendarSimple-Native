@@ -215,6 +215,26 @@ describe("name fallbacks", () => {
     expect(formatMonthYear(d, "fr")).toBe("March 2026");
   });
 
+  it("formatMonthYear: without formatToParts (iOS Hermes) uses format", () => {
+    const d = DateTime.fromISO("2026-03-05");
+    const withFormat = (text: string) =>
+      vi.spyOn(Intl, "DateTimeFormat").mockImplementation(function () {
+        return {
+          format: () => text,
+          formatToParts: () => {
+            throw new TypeError("not supported");
+          },
+        };
+      });
+    withFormat("2026年3月");
+    expect(formatMonthYear(d, "ja-JP")).toBe("2026年3月");
+    // A result without a month name (or the year) is not trusted.
+    vi.restoreAllMocks();
+    clearNameCache();
+    withFormat("3 2026");
+    expect(formatMonthYear(d, "en")).toBe("March 2026");
+  });
+
   it("leaves formats without names untouched", () => {
     emptyLuxonNames();
     const d = DateTime.fromISO("2026-10-22T09:30:00");
