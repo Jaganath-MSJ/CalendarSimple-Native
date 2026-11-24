@@ -1,8 +1,13 @@
 /**
  * @file The first and last visible day of each view (TDD §7.2).
  */
-import { getDayOfWeek, type DateType } from "../utils/date";
-import type { ECalendarViewType, VisibleRange } from "../types";
+import { dateFn, getDayOfWeek, type DateType } from "../utils/date";
+import { getLastEventDay } from "../utils/common";
+import type {
+  BaseCalendarEvent,
+  ECalendarViewType,
+  VisibleRange,
+} from "../types";
 import { TIME_CONSTANTS } from "../constants";
 import { buildMonthMatrix } from "./monthMatrix";
 import { getVisibleDays } from "./visibleDays";
@@ -12,14 +17,15 @@ export interface VisibleRangeOptions {
   weekStartsOn: number;
   weekEndsOn: number;
   customDays?: number;
-  scheduleDays: number;
-  scheduleExtraDays: number;
+  /** Used by Schedule, which lists every event. */
+  events?: readonly BaseCalendarEvent[];
 }
 
 /**
  * Returns the visible days of `view` around `selectedDate`, both ends inclusive.
  * Month spans the first to the last grid cell (adjacent-month cells included);
- * Schedule spans `scheduleDays + scheduleExtraDays` days from `selectedDate`.
+ * Schedule spans all events: the first one's start day to the last one's last
+ * day (no events: the selected day), as calendar-simple.
  */
 export function getVisibleRange(
   view: ECalendarViewType,
@@ -42,8 +48,17 @@ export function getVisibleRange(
   }
 
   if (view === "schedule") {
-    const total = opts.scheduleDays + opts.scheduleExtraDays;
-    return { start: day, end: day.plus({ days: Math.max(total, 1) - 1 }) };
+    const events = opts.events ?? [];
+    if (events.length === 0) return { start: day, end: day };
+    let start = dateFn(events[0]!.startDate).startOf("day");
+    let end = getLastEventDay(events[0]!);
+    for (const event of events) {
+      const s = dateFn(event.startDate).startOf("day");
+      const e = getLastEventDay(event);
+      if (s < start) start = s;
+      if (e > end) end = e;
+    }
+    return { start, end };
   }
 
   const days = getVisibleDays(view, day, opts);

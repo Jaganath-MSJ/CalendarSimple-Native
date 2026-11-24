@@ -2,6 +2,7 @@ import { fireEvent, screen } from "@testing-library/react-native";
 import { Platform, processColor, View } from "react-native";
 import { Calendar } from "./Calendar";
 import { OCT_2026_EVENTS } from "../core/test/fixtures";
+import { eventsFrom } from "../test-utils/scheduleEvents";
 import { renderCalendar } from "../test-utils/renderCalendar";
 import { useFrozenClock } from "../test-utils/clock";
 import { PALETTE } from "../theme";
@@ -42,7 +43,11 @@ it.each([
     <Calendar
       view={view}
       selectedDate={new Date(2026, 9, 22)}
-      events={OCT_2026_EVENTS}
+      events={
+        view === "schedule"
+          ? eventsFrom("2026-10-22", OCT_2026_EVENTS)
+          : OCT_2026_EVENTS
+      }
     />,
   );
   expectRipple(id);

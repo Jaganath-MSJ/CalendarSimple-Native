@@ -107,14 +107,15 @@ export type PeriodKeyAction = 1 | -1 | "today" | null;
  */
 export function getPeriodKeyAction(
   input: KeyInput,
-  options: { flip: boolean; arrows: boolean },
+  options: { flip: boolean; arrows: boolean; pages?: boolean },
 ): PeriodKeyAction {
   if (hasCommandModifier(input) || input.shiftKey) return null;
+  const pages = options.pages !== false;
   switch (input.key) {
     case "PageUp":
-      return -1;
+      return pages ? -1 : null;
     case "PageDown":
-      return 1;
+      return pages ? 1 : null;
     case "ArrowLeft":
       return options.arrows ? (options.flip ? 1 : -1) : null;
     case "ArrowRight":

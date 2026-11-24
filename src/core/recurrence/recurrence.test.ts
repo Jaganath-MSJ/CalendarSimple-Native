@@ -5,6 +5,7 @@ import type { BaseCalendarEvent } from "../types";
 import {
   expandRecurringEvents,
   getExpansionWindow,
+  getScheduleExpansionWindow,
   isSeries,
   MAX_OCCURRENCES,
 } from "./expand";
@@ -449,5 +450,13 @@ describe("WEEKLY with BYMONTHDAY (RFC 5545)", () => {
   it("is rejected; MONTHLY with BYMONTHDAY is fine", () => {
     expect(parseRRule("FREQ=WEEKLY;BYMONTHDAY=1").ok).toBe(false);
     expect(parseRRule("FREQ=MONTHLY;BYMONTHDAY=1").ok).toBe(true);
+  });
+});
+
+describe("getScheduleExpansionWindow (calendar-simple)", () => {
+  it("2 months back to 12 ahead, widened to whole quarters", () => {
+    const w = getScheduleExpansionWindow(DateTime.fromISO("2026-10-22"));
+    expect(w.start.toISODate()).toBe("2026-07-01");
+    expect(w.end.toISODate()).toBe("2027-12-31");
   });
 });

@@ -169,7 +169,6 @@ export interface CalendarProps<TEvent extends CalendarEvent = CalendarEvent> {
   showAllDayRow?: boolean;
   /** Percent of column width. */
   eventOverlapOffset?: number;
-  scheduleDays?: number;
   swipeNavigation?: boolean;
   showMorePopover?: boolean;
   /** Web only: arrow keys, Home/End, PageUp/PageDown and T (default `true`). */
@@ -237,7 +236,6 @@ export interface CalendarProps<TEvent extends CalendarEvent = CalendarEvent> {
   onDateRangeChange?: (start: Date, end: Date, view: ECalendarViewType) => void;
   onRefresh?: () => void;
   refreshing?: boolean;
-  onEndReached?: () => void;
   // Appearance
   theme?: CalendarTheme;
   styles?: CalendarStyles;
@@ -303,7 +301,6 @@ export type ResolvedConfig<TEvent extends CalendarEvent = CalendarEvent> = Omit<
   | "is12Hour"
   | "swipeNavigation"
   | "maxFontSizeMultiplier"
-  | "scheduleDays"
   | "slotPressMode"
   | "showMorePopover"
   | "keyboardNavigation"
@@ -321,7 +318,6 @@ export type ResolvedConfig<TEvent extends CalendarEvent = CalendarEvent> = Omit<
     messages: CalendarMessages;
     swipeNavigation: boolean;
     maxFontSizeMultiplier: number;
-    scheduleDays: number;
     slotPressMode: SlotPressMode;
     showMorePopover: boolean;
     keyboardNavigation: boolean;

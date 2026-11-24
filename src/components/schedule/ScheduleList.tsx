@@ -1,7 +1,8 @@
 /**
- * @file The schedule list: one section per day in the window, rows per event,
- * separators between sections, empty state, scroll-to-top on navigation,
- * pull-to-refresh and end reached (port spec §4.5, TDD §6.3).
+ * @file The schedule list: one section per day with events (every event, as
+ * calendar-simple), rows per event, separators between sections, empty
+ * state, scroll to the selected date and pull-to-refresh (port spec §4.5,
+ * TDD §6.3).
  */
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
@@ -11,12 +12,7 @@ import {
   View,
   type SectionListData,
 } from "react-native";
-import {
-  CALENDAR_ACTIONS,
-  ECalendarViewType,
-  getVisibleRange,
-  type DateType,
-} from "../../core";
+import type { DateType } from "../../core";
 import { useCalendarState } from "../../context/CalendarContext";
 import { useTestID, useViewConfig } from "../../context/LayoutContext";
 import { useToday } from "../../hooks/useNow";
@@ -38,7 +34,7 @@ const RETRY_MS = 100;
 
 export function ScheduleList<E extends CalendarEvent = CalendarEvent>() {
   const cfg = useViewConfig<E>();
-  const { state, dispatch } = useCalendarState();
+  const { state } = useCalendarState();
   const { palette, metrics } = useCalendarTheme();
   const id = useTestID();
   const reduceMotion = useReduceMotion();
@@ -82,76 +78,55 @@ export function ScheduleList<E extends CalendarEvent = CalendarEvent>() {
     });
   }, [sections, renderEvent, renderScheduleSeparator, rowHeight]);
 
-  // P7.S2: back to the top whenever the window moves.
+  // The first day on or after the selected date, else the last day.
   const listRef = useRef<SectionList<E, Section<E>>>(null);
-  const dateKey = state.selectedDate.toISODate();
-  const firstRun = useRef(true);
-  const scrollTop = useCallback(() => {
-    if (!sections.length) return;
-    try {
-      listRef.current?.scrollToLocation({
-        sectionIndex: 0,
-        itemIndex: 0,
-        viewOffset: 0,
-        animated: !reduceMotion,
-      });
-    } catch {
-      // Not laid out yet; the next navigation scrolls again.
-    }
-  }, [sections.length, reduceMotion]);
+  const selectedKey = state.selectedDate.toISODate() ?? "";
+  const targetIndex = useMemo(() => {
+    if (!sections.length) return -1;
+    const i = sections.findIndex((sec) => sec.dateKey >= selectedKey);
+    return i === -1 ? sections.length - 1 : i;
+  }, [sections, selectedKey]);
+  const scrollToTarget = useCallback(
+    (animated: boolean) => {
+      if (targetIndex < 0) return;
+      try {
+        listRef.current?.scrollToLocation({
+          sectionIndex: targetIndex,
+          itemIndex: 0,
+          viewOffset: 0,
+          animated,
+        });
+      } catch {
+        // Not laid out yet; onScrollToIndexFailed retries.
+      }
+    },
+    [targetIndex],
+  );
+  // On mount (and when the events change) only with autoScrollToCurrentTime;
+  // every later Today or date pick (even to the same date) scrolls.
+  const { autoScrollToCurrentTime } = cfg;
   useEffect(() => {
-    if (firstRun.current) {
-      firstRun.current = false;
-      return;
-    }
-    scrollTop();
-    // Keyed on the date only.
+    if (autoScrollToCurrentTime) scrollToTarget(false);
+    // Keyed on the setting and the events only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateKey]);
+  }, [autoScrollToCurrentTime, sections]);
+  const lastNavigation = useRef(state.navigationId);
+  useEffect(() => {
+    if (lastNavigation.current === state.navigationId) return;
+    lastNavigation.current = state.navigationId;
+    scrollToTarget(!reduceMotion);
+    // Keyed on navigation only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.navigationId]);
   const retried = useRef(false);
   const onScrollToIndexFailed = useCallback(() => {
     if (retried.current) return;
     retried.current = true;
     setTimeout(() => {
-      scrollTop();
+      scrollToTarget(false);
       retried.current = false;
     }, RETRY_MS);
-  }, [scrollTop]);
-
-  // P7.S3: extend once per window end. `extendedFrom` holds the window end
-  // the last EXTEND_SCHEDULE grew from (read synchronously, so back-to-back
-  // events before a re-render cannot both extend). Once extended, the list
-  // must scroll (or navigate) before the next end reached counts: React
-  // re-renders between two events, and VirtualizedList re-fires only after
-  // the user moves. Empty extensions never stall: each scroll re-arms.
-  const rangeEnd = getVisibleRange(
-    ECalendarViewType.schedule,
-    state.selectedDate,
-    {
-      weekStartsOn: cfg.weekStartsOn,
-      weekEndsOn: cfg.weekEndsOn,
-      customDays: state.customDays,
-      scheduleDays: cfg.scheduleDays,
-      scheduleExtraDays: state.scheduleExtraDays,
-    },
-  ).end.toISODate();
-  const extendedFrom = useRef<string | null>(null);
-  const armed = useRef(true);
-  useEffect(() => {
-    armed.current = true;
-    extendedFrom.current = null;
-  }, [dateKey]);
-  const onScroll = useCallback(() => {
-    armed.current = true;
-  }, []);
-  const { scheduleDays, onEndReached } = cfg;
-  const handleEndReached = useCallback(() => {
-    if (!armed.current || extendedFrom.current === rangeEnd) return;
-    armed.current = false;
-    extendedFrom.current = rangeEnd;
-    dispatch({ type: CALENDAR_ACTIONS.EXTEND_SCHEDULE, payload: scheduleDays });
-    onEndReached?.();
-  }, [rangeEnd, dispatch, scheduleDays, onEndReached]);
+  }, [scrollToTarget]);
 
   const last = sections.length - 1;
   const separated = renderScheduleSeparator !== undefined;
@@ -204,10 +179,6 @@ export function ScheduleList<E extends CalendarEvent = CalendarEvent>() {
           />
         ) : undefined
       }
-      onEndReachedThreshold={0.5}
-      onEndReached={handleEndReached}
-      onScroll={onScroll}
-      scrollEventThrottle={100}
     />
   );
 }

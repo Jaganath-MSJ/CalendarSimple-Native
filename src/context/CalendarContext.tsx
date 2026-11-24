@@ -22,6 +22,7 @@ import {
   dateFn,
   expandRecurringEvents,
   getExpansionWindow,
+  getScheduleExpansionWindow,
   getVisibleRange,
   isSeries,
   type CalendarAction,
@@ -75,15 +76,17 @@ function useExpandedConfig(
   const recurring = useMemo(() => events.some(isSeries), [events]);
   let windowKey = "";
   if (recurring && !enableEnrichedEvents) {
-    const w = getExpansionWindow(
-      getVisibleRange(state.view, state.selectedDate, {
-        weekStartsOn: config.weekStartsOn,
-        weekEndsOn: config.weekEndsOn,
-        customDays: state.customDays,
-        scheduleDays: config.scheduleDays,
-        scheduleExtraDays: state.scheduleExtraDays,
-      }),
-    );
+    // Schedule lists every event: its series use a window of their own.
+    const w =
+      state.view === "schedule"
+        ? getScheduleExpansionWindow(state.selectedDate)
+        : getExpansionWindow(
+            getVisibleRange(state.view, state.selectedDate, {
+              weekStartsOn: config.weekStartsOn,
+              weekEndsOn: config.weekEndsOn,
+              customDays: state.customDays,
+            }),
+          );
     windowKey = `${w.start.toISODate()}|${w.end.toISODate()}`;
   }
   const expanded = useMemo(() => {

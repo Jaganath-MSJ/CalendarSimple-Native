@@ -9,7 +9,7 @@ v2.1 and keeps its props, callbacks and render props.
 [Try it in Expo Snack](https://snack.expo.dev/@msj_jagan/calendar-simple-native-demo)
 
 - Month, Week, Day, Custom Days (1–7) and Schedule views
-- Swipe paging, pull-to-refresh and "load more" in Schedule
+- Swipe paging, and a Schedule list of every event with pull-to-refresh
 - Light, dark and automatic colour schemes, palette and per-state theme
 - Locale-aware names, times, week start and right-to-left layout
 - Screen-reader labels, 44 pt touch targets, font scaling, reduce motion
@@ -196,7 +196,6 @@ All props are optional. Dates in props and callbacks are JS `Date` objects.
 | `resetDateOnViewChange`                         | `boolean`                       | `false`                   | jump back to today when the view changes                                                  |
 | `showAllDayRow`                                 | `boolean`                       | `true`                    | all-day banner in time grids                                                              |
 | `eventOverlapOffset`                            | `number`                        | `0`                       | percent of the column width; > 0 stacks overlapping events                                |
-| `scheduleDays`                                  | `number`                        | `30`                      | length of the Schedule window from the selected date                                      |
 | `swipeNavigation`                               | `boolean`                       | `true` (`false` on web)   | swipe between periods in month and time grids                                             |
 | `showMorePopover`                               | `boolean`                       | `true`                    | `false` lets `onMoreClick` handle "+N more" alone                                         |
 | `draggable`                                     | `boolean \| (event) => boolean` | `false`                   | events can be moved; see [Moving and resizing events](#gestures-move-resize-zoom)         |
@@ -233,7 +232,6 @@ All props are optional. Dates in props and callbacks are JS `Date` objects.
 | `onSlotClick`              | `(start: Date, end: Date) => void`                          | an empty slot or cell is pressed (with `creatable`) |
 | `onDateRangeChange`        | `(start: Date, end: Date, view: ECalendarViewType) => void` | the visible range changes (once per settle)         |
 | `onRefresh` / `refreshing` | `() => void` / `boolean`                                    | Schedule pull-to-refresh                            |
-| `onEndReached`             | `() => void`                                                | the Schedule window grew at the end                 |
 
 ### Appearance
 
@@ -685,7 +683,7 @@ Android ignore the prop.
 | Month grid | PageUp / PageDown      | Previous or next month (with Shift: year)                     |
 | Month grid | Enter / Space          | Press the day (select, create or open the day sheet)          |
 | Time grids | ← → / PageUp, PageDown | Previous or next period                                       |
-| Schedule   | ↑ ↓ / PageUp, PageDown | Move between rows / move the window                           |
+| Schedule   | ↑ ↓                    | Move between rows                                             |
 | All views  | T                      | Today                                                         |
 | Overlays   | Escape                 | Close the popover, sheet or menu; focus returns to its opener |
 | Event      | Alt + ↑ ↓              | Move by `dragSnapMinutes` (Month: a week), with `draggable`   |

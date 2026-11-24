@@ -9,14 +9,15 @@ const DELAY_MS = 16;
 
 /**
  * Call once inside the provider. When the visible range key
- * `"<view>|<startISO>|<endISO>"` changes (mount, navigation, view change,
- * `EXTEND_SCHEDULE`), fires `onDateRangeChange(start, end, view)` after 16 ms;
- * a newer key cancels the pending call.
+ * `"<view>|<startISO>|<endISO>"` changes (mount, navigation, view change, and
+ * in Schedule — which spans all events — an events change that moves the
+ * span), fires `onDateRangeChange(start, end, view)` after 16 ms; a newer key
+ * cancels the pending call.
  */
 export function useDateRangeNotifier(): void {
   const { state, config } = useCalendar();
-  const { view, selectedDate, customDays, scheduleExtraDays } = state;
-  const { weekStartsOn, weekEndsOn, scheduleDays, onDateRangeChange } = config;
+  const { view, selectedDate, customDays } = state;
+  const { weekStartsOn, weekEndsOn, events, onDateRangeChange } = config;
 
   const range = useMemo(
     () =>
@@ -24,18 +25,9 @@ export function useDateRangeNotifier(): void {
         weekStartsOn,
         weekEndsOn,
         customDays,
-        scheduleDays,
-        scheduleExtraDays,
+        events,
       }),
-    [
-      view,
-      selectedDate,
-      weekStartsOn,
-      weekEndsOn,
-      customDays,
-      scheduleDays,
-      scheduleExtraDays,
-    ],
+    [view, selectedDate, weekStartsOn, weekEndsOn, customDays, events],
   );
   const key = `${view}|${range.start.toISODate()}|${range.end.toISODate()}`;
 

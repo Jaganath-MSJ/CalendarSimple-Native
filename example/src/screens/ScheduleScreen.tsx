@@ -4,7 +4,10 @@ import Calendar from "../../../src";
 import { DEMO_DATE, DEMO_EVENTS } from "../fixtures/demoEvents";
 import { useExampleScheme } from "../launch";
 
-/** Schedule view: pull-to-refresh (1 s) and end reached (logged). */
+/**
+ * Schedule view: every event, opening at the selected date
+ * (`autoScrollToCurrentTime`), with pull-to-refresh (1 s).
+ */
 export default function ScheduleScreen() {
   const scheme = useExampleScheme();
   const [refreshing, setRefreshing] = useState(false);
@@ -13,9 +16,6 @@ export default function ScheduleScreen() {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     timer.current = setTimeout(() => setRefreshing(false), 1000);
-  }, []);
-  const onEndReached = useCallback(() => {
-    console.log("[schedule] end reached");
   }, []);
   return (
     <View style={styles.root}>
@@ -26,7 +26,7 @@ export default function ScheduleScreen() {
         selectedDate={DEMO_DATE}
         onRefresh={onRefresh}
         refreshing={refreshing}
-        onEndReached={onEndReached}
+        autoScrollToCurrentTime
       />
     </View>
   );

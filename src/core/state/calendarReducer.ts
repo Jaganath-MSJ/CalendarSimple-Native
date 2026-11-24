@@ -17,8 +17,11 @@ export interface CalendarState {
   view: ECalendarViewType;
   /** Days shown when view is `customDays` (1–7; unset means 3). */
   customDays?: CustomDaysCount;
-  /** Days added to the schedule window by `EXTEND_SCHEDULE`; reset by navigation and view change. */
-  scheduleExtraDays: number;
+  /**
+   * Bumped by `TODAY` and `SET_DATE` (also to the same date): Schedule scrolls
+   * to the selected date on every change (as calendar-simple).
+   */
+  navigationId: number;
 }
 
 /**
@@ -27,7 +30,6 @@ export interface CalendarState {
  * - `SET_VIEW` — switch the active view
  * - `NEXT` / `PREV` — advance or retreat by one view-unit (month, week, day, or N custom days)
  * - `TODAY` — reset navigation to today
- * - `EXTEND_SCHEDULE` — grow the schedule window by `payload` days
  */
 export type CalendarAction =
   | { type: typeof CALENDAR_ACTIONS.SET_DATE; payload: DateType }
@@ -38,10 +40,9 @@ export type CalendarAction =
     }
   | { type: typeof CALENDAR_ACTIONS.NEXT }
   | { type: typeof CALENDAR_ACTIONS.PREV }
-  | { type: typeof CALENDAR_ACTIONS.TODAY }
-  | { type: typeof CALENDAR_ACTIONS.EXTEND_SCHEDULE; payload: number };
+  | { type: typeof CALENDAR_ACTIONS.TODAY };
 
-/** Builds the reducer's initial state (`scheduleExtraDays: 0`). */
+/** Builds the reducer's initial state (`navigationId: 0`). */
 export function createInitialState(
   selectedDate: DateType,
   view: ECalendarViewType,
@@ -52,7 +53,7 @@ export function createInitialState(
     view,
     customDays:
       customDays === undefined ? undefined : clampCustomDays(customDays),
-    scheduleExtraDays: 0,
+    navigationId: 0,
   };
 }
 
@@ -73,10 +74,10 @@ export function calendarReducer(
       return {
         ...state,
         selectedDate: action.payload,
-        scheduleExtraDays: 0,
+        navigationId: state.navigationId + 1,
       };
     case CALENDAR_ACTIONS.SET_VIEW:
-      return { ...state, view: action.payload, scheduleExtraDays: 0 };
+      return { ...state, view: action.payload };
     case CALENDAR_ACTIONS.SET_CUSTOM_DAYS:
       return {
         ...state,
@@ -86,27 +87,21 @@ export function calendarReducer(
             : clampCustomDays(action.payload),
       };
     case CALENDAR_ACTIONS.NEXT:
-      return {
-        ...state,
-        selectedDate: getNavigatedDate(state, 1),
-        scheduleExtraDays: 0,
-      };
-    case CALENDAR_ACTIONS.PREV:
-      return {
-        ...state,
-        selectedDate: getNavigatedDate(state, -1),
-        scheduleExtraDays: 0,
-      };
+    case CALENDAR_ACTIONS.PREV: {
+      const next = getNavigatedDate(
+        state,
+        action.type === CALENDAR_ACTIONS.NEXT ? 1 : -1,
+      );
+      // Unchanged (Schedule): keep the same state object.
+      return next === state.selectedDate
+        ? state
+        : { ...state, selectedDate: next };
+    }
     case CALENDAR_ACTIONS.TODAY:
       return {
         ...state,
         selectedDate: dateFn(),
-        scheduleExtraDays: 0,
-      };
-    case CALENDAR_ACTIONS.EXTEND_SCHEDULE:
-      return {
-        ...state,
-        scheduleExtraDays: state.scheduleExtraDays + action.payload,
+        navigationId: state.navigationId + 1,
       };
     default:
       return state;

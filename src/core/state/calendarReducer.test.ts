@@ -49,10 +49,11 @@ describe("calendarReducer", () => {
       key(calendarReducer(s("2026-10-22", "customDays", 30), { type: "NEXT" })),
     ).toBe("2026-10-29");
   });
-  it("schedule moves one day", () =>
-    expect(
-      key(calendarReducer(s("2026-10-22", "schedule"), { type: "NEXT" })),
-    ).toBe("2026-10-23"));
+  it("schedule has no Prev/Next: the same state comes back", () => {
+    const st = s("2026-10-22", "schedule");
+    expect(calendarReducer(st, { type: "NEXT" })).toBe(st);
+    expect(calendarReducer(st, { type: "PREV" })).toBe(st);
+  });
   it("TODAY uses the frozen clock", () => {
     freezeNow("2026-10-22T10:40:00");
     expect(key(calendarReducer(s("2025-01-01"), { type: "TODAY" }))).toBe(
@@ -60,16 +61,21 @@ describe("calendarReducer", () => {
     );
     restoreNow();
   });
-  it("EXTEND_SCHEDULE grows the window; navigation resets it", () => {
-    const a = calendarReducer(s("2026-10-22", "schedule"), {
-      type: "EXTEND_SCHEDULE",
-      payload: 30,
+  it("TODAY and SET_DATE bump navigationId, also to the same date", () => {
+    const st = s("2026-10-22", "schedule");
+    expect(st.navigationId).toBe(0);
+    const a = calendarReducer(st, {
+      type: "SET_DATE",
+      payload: dateFn("2026-10-22"),
     });
-    expect(a.scheduleExtraDays).toBe(30);
-    expect(calendarReducer(a, { type: "NEXT" }).scheduleExtraDays).toBe(0);
+    const b = calendarReducer(a, { type: "TODAY" });
+    expect([a.navigationId, b.navigationId]).toEqual([1, 2]);
+    // Other actions keep it.
     expect(
-      calendarReducer(a, { type: "SET_VIEW", payload: "month" })
-        .scheduleExtraDays,
+      calendarReducer(b, { type: "SET_VIEW", payload: "month" }).navigationId,
+    ).toBe(2);
+    expect(
+      calendarReducer(s("2026-10-22"), { type: "NEXT" }).navigationId,
     ).toBe(0);
   });
 });

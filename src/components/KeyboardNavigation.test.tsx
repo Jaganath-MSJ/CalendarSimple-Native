@@ -220,7 +220,7 @@ describe("time grids and schedule (web)", () => {
     expect(atEnd).not.toHaveBeenCalled();
   });
 
-  it("PageDown moves the Schedule window", async () => {
+  it("PageDown does nothing in Schedule (no Prev/Next since 1.1)", async () => {
     await renderCalendar(
       <Calendar
         view="schedule"
@@ -229,12 +229,15 @@ describe("time grids and schedule (web)", () => {
       />,
     );
     const list = screen.getByTestId("calendar-schedule-view").parent!;
+    const preventDefault = jest.fn();
     await fireEvent(list, "keyDown", {
       nativeEvent: { key: "PageDown" },
-      preventDefault: jest.fn(),
+      preventDefault,
     });
+    // The browser keeps the key (it scrolls the list).
+    expect(preventDefault).not.toHaveBeenCalled();
     expect(screen.getAllByTestId(/-schedule-section$/)[0]!.props.testID).toBe(
-      "calendar-2026-10-23-schedule-section",
+      "calendar-2026-10-01-schedule-section",
     );
   });
 });

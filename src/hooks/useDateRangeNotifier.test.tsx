@@ -91,27 +91,37 @@ it("does not fire again when only the callback identity changes", async () => {
   expect(spy).toHaveBeenCalledTimes(1);
 });
 
-it("fires on view change and schedule extension", async () => {
+it("Schedule spans every event and fires again when events widen it", async () => {
   const spy = rangeSpy();
+  const a = { title: "A", startDate: "2026-10-05" };
+  const b = { title: "B", startDate: "2026-11-10T09:00:00" };
   let dispatch!: Dispatch<CalendarAction>;
   const Probe = () => {
     dispatch = useCalendar().dispatch;
     return null;
   };
-  await renderCalendar(
+  const ui = (events: { title: string; startDate: string }[]) => (
     <Calendar
       selectedDate={new Date(2026, 9, 22)}
       view="schedule"
+      events={events}
       onDateRangeChange={spy}
     >
       <Probe />
-    </Calendar>,
+    </Calendar>
   );
+  const { rerender } = await renderCalendar(ui([a, b]));
   await tick();
-  await act(() => dispatch({ type: "EXTEND_SCHEDULE", payload: 30 }));
+  const last = () => spy.mock.calls.at(-1)!;
+  expect([iso(last()[0]), iso(last()[1]), last()[2]]).toEqual([
+    "2026-10-05",
+    "2026-11-10",
+    "schedule",
+  ]);
+  await rerender(ui([a, b, { title: "C", startDate: "2026-12-01" }]));
   await tick();
-  expect(iso(spy.mock.calls.at(-1)![1])).toBe("2026-12-20");
+  expect(iso(last()[1])).toBe("2026-12-01");
   await act(() => dispatch({ type: "SET_VIEW", payload: "week" }));
   await tick();
-  expect(spy.mock.calls.at(-1)![2]).toBe("week");
+  expect(last()[2]).toBe("week");
 });

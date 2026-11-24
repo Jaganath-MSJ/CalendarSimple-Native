@@ -71,8 +71,10 @@ export function Header(props: HeaderProps) {
   );
   const showWeekNumbers = props.showWeekNumbers ?? config.showWeekNumbers;
 
-  const { view, selectedDate, customDays, scheduleExtraDays } = state;
-  const { locale, weekStartsOn, weekEndsOn, scheduleDays } = config;
+  const { view, selectedDate, customDays } = state;
+  const { locale, weekStartsOn, weekEndsOn, events } = config;
+  // Schedule lists every event and has no Prev/Next (calendar-simple).
+  const steps = view !== "schedule";
   const title = useMemo(() => {
     const visibleDays =
       view === "week" || view === "day" || view === "customDays"
@@ -87,9 +89,7 @@ export function Header(props: HeaderProps) {
         ? getVisibleRange(view, selectedDate, {
             weekStartsOn,
             weekEndsOn,
-            customDays,
-            scheduleDays,
-            scheduleExtraDays,
+            events,
           })
         : undefined;
     return getHeaderTitle({
@@ -105,11 +105,10 @@ export function Header(props: HeaderProps) {
     view,
     selectedDate,
     customDays,
-    scheduleExtraDays,
+    events,
     locale,
     weekStartsOn,
     weekEndsOn,
-    scheduleDays,
     showWeekNumbers,
     breakpoint,
   ]);
@@ -324,25 +323,29 @@ export function Header(props: HeaderProps) {
             {messages.today}
           </CalendarText>
         </CalendarPressable>
-        <NavButton
-          direction="prev"
-          onPress={() => navigate(-1)}
-          testID={`${testId}-header-prev-btn`}
-          accessibilityLabel={messages.previous}
-        />
-        <NavButton
-          direction="next"
-          onPress={() => navigate(1)}
-          testID={`${testId}-header-next-btn`}
-          accessibilityLabel={messages.next}
-        />
+        {steps ? (
+          <>
+            <NavButton
+              direction="prev"
+              onPress={() => navigate(-1)}
+              testID={`${testId}-header-prev-btn`}
+              accessibilityLabel={messages.previous}
+            />
+            <NavButton
+              direction="next"
+              onPress={() => navigate(1)}
+              testID={`${testId}-header-next-btn`}
+              accessibilityLabel={messages.next}
+            />
+          </>
+        ) : null}
         <View
           testID={`${testId}-header-title`}
           accessible
           accessibilityRole="header"
           accessibilityLabel={title}
-          accessibilityActions={titleActions}
-          onAccessibilityAction={onTitleAction}
+          accessibilityActions={steps ? titleActions : undefined}
+          onAccessibilityAction={steps ? onTitleAction : undefined}
           style={styles.title}
         >
           <CalendarText

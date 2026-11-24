@@ -29,10 +29,10 @@ it("merges messages key by key", () => {
 it("defaults for new props", () => {
   const c = applyDefaults({});
   expect([
-    c.scheduleDays,
     c.slotPressMode,
     c.showMorePopover,
     c.maxFontSizeMultiplier,
     c.testID,
-  ]).toEqual([30, "press", true, 1.5, "calendar"]);
+  ]).toEqual(["press", true, 1.5, "calendar"]);
+  expect(c).not.toHaveProperty("scheduleDays");
 });

@@ -91,14 +91,17 @@ test("week: PageDown, ← / → and T turn the period", async ({ page }) => {
   await expect(title(page)).toHaveText("October 2026");
 });
 
-test("schedule: PageDown keeps focus in the list", async ({ page }) => {
+test("schedule: PageDown leaves the focused row alone", async ({ page }) => {
   await page.goto("/?screen=schedule&scheme=light");
-  await page.locator('[data-testid$="-schedule-event"]').first().focus();
+  const rows = page.locator('[data-testid$="-schedule-event"]');
+  await rows.nth(0).focus();
+  // No window to move since 1.1: the title stays and focus stays.
+  const before = await title(page).textContent();
   await page.keyboard.press("PageDown");
+  await expect(title(page)).toHaveText(before!);
+  await expect(rows.nth(0)).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(
-    page.locator('[data-testid$="-schedule-event"]').first(),
-  ).toBeFocused();
+  await expect(rows.nth(1)).toBeFocused();
 });
 
 test("schedule: ↓ and ↑ move between rows", async ({ page }) => {

@@ -2,7 +2,7 @@
  * @file Expands recurring events (`rrule`) into occurrences inside a window.
  */
 import type { DateTime, Duration } from "luxon";
-import { dateFn } from "../utils/date";
+import { dateFn, type DateType } from "../utils/date";
 import type { BaseCalendarEvent, VisibleRange } from "../types";
 import { parseRRule, type RRule } from "./parseRRule";
 
@@ -21,6 +21,23 @@ export function getExpansionWindow(range: VisibleRange): VisibleRange {
   return {
     start: range.start.minus({ months: 2 }).startOf("quarter"),
     end: range.end.plus({ months: 2 }).endOf("quarter"),
+  };
+}
+
+/** How far past `selectedDate` Schedule expands series. */
+const SCHEDULE_MONTHS_AHEAD = 12;
+
+/**
+ * Schedule lists every event, but only series need a window: from two months
+ * before `selectedDate` to 12 months after it, widened to whole quarters
+ * (calendar-simple). Every series, finite or endless, is cut there.
+ */
+export function getScheduleExpansionWindow(
+  selectedDate: DateType,
+): VisibleRange {
+  return {
+    start: selectedDate.minus({ months: 2 }).startOf("quarter"),
+    end: selectedDate.plus({ months: SCHEDULE_MONTHS_AHEAD }).endOf("quarter"),
   };
 }
 

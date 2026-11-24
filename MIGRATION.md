@@ -41,9 +41,7 @@ export function Team() {
 | `onEventLongPress(event)`             | An event was long-pressed                                     |
 | `slotPressMode`                       | Create with a press (default) or a long press                 |
 | `swipeNavigation`                     | Swipe between periods (default on, off on web)                |
-| `scheduleDays`                        | Length of the Schedule window (default 30)                    |
 | `onRefresh` / `refreshing`            | Schedule pull-to-refresh                                      |
-| `onEndReached`                        | The Schedule window grew at its end                           |
 | `showMorePopover`                     | `false` lets `onMoreClick` handle "+N more" alone             |
 | `maxFontSizeMultiplier`               | Caps system font scaling (default 1.5)                        |
 | `safeAreaInsets`                      | Padding for the day sheet and menus                           |
@@ -51,25 +49,24 @@ export function Team() {
 
 ## Behaviour differences
 
-| Area                   | Web 2.1                                                                              | Native                                                                                   |
-| ---------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| Week title             | Built from ISO weeks (Mon–Sun), so a Sunday-start week can show the wrong months     | Built from the visible days                                                              |
-| Auto-scroll to now     | Ignores `minHour`; runs only on mount                                                | Centres the now line, accounts for `minHour`, re-runs when the visible days change       |
-| Schedule range         | Lists every event; prev/next only change the title                                   | A window of `scheduleDays` days from the selected date; grows on scroll (`onEndReached`) |
-| Event ending at 00:00  | Month view also draws it on the next day                                             | Ends on the previous day everywhere (month, banner, schedule)                            |
-| Month "auto" max       | A string `height` gives 0 visible events                                             | Always measured; phone cells use thin bars and fit more                                  |
-| Multi-day chip width   | Ignores the week-number column                                                       | Subtracts it                                                                             |
-| Compound mode          | `view` / `selectedDate` / `customDays` changes after mount are ignored with children | Synced in both modes                                                                     |
-| Year bounds            | `pastYearLength` / `futureYearLength` fill the picker only                           | Same: navigation is never clamped, and the picker always includes the shown year         |
-| Defaults               | An explicit `undefined` (e.g. `minHour={undefined}`) erases the default              | `undefined` falls back to the default                                                    |
-| Timed event, no end    | 1-minute block                                                                       | Same 1-minute event, drawn at the minimum height                                         |
-| Missing title          | Empty                                                                                | Empty on screen; read as "No title" by screen readers                                    |
-| Today in another month | An adjacent-month cell showing today is not marked                                   | Marked with a muted outline                                                              |
-| "+N more"              | Always opens the popover                                                             | `showMorePopover={false}` hands it to `onMoreClick` only                                 |
-| Invalid dates          | Only `endDate < startDate` is filtered; unparseable dates pass through               | Unparseable dates are dropped too, with one development warning                          |
-| Daylight-saving days   | Event position from millisecond differences                                          | Wall-clock position, so events stay at their printed time                                |
-| Phone layout           | Same as desktop, scaled                                                              | Month uses event bars and a day sheet; time grids fit the width when swiping is on       |
-| Palette                | Web colours                                                                          | A refreshed palette with a dark scheme; set `palette` to match your web colours          |
+| Area                   | Web 2.1                                                                              | Native                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| Week title             | Built from ISO weeks (Mon–Sun), so a Sunday-start week can show the wrong months     | Built from the visible days                                                        |
+| Auto-scroll to now     | Ignores `minHour`; runs only on mount                                                | Centres the now line, accounts for `minHour`, re-runs when the visible days change |
+| Event ending at 00:00  | Month view also draws it on the next day                                             | Ends on the previous day everywhere (month, banner, schedule)                      |
+| Month "auto" max       | A string `height` gives 0 visible events                                             | Always measured; phone cells use thin bars and fit more                            |
+| Multi-day chip width   | Ignores the week-number column                                                       | Subtracts it                                                                       |
+| Compound mode          | `view` / `selectedDate` / `customDays` changes after mount are ignored with children | Synced in both modes                                                               |
+| Year bounds            | `pastYearLength` / `futureYearLength` fill the picker only                           | Same: navigation is never clamped, and the picker always includes the shown year   |
+| Defaults               | An explicit `undefined` (e.g. `minHour={undefined}`) erases the default              | `undefined` falls back to the default                                              |
+| Timed event, no end    | 1-minute block                                                                       | Same 1-minute event, drawn at the minimum height                                   |
+| Missing title          | Empty                                                                                | Empty on screen; read as "No title" by screen readers                              |
+| Today in another month | An adjacent-month cell showing today is not marked                                   | Marked with a muted outline                                                        |
+| "+N more"              | Always opens the popover                                                             | `showMorePopover={false}` hands it to `onMoreClick` only                           |
+| Invalid dates          | Only `endDate < startDate` is filtered; unparseable dates pass through               | Unparseable dates are dropped too, with one development warning                    |
+| Daylight-saving days   | Event position from millisecond differences                                          | Wall-clock position, so events stay at their printed time                          |
+| Phone layout           | Same as desktop, scaled                                                              | Month uses event bars and a day sheet; time grids fit the width when swiping is on |
+| Palette                | Web colours                                                                          | A refreshed palette with a dark scheme; set `palette` to match your web colours    |
 
 ## No native equivalent
 
@@ -132,5 +129,24 @@ import Calendar, { type CustomDaysCount } from "calendar-simple-native";
 
 export function Planner({ days }: { days: number }) {
   return <Calendar view="customDays" customDays={days as CustomDaysCount} />;
+}
+```
+
+### Schedule lists every event
+
+Schedule now lists every event, as in calendar-simple: the 30-day window,
+`scheduleDays` and `onEndReached` are gone (passing them logs a warning in
+development). The header has no Prev/Next in Schedule and its title spans the
+events; Today and date picks scroll to the first day on or after the date, and
+`autoScrollToCurrentTime` does the same when the list opens. PageUp/PageDown do
+nothing there. `onDateRangeChange` reports the span of the events, so an app
+that loaded events per window should load the whole list it wants to show.
+
+```tsx
+import Calendar, { type CalendarEvent } from "calendar-simple-native";
+
+export function Agenda({ events }: { events: CalendarEvent[] }) {
+  // 1.0: scheduleDays={60} onEndReached={loadMore}
+  return <Calendar view="schedule" events={events} autoScrollToCurrentTime />;
 }
 ```
