@@ -5,8 +5,10 @@ React Native port of [calendar-simple](https://github.com/Jaganath-MSJ/CalendarS
 v2.1 and keeps its props, callbacks and render props.
 
 [npm](https://www.npmjs.com/package/calendar-simple-native) ·
-[Live demo](https://calendar-simple-native.netlify.app/) ·
+[Live demo](https://jaganath-msj.github.io/CalendarSimple-Native/) ·
 [Try it in Expo Snack](https://snack.expo.dev/@msj_jagan/calendar-simple-native-demo)
+
+![Moving an event a day later and an hour down with a long press, then dragging its bottom edge to make it longer](https://raw.githubusercontent.com/Jaganath-MSJ/CalendarSimple-Native/main/media/drag-resize.gif)
 
 - Month, Week, Day, Custom Days (1–7) and Schedule views
 - Swipe paging, and a Schedule list of every event with pull-to-refresh
@@ -734,7 +736,7 @@ Every ID starts with `testID` (default `calendar`). The most useful ones:
 
 ## Example app and demo
 
-Try the [live demo](https://calendar-simple-native.netlify.app/) in the
+Try the [live demo](https://jaganath-msj.github.io/CalendarSimple-Native/) in the
 browser, or open the
 [Expo Snack](https://snack.expo.dev/@msj_jagan/calendar-simple-native-demo)
 on your phone with Expo Go.
