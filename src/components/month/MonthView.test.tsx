@@ -58,9 +58,10 @@ it("hides adjacent contents but keeps the cell", async () => {
   expect(screen.getAllByTestId("calendar-27-month-label")).toHaveLength(1); // only Oct 27
 });
 
-it("week numbers: 36 px column, ISO week of the row's first day", async () => {
+it("week numbers: 36 px column, ISO week of the row's Thursday", async () => {
   await month({ showWeekNumbers: true });
-  expect(screen.getByTestId("calendar-0-week-number")).toHaveTextContent("39");
+  // Row Sun 27 Sep – Sat 3 Oct: its Thursday, 1 Oct, is in week 40.
+  expect(screen.getByTestId("calendar-0-week-number")).toHaveTextContent("40");
   expect(screen.getByTestId("calendar-0-week-number")).toHaveStyle({
     width: 36,
   });

@@ -12,6 +12,8 @@ import { CalendarPressable } from "../ui/CalendarPressable";
 
 export interface MoreButtonProps {
   hidden: number;
+  /** Screen-reader label (`messages.moreEventsOn`). */
+  accessibilityLabel: string;
   start: number;
   top: number;
   width: number;
@@ -29,6 +31,7 @@ export interface MoreButtonProps {
 
 export function MoreButton({
   hidden,
+  accessibilityLabel,
   start,
   top,
   width,
@@ -46,7 +49,7 @@ export function MoreButton({
       ref={ref}
       testID={testID}
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel}
       hitSlop={{ top: slop, bottom: slop }}
       onPress={() =>
         onPress(

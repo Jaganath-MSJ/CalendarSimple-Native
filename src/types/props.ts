@@ -145,7 +145,10 @@ export interface CalendarProps<TEvent extends CalendarEvent = CalendarEvent> {
   view?: ECalendarViewType;
   /** Days the Custom Days view shows: 1–7 (default 3). */
   customDays?: CustomDaysCount;
+  /** Prefix of every test ID (default `"calendar"`). */
   testID?: string;
+  /** Alias of `testID`, calendar-simple's name; `testID` wins when both are set. */
+  testId?: string;
   isLoading?: boolean;
   renderLoading?: () => ReactNode;
   // Config

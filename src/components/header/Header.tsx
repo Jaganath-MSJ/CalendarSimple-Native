@@ -99,6 +99,7 @@ export function Header(props: HeaderProps) {
       scheduleRange,
       locale,
       showWeekNumbers,
+      weekNumber: messages.weekNumber,
       compact: breakpoint === "phone",
     });
   }, [
@@ -110,6 +111,7 @@ export function Header(props: HeaderProps) {
     weekStartsOn,
     weekEndsOn,
     showWeekNumbers,
+    messages.weekNumber,
     breakpoint,
   ]);
 

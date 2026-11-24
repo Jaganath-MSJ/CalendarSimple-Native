@@ -5,6 +5,8 @@
 import { StyleSheet, View } from "react-native";
 import {
   cellsMoved,
+  DATE_FORMATS,
+  formatDate,
   getAxisBounds,
   getDiffDays,
   stepsMoved,
@@ -143,10 +145,15 @@ export function WeekBarsOverlay<E extends CalendarEvent = CalendarEvent>({
     if (hidden <= 0) return null;
     const start = gutter + col * cellWidth + 4;
     const top = labelArea + visibleSlots * (height + 2);
+    const label = cfg.messages.moreEventsOn(
+      hidden,
+      formatDate(day.currentDate, DATE_FORMATS.MONTH_DAY_YEAR, cfg.locale),
+    );
     return variant === "bar" ? (
       <MoreLabel
         key={`more-${col}`}
         hidden={hidden}
+        accessibilityLabel={label}
         start={start}
         top={top}
         width={cellWidth - 8}
@@ -156,6 +163,7 @@ export function WeekBarsOverlay<E extends CalendarEvent = CalendarEvent>({
       <MoreButton
         key={`more-${col}`}
         hidden={hidden}
+        accessibilityLabel={label}
         start={start}
         top={top}
         width={cellWidth - 8}

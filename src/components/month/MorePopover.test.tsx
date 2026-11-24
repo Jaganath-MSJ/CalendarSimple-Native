@@ -23,6 +23,11 @@ it("+ 6 more on 22 Oct reports the hidden events and opens the popover", async (
   expect(screen.getByTestId("calendar-22-more-events")).toHaveTextContent(
     "+ 6 more",
   );
+  // Screen readers hear the count and the date (messages.moreEventsOn).
+  expect(screen.getByTestId("calendar-22-more-events")).toHaveProp(
+    "accessibilityLabel",
+    "6 more events on October 22, 2026",
+  );
   await fireEvent.press(screen.getByTestId("calendar-22-more-events"));
   const [date, hidden] = onMoreClick.mock.calls[0]!;
   expect(DateTime.fromJSDate(date).toISODate()).toBe("2026-10-22");

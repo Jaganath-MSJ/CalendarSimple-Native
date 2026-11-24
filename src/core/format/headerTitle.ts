@@ -1,9 +1,10 @@
 /**
  * @file Header title per view (ported from web `components/layout/Header.tsx`).
  */
-import { formatDate, type DateType } from "../utils/date";
+import { formatDate, getRowWeekNumber, type DateType } from "../utils/date";
 import { ECalendarViewType, type VisibleRange } from "../types";
 import { DATE_FORMATS } from "../constants";
+import { formatMonthYear } from "../i18n/names";
 
 /** Input for `getHeaderTitle`. */
 export interface HeaderTitleInput {
@@ -15,19 +16,24 @@ export interface HeaderTitleInput {
   scheduleRange?: VisibleRange;
   locale: string;
   showWeekNumbers: boolean;
+  /** Week suffix text (`messages.weekNumber`); default "W43". */
+  weekNumber?: (n: number) => string;
   /** Phone header: shorter Custom Days title. */
   compact: boolean;
 }
 
-/** "Oct - Nov 2026", "Dec 2026 - Jan 2027" or "Oct 2026" for a span of days. */
+/**
+ * "Oct - Nov 2026", "Dec 2026 - Jan 2027" or "Oct 2026" for a span of days;
+ * month and year follow the locale's order ("2026年10月" in ja).
+ */
 function monthSpan(start: DateType, end: DateType, locale: string): string {
   if (start.month !== end.month || start.year !== end.year) {
     if (start.year !== end.year) {
-      return `${formatDate(start, DATE_FORMATS.SHORT_MONTH_YEAR, locale)} - ${formatDate(end, DATE_FORMATS.SHORT_MONTH_YEAR, locale)}`;
+      return `${formatMonthYear(start, locale, "short")} - ${formatMonthYear(end, locale, "short")}`;
     }
-    return `${formatDate(start, DATE_FORMATS.SHORT_MONTH, locale)} - ${formatDate(end, DATE_FORMATS.SHORT_MONTH_YEAR, locale)}`;
+    return `${formatDate(start, DATE_FORMATS.SHORT_MONTH, locale)} - ${formatMonthYear(end, locale, "short")}`;
   }
-  return formatDate(start, DATE_FORMATS.SHORT_MONTH_YEAR, locale);
+  return formatMonthYear(start, locale, "short");
 }
 
 /**
@@ -41,11 +47,13 @@ export function getHeaderTitle({
   scheduleRange,
   locale,
   showWeekNumbers,
+  weekNumber = (n) => `W${n}`,
   compact,
 }: HeaderTitleInput): string {
+  // The week's number is the ISO week of its Thursday (calendar-simple).
   const weekSuffix =
     view === ECalendarViewType.week && showWeekNumbers
-      ? `  ·  W${selectedDate.weekNumber}`
+      ? `  ·  ${weekNumber(getRowWeekNumber(visibleDays[0] ?? selectedDate))}`
       : "";
 
   if (view === ECalendarViewType.day) {
@@ -57,7 +65,7 @@ export function getHeaderTitle({
     const baseString =
       startOfWeek.month !== endOfWeek.month
         ? monthSpan(startOfWeek, endOfWeek, locale)
-        : formatDate(startOfWeek, DATE_FORMATS.MONTH_YEAR, locale);
+        : formatMonthYear(startOfWeek, locale);
     return `${baseString}${weekSuffix}`;
   }
   if (view === ECalendarViewType.customDays) {
@@ -84,5 +92,5 @@ export function getHeaderTitle({
   if (view === ECalendarViewType.schedule && scheduleRange) {
     return monthSpan(scheduleRange.start, scheduleRange.end, locale);
   }
-  return formatDate(selectedDate, DATE_FORMATS.MONTH_YEAR, locale);
+  return formatMonthYear(selectedDate, locale);
 }

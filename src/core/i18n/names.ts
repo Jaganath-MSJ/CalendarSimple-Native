@@ -41,11 +41,13 @@ export type NameSource = "custom" | "luxon" | "intl" | "english";
 const cache = new Map<string, string[]>();
 const luxonOk = new Map<string, boolean>();
 const custom = new Map<string, LocaleNames>();
+const monthYearFormats = new Map<string, Intl.DateTimeFormat | null>();
 
 /** Clears the name caches (tests). */
 export function clearNameCache(): void {
   cache.clear();
   luxonOk.clear();
+  monthYearFormats.clear();
 }
 
 /**
@@ -302,4 +304,57 @@ export function formatWithNames(
   }
   flush();
   return out;
+}
+
+function monthYearFormat(
+  locale: string,
+  length: NameLength,
+): Intl.DateTimeFormat | null {
+  const key = `${locale}|${length}`;
+  let dtf = monthYearFormats.get(key);
+  if (dtf === undefined) {
+    try {
+      dtf = new Intl.DateTimeFormat(locale, {
+        year: "numeric",
+        month: length,
+        timeZone: "UTC",
+      });
+    } catch {
+      dtf = null;
+    }
+    monthYearFormats.set(key, dtf);
+  }
+  return dtf;
+}
+
+/**
+ * Month and year in the locale's own order: "October 2026", "2026年10月"
+ * (ja, zh), "2026년 10월" (ko). Uses `Intl.DateTimeFormat` with `{ year,
+ * month }`; falls back to `MMMM yyyy` / `MMM yyyy` (with the usual name
+ * fallbacks) when `Intl` is missing or gives no month name, or when the app
+ * registered its own month names for the locale.
+ */
+export function formatMonthYear(
+  dt: DateTime,
+  locale: string,
+  length: NameLength = "long",
+): string {
+  const loc = locale || "en";
+  const pattern = length === "long" ? "MMMM yyyy" : "MMM yyyy";
+  const registered = custom.has(loc) || custom.has(loc.split("-")[0] ?? "");
+  const dtf = registered ? null : monthYearFormat(loc, length);
+  if (dtf) {
+    try {
+      // Mid-month at noon UTC: the same month in every time zone.
+      const parts = dtf.formatToParts(
+        new Date(Date.UTC(dt.year, dt.month - 1, 15, 12)),
+      );
+      const month = parts.find((p) => p.type === "month")?.value ?? "";
+      // An empty month part means this engine has no names for the locale.
+      if (month.trim()) return parts.map((p) => p.value).join("");
+    } catch {
+      // Fall through to the pattern.
+    }
+  }
+  return formatWithNames(dt, pattern, loc);
 }

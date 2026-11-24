@@ -100,6 +100,26 @@ it("never goes below minEventDurationMinutes", async () => {
   expect(hm(onEventResize.mock.calls[0]![0].end)).toBe("09:30");
 });
 
+it("an event shorter than the minimum: a jiggle never resizes it", async () => {
+  // 10 minutes long, 30-minute minimum: neither edge may move inwards.
+  const onEventResize = jest.fn<void, [Resize]>();
+  await renderCalendar(
+    day({
+      onEventResize,
+      minEventDurationMinutes: 30,
+      events: [{ ...meeting, endDate: "2026-10-22T09:10:00" }],
+    }),
+  );
+  const r = wrapped.get(item)!.resize!;
+  expect(r.top!.max).toBe(0);
+  expect(r.bottom!.min).toBe(0);
+  // Outwards still works.
+  expect(r.top!.min).toBeLessThan(0);
+  expect(r.bottom!.max).toBeGreaterThan(0);
+  await resize("bottom", 0);
+  expect(onEventResize).not.toHaveBeenCalled();
+});
+
 it("does nothing for an unchanged edge", async () => {
   const onEventResize = jest.fn();
   await renderCalendar(day({ onEventResize }));

@@ -135,6 +135,22 @@ it("web: Alt+←/→ move a day; ↑/↓ do nothing", async () => {
   os.restore();
 });
 
+it("showAllDayRow={false}: in the grid it still moves by whole days only", async () => {
+  const { onEventDrop } = await week({ showAllDayRow: false });
+  const props = wrapped.get("calendar-o-day-event-item")!;
+  const move = props.move!;
+  expect(props.resize).toBeUndefined();
+  expect([move.snapY, move.bounds.minY, move.bounds.maxY]).toEqual([0, 0, 0]);
+  // A vertical drop is ignored; one column right is one day later.
+  await act(() => move.onEnd(move.snapX, 200));
+  const info = onEventDrop.mock.calls[0]![0];
+  expect([ymd(info.start), ymd(info.end), info.allDay]).toEqual([
+    "2026-10-21 00:00",
+    "2026-10-22 00:00",
+    true,
+  ]);
+});
+
 it("not draggable: no wrapper and no actions", async () => {
   await week({ draggable: (e) => e.id !== "o" });
   expect(wrapped.has(chip("o"))).toBe(false);

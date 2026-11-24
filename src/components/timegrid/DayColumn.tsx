@@ -15,6 +15,7 @@ import {
   DATE_FORMATS,
   formatDate,
   getAxisBounds,
+  isAllDayEvent,
   stepsMoved,
   type DateType,
   type DayEventLayout,
@@ -175,8 +176,12 @@ function DayColumnImpl<E extends CalendarEvent = CalendarEvent>({
     const gridEnd = day.plus({ hours: maxHour });
     return layouts.map((l, i): DragSpec | undefined => {
       const ev = l.event;
+      // All-day events drawn in the grid (showAllDayRow={false}) move by
+      // whole days only and are never resized, so they stay all-day
+      // (calendar-simple).
+      const allDay = isAllDayEvent(ev);
       const canMove = mover.canMove(ev);
-      const canResize = mover.canResize(ev);
+      const canResize = !allDay && mover.canResize(ev);
       if (!canMove && !canResize) return undefined;
       const f = frames[i]!;
       const shift = (days: number, minutes: number) =>
@@ -191,20 +196,20 @@ function DayColumnImpl<E extends CalendarEvent = CalendarEvent>({
         move: canMove
           ? {
               snapX: across,
-              snapY: step,
+              snapY: allDay ? 0 : step,
               bounds: {
                 minX: across ? x.min : 0,
                 maxX: across ? x.max : 0,
-                minY: -f.top,
-                maxY: Math.max(0, height - f.top - f.height),
+                minY: allDay ? 0 : -f.top,
+                maxY: allDay ? 0 : Math.max(0, height - f.top - f.height),
               },
               drop: (dx, dy) =>
                 shift(
                   cellsMoved(dx, across, mover.reversed),
-                  stepsMoved(dy, step) * mover.snapMinutes,
+                  allDay ? 0 : stepsMoved(dy, step) * mover.snapMinutes,
                 ),
               shift,
-              stepMinutes: mover.snapMinutes,
+              stepMinutes: allDay ? 0 : mover.snapMinutes,
               reversed: mover.reversed,
             }
           : undefined,
@@ -215,7 +220,7 @@ function DayColumnImpl<E extends CalendarEvent = CalendarEvent>({
               bottom:
                 end <= gridEnd
                   ? {
-                      min: -room,
+                      min: -room || 0, // never -0
                       max: Math.max(0, height - f.top - f.height),
                     }
                   : undefined,

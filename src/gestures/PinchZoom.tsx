@@ -23,16 +23,20 @@ const SETTLE_MS = 400;
 
 /**
  * The hour height for a pinch `scale` from `base`, kept inside
- * `[min, max]` and rounded to whole points.
+ * `[min, max]`. Rounded to whole points unless `exact`: the preview during
+ * the gesture follows the fingers exactly, and only the height reported on
+ * release is rounded (calendar-simple).
  */
 export function zoomedHourHeight(
   base: number,
   scale: number,
   min: number,
   max: number,
+  exact = false,
 ): number {
   "worklet";
-  return Math.round(Math.min(max, Math.max(min, base * scale)));
+  const h = Math.min(max, Math.max(min, base * scale));
+  return exact ? h : Math.round(h);
 }
 
 export function PinchZoom({
@@ -91,6 +95,7 @@ export function PinchZoom({
             e.scale,
             minHourHeight,
             maxHourHeight,
+            true,
           );
           scale.value = next / hourHeight;
         })

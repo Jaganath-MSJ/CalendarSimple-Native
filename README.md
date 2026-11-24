@@ -168,14 +168,15 @@ All props are optional. Dates in props and callbacks are JS `Date` objects.
 
 ### Data
 
-| Prop                          | Type                          | Default      | Notes                                               |
-| ----------------------------- | ----------------------------- | ------------ | --------------------------------------------------- |
-| `events`                      | `TEvent[]`                    | `[]`         |                                                     |
-| `selectedDate`                | `Date`                        | today        | synced into the calendar whenever its value changes |
-| `view`                        | `ECalendarViewType`           | `"month"`    | `month`, `week`, `day`, `customDays`, `schedule`    |
-| `customDays`                  | `CustomDaysCount` (1–7)       | 3            | days in the Custom Days view; other values clamp    |
-| `testID`                      | `string`                      | `"calendar"` | prefix of every test ID                             |
-| `isLoading` / `renderLoading` | `boolean` / `() => ReactNode` | `false` / —  | skeleton when empty, overlay over existing events   |
+| Prop                          | Type                          | Default      | Notes                                                     |
+| ----------------------------- | ----------------------------- | ------------ | --------------------------------------------------------- |
+| `events`                      | `TEvent[]`                    | `[]`         |                                                           |
+| `selectedDate`                | `Date`                        | today        | synced into the calendar whenever its value changes       |
+| `view`                        | `ECalendarViewType`           | `"month"`    | `month`, `week`, `day`, `customDays`, `schedule`          |
+| `customDays`                  | `CustomDaysCount` (1–7)       | 3            | days in the Custom Days view; other values clamp          |
+| `testID`                      | `string`                      | `"calendar"` | prefix of every test ID                                   |
+| `testId`                      | `string`                      | —            | alias of `testID` (calendar-simple's name); `testID` wins |
+| `isLoading` / `renderLoading` | `boolean` / `() => ReactNode` | `false` / —  | skeleton when empty, overlay over existing events         |
 
 ### Behaviour
 
@@ -192,7 +193,7 @@ All props are optional. Dates in props and callbacks are JS `Date` objects.
 | `minHour` / `maxHour`                           | `number`                        | `0` / `24`                | hours shown in time grids                                                                 |
 | `weekStartsOn`                                  | `WeekdayIndex \| "locale"`      | `0` (Sunday)              | `"locale"` uses the locale's first day                                                    |
 | `weekEndsOn`                                    | `WeekdayIndex`                  | day before `weekStartsOn` | for work weeks, e.g. `1`–`5`                                                              |
-| `showAdjacentMonths` / `showWeekNumbers`        | `boolean`                       | `true` / `false`          | month view                                                                                |
+| `showAdjacentMonths` / `showWeekNumbers`        | `boolean`                       | `true` / `false`          | month view; `showWeekNumbers` also ends the Week title with "· W43" (`weekNumber`)        |
 | `resetDateOnViewChange`                         | `boolean`                       | `false`                   | jump back to today when the view changes                                                  |
 | `showAllDayRow`                                 | `boolean`                       | `true`                    | all-day banner in time grids                                                              |
 | `eventOverlapOffset`                            | `number`                        | `0`                       | percent of the column width; > 0 stacks overlapping events                                |
@@ -374,6 +375,8 @@ export function PlannerCalendar({ initial }: { initial: CalendarEvent[] }) {
   grids there.
 - **All-day row (Week, Day, Custom Days):** chips move sideways by whole
   days inside the visible days; a timed multi-day event keeps its times.
+  With `showAllDayRow={false}`, all-day events drawn in the grid do the
+  same: whole days only, never resized.
 - `onEventDrop` receives `{ event, start, end, allDay, view }`; `end` keeps
   the length (equal to `start` when the event has no `endDate`). A recurring
   event's occurrence is passed as shown (see `recurringEventId`).
@@ -577,6 +580,8 @@ export function FrenchCalendar() {
         week: "Semaine",
         day: "Jour",
         more: (n) => `+ ${n} de plus`,
+        moreEventsOn: (n, date) => `${n} événements de plus le ${date}`,
+        weekNumber: (n) => `S${n}`,
         eventCount: (n) =>
           n === 0 ? "aucun événement" : DEFAULT_MESSAGES.eventCount(n),
       }}
@@ -596,6 +601,9 @@ Measured on Hermes (React Native 0.88):
 - On iOS, Luxon on Hermes returns empty month and weekday names for some
   locales (seen with `fr` and `ja`). The calendar then reads them through
   `Intl.DateTimeFormat`, and uses English only if that is empty too.
+- Month and year in titles follow the locale's order through `Intl`
+  ("2026年10月" in `ja`, "2026년 10월" in `ko`); without `Intl` month names, or
+  with names from `registerLocaleNames`, they read "October 2026".
 
 ### Your own month and weekday names
 
