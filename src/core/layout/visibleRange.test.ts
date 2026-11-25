@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getVisibleRange } from "./visibleRange";
+import { getScheduleLoadRange, getVisibleRange } from "./visibleRange";
 import { dateFn } from "../utils/date";
 import type { ECalendarViewType } from "../types";
 
@@ -50,4 +50,25 @@ describe("getVisibleRange", () => {
       "2026-10-22",
     ]);
   });
+});
+
+describe("getScheduleLoadRange", () => {
+  const iso = (x: {
+    start: { toISODate(): string | null };
+    end: { toISODate(): string | null };
+  }) => [x.start.toISODate(), x.end.toISODate()];
+  it("no events: the window around the date (2 months before, 12 after, quarters)", () =>
+    expect(iso(getScheduleLoadRange(dateFn("2026-10-22"), []))).toEqual([
+      "2026-07-01",
+      "2027-12-31",
+    ]));
+  it("events beyond the window widen it", () =>
+    expect(
+      iso(
+        getScheduleLoadRange(dateFn("2026-10-22"), [
+          { title: "A", startDate: "2025-01-10" },
+          { title: "B", startDate: "2026-10-25T09:00:00" },
+        ]),
+      ),
+    ).toEqual(["2025-01-10", "2027-12-31"]));
 });

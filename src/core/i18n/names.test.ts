@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { DateTime, Info } from "luxon";
 import {
   clearNameCache,
+  formatLongDate,
   formatMonthYear,
   monthNames,
   nameSource,
@@ -213,6 +214,16 @@ describe("name fallbacks", () => {
     emptyLuxonNames();
     emptyIntlNames();
     expect(formatMonthYear(d, "fr")).toBe("March 2026");
+  });
+
+  it("formatMonthYear and formatLongDate stay Gregorian (th, fa)", () => {
+    const d = DateTime.fromISO("2026-10-22");
+    // th-TH defaults to the Buddhist year (2569), fa-IR to the Persian one.
+    expect(formatMonthYear(d, "th-TH")).toContain("2026");
+    expect(formatMonthYear(d, "fa-IR")).not.toContain("مهر");
+    expect(formatLongDate(d, "ja-JP")).toBe("2026年10月22日");
+    expect(formatLongDate(d, "en")).toBe("October 22, 2026");
+    expect(formatLongDate(d, "th-TH")).toContain("2026");
   });
 
   it("formatMonthYear: without formatToParts (iOS Hermes) uses format", () => {

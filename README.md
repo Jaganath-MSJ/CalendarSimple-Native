@@ -498,6 +498,9 @@ use gestures do not need them.
 `onDateRangeChange` fires with the first and last visible day whenever the
 visible range settles (after mount, navigation, a swipe or a view change),
 once for a burst of quick swipes. Use it to fetch only what is on screen.
+Schedule, which lists every event, reports the window around the selected
+date (two months before to twelve months after, whole quarters), widened by
+any events outside it; Today or a date pick in another quarter moves it.
 
 ```tsx
 import { useCallback, useState } from "react";
@@ -720,9 +723,11 @@ order, after their week's days. ← and → swap in right-to-left layouts. Keys
 typed into a text field inside a custom renderer are ignored.
 
 The event keys work on any focused draggable or resizable event, with or
-without `<CalendarGestures>`, and are listed in its `aria-keyshortcuts`.
-After a move the event keeps focus, also when it is redrawn in another
-column. They report through `onEventDrop` / `onEventResize` like a drag.
+without `<CalendarGestures>`, and are listed in its `aria-keyshortcuts`;
+`keyboardNavigation={false}` turns them off with the other keys. After a
+move the event keeps focus, also when it is redrawn in another column (a
+recurring occurrence too). They report through `onEventDrop` /
+`onEventResize` like a drag.
 
 ## Performance
 

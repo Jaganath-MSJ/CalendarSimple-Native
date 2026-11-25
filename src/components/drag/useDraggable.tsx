@@ -30,9 +30,18 @@ import {
   useGestureAdapter,
 } from "../../context/GestureAdapterContext";
 import { useTestID, useViewConfig } from "../../context/LayoutContext";
-import { readKey, type WebKeyEvent } from "../../hooks/useKeyboardNavigation";
+import {
+  readKey,
+  useKeyboardEnabled,
+  type WebKeyEvent,
+} from "../../hooks/useKeyboardNavigation";
 import type { HapticKind } from "../../types";
-import { markFocusAfterMove, useFocusAfterMove } from "./focusAfterMove";
+import {
+  focusKey as keyOf,
+  markFocusAfterMove,
+  useFocusAfterMove,
+  type EventFocus,
+} from "./focusAfterMove";
 
 /** Shortest gap between two `"snap"` haptics, in ms. */
 export const SNAP_HAPTIC_MS = 50;
@@ -69,8 +78,12 @@ export interface ResizeSpec {
 export interface DragSpec {
   move?: MoveSpec;
   resize?: ResizeSpec;
-  /** The event's id: keeps keyboard focus on it after a keyboard move. */
-  focusKey?: string;
+  /**
+   * Keeps keyboard focus on the event after a keyboard move. Set it on one
+   * drawn piece of the event only (the one holding its start, or the first
+   * visible one), so a multi-week or multi-day event takes focus once.
+   */
+  focus?: EventFocus;
 }
 
 export interface Draggable {
@@ -116,14 +129,18 @@ const NONE: Draggable = {
 export function useDraggable(spec: DragSpec | undefined): Draggable {
   const { EventWrapper } = useGestureAdapter();
   const { setDragging } = useDragState();
-  const { messages, onHaptic } = useViewConfig();
+  const { messages, onHaptic, keyboardNavigation } = useViewConfig();
+  // The event keys follow keyboardNavigation (and only the current page).
+  const keyboard = useKeyboardEnabled(keyboardNavigation);
   const lastSnap = useRef(0);
   // A drag began during the current press.
   const dragged = useRef(false);
   const id = useTestID();
   const keyRef = useRef<ComponentRef<typeof Pressable> | null>(null);
-  const focusKey =
-    spec?.focusKey !== undefined ? id(`focus-${spec.focusKey}`) : undefined;
+  const focus = spec?.focus;
+  // Its key now, and after a keyboard move (`undefined` on neighbour pages).
+  const prefix = focus ? id("focus") : undefined;
+  const focusKey = prefix && focus ? `${prefix}|${keyOf(focus)}` : undefined;
   useFocusAfterMove(focusKey, keyRef);
   const { move, resize } = spec ?? {};
   if (!move && !resize) return NONE;
@@ -172,23 +189,29 @@ export function useDraggable(spec: DragSpec | undefined): Draggable {
     },
     resizeMinutes: resize?.bottom ? resize.stepMinutes : undefined,
   };
-  const keys: EventKeyProps | undefined =
-    Platform.OS === "web"
-      ? {
-          ref: keyRef,
-          "aria-keyshortcuts": getEventKeyShortcuts(keyOptions),
-          onKeyDown: (e) => {
-            const key = readKey(e);
-            const action = key && getEventKeyAction(key, keyOptions);
-            if (!action) return;
-            e.preventDefault();
-            markFocusAfterMove(focusKey);
-            if (action.type === "move")
-              move?.shift(action.days, action.minutes);
-            else resize?.stretch("bottom", action.minutes);
-          },
-        }
-      : undefined;
+  const keys: EventKeyProps | undefined = keyboard
+    ? {
+        ref: keyRef,
+        "aria-keyshortcuts": getEventKeyShortcuts(keyOptions),
+        onKeyDown: (e) => {
+          const key = readKey(e);
+          const action = key && getEventKeyAction(key, keyOptions);
+          if (!action) return;
+          e.preventDefault();
+          markFocusAfterMove(
+            prefix && focus
+              ? `${prefix}|${
+                  action.type === "move"
+                    ? keyOf(focus, action.days, action.minutes)
+                    : keyOf(focus)
+                }`
+              : undefined,
+          );
+          if (action.type === "move") move?.shift(action.days, action.minutes);
+          else resize?.stretch("bottom", action.minutes);
+        },
+      }
+    : undefined;
 
   if (!EventWrapper)
     return {

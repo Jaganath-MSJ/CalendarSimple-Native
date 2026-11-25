@@ -11,6 +11,7 @@ import type {
 import { TIME_CONSTANTS } from "../constants";
 import { buildMonthMatrix } from "./monthMatrix";
 import { getVisibleDays } from "./visibleDays";
+import { getScheduleExpansionWindow } from "../recurrence/expand";
 
 /** Options for `getVisibleRange`. */
 export interface VisibleRangeOptions {
@@ -63,4 +64,31 @@ export function getVisibleRange(
 
   const days = getVisibleDays(view, day, opts);
   return { start: days[0] ?? day, end: days[days.length - 1] ?? day };
+}
+
+/**
+ * The range Schedule reports through `onDateRangeChange`: the span of the
+ * events joined with the window around `selectedDate` (two months before to
+ * twelve after, whole quarters; `getScheduleExpansionWindow`). An app that
+ * loads events for the reported range therefore gets a useful range even
+ * before it has any events.
+ */
+export function getScheduleLoadRange(
+  selectedDate: DateType,
+  events: readonly BaseCalendarEvent[],
+): VisibleRange {
+  const expansion = getScheduleExpansionWindow(selectedDate);
+  // Day starts, like every other range.
+  const start = expansion.start.startOf("day");
+  const end = expansion.end.startOf("day");
+  if (events.length === 0) return { start, end };
+  const span = getVisibleRange("schedule", selectedDate, {
+    weekStartsOn: 0,
+    weekEndsOn: 6,
+    events,
+  });
+  return {
+    start: span.start < start ? span.start : start,
+    end: span.end > end ? span.end : end,
+  };
 }

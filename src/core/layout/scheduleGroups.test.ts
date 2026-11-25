@@ -276,3 +276,41 @@ describe("native additions", () => {
       ),
     ).toBe("Hackathon (Day 2/2)"));
 });
+
+describe("groupScheduleEvents with fill (long events)", () => {
+  const fill = { start: dateFn("2026-07-01"), end: dateFn("2027-12-31") };
+  it("a years-long event fills only the window, plus its first day", () => {
+    const term = {
+      title: "Term",
+      startDate: "2020-01-01",
+      endDate: "2030-12-31",
+    };
+    const groups = groupScheduleEvents([term], WIDE, fill);
+    // 1 (its first day) + 549 days of the window, not ~4,000.
+    expect(groups).toHaveLength(1 + 549);
+    expect(groups[0]!.dateKey).toBe("2020-01-01");
+    expect(groups[1]!.dateKey).toBe("2026-07-01");
+    expect(groups.at(-1)!.dateKey).toBe("2027-12-31");
+  });
+  it("short events and events outside the window are listed as before", () => {
+    const trip = {
+      title: "Trip",
+      startDate: "2026-10-20",
+      endDate: "2026-10-22",
+    };
+    const old = {
+      title: "Old",
+      startDate: "2024-03-01",
+      endDate: "2024-03-03",
+    };
+    const keys = groupScheduleEvents([trip, old], WIDE, fill).map(
+      (g) => g.dateKey,
+    );
+    expect(keys).toEqual([
+      "2024-03-01",
+      "2026-10-20",
+      "2026-10-21",
+      "2026-10-22",
+    ]);
+  });
+});

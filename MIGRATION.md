@@ -139,8 +139,11 @@ Schedule now lists every event, as in calendar-simple: the 30-day window,
 development). The header has no Prev/Next in Schedule and its title spans the
 events; Today and date picks scroll to the first day on or after the date, and
 `autoScrollToCurrentTime` does the same when the list opens. PageUp/PageDown do
-nothing there. `onDateRangeChange` reports the span of the events, so an app
-that loaded events per window should load the whole list it wants to show.
+nothing there. `onDateRangeChange` reports the window around the selected date
+(two months before to twelve months after, whole quarters), widened by any
+events outside it, so an app that loads by range keeps working; an event
+lasting months fills its days only inside that window (and shows on its first
+day).
 
 ```tsx
 import Calendar, { type CalendarEvent } from "calendar-simple-native";

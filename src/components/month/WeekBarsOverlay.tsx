@@ -5,15 +5,16 @@
 import { StyleSheet, View } from "react-native";
 import {
   cellsMoved,
-  DATE_FORMATS,
-  formatDate,
+  formatLongDate,
   getAxisBounds,
   getDiffDays,
+  getStartOfDay,
   stepsMoved,
   type CalendarDayInfo,
 } from "../../core";
 import type { EventMover } from "../../hooks/useEventMover";
 import type { DragSpec } from "../drag/useDraggable";
+import { eventFocus } from "../drag/focusAfterMove";
 import { useTestID, useViewConfig } from "../../context/LayoutContext";
 import { originalOf } from "../../hooks/useMonthGrid";
 import { useCalendarTheme } from "../../theme";
@@ -65,8 +66,18 @@ function chipDrag<E extends CalendarEvent>(
   const from = row[col]?.currentDate;
   const shift = (days: number, minutes: number) =>
     mover.move(event, days, minutes);
+  // Focus after a keyboard move goes to one chip only: the one on the
+  // event's start day, or the grid's first cell when it starts earlier.
+  const startDay = getStartOfDay(event.startDate);
+  const gridStart = matrix[0]?.[0]?.currentDate;
+  const primary =
+    (from !== undefined && from.equals(startDay)) ||
+    (gridStart !== undefined &&
+      startDay < gridStart &&
+      rowIndex === 0 &&
+      col === 0);
   return {
-    focusKey: event.id,
+    focus: primary ? eventFocus(event) : undefined,
     move: {
       snapX: cellWidth,
       snapY: rowHeight,
@@ -147,7 +158,7 @@ export function WeekBarsOverlay<E extends CalendarEvent = CalendarEvent>({
     const top = labelArea + visibleSlots * (height + 2);
     const label = cfg.messages.moreEventsOn(
       hidden,
-      formatDate(day.currentDate, DATE_FORMATS.MONTH_DAY_YEAR, cfg.locale),
+      formatLongDate(day.currentDate, cfg.locale),
     );
     return variant === "bar" ? (
       <MoreLabel

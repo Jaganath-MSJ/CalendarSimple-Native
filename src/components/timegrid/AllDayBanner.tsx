@@ -25,6 +25,7 @@ import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
 import type { EventMover } from "../../hooks/useEventMover";
 import { useDraggable, type DragSpec } from "../drag/useDraggable";
+import { eventFocus } from "../drag/focusAfterMove";
 import { pickEventStyle } from "../eventStyle";
 import {
   ARROW,
@@ -162,7 +163,7 @@ export function AllDayBanner<E extends CalendarEvent = CalendarEvent>({
     const drag: DragSpec | undefined =
       mover && mover.canMove(event)
         ? {
-            focusKey: event.id,
+            focus: eventFocus(event),
             move: {
               snapX: colWidth,
               snapY: 0,

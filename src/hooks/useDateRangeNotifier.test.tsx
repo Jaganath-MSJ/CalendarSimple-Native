@@ -91,7 +91,7 @@ it("does not fire again when only the callback identity changes", async () => {
   expect(spy).toHaveBeenCalledTimes(1);
 });
 
-it("Schedule spans every event and fires again when events widen it", async () => {
+it("Schedule reports the window around the date, widened by the events", async () => {
   const spy = rangeSpy();
   const a = { title: "A", startDate: "2026-10-05" };
   const b = { title: "B", startDate: "2026-11-10T09:00:00" };
@@ -110,17 +110,26 @@ it("Schedule spans every event and fires again when events widen it", async () =
       <Probe />
     </Calendar>
   );
-  const { rerender } = await renderCalendar(ui([a, b]));
+  // No events yet: the window around the selected date (two months before
+  // to twelve after, whole quarters), so an app loading by range has one.
+  const { rerender } = await renderCalendar(ui([]));
   await tick();
   const last = () => spy.mock.calls.at(-1)!;
   expect([iso(last()[0]), iso(last()[1]), last()[2]]).toEqual([
-    "2026-10-05",
-    "2026-11-10",
+    "2026-07-01",
+    "2027-12-31",
     "schedule",
   ]);
-  await rerender(ui([a, b, { title: "C", startDate: "2026-12-01" }]));
+  // Events inside the window keep it; one beyond it widens the range.
+  await rerender(ui([a, b]));
   await tick();
-  expect(iso(last()[1])).toBe("2026-12-01");
+  expect([iso(last()[0]), iso(last()[1])]).toEqual([
+    "2026-07-01",
+    "2027-12-31",
+  ]);
+  await rerender(ui([a, b, { title: "C", startDate: "2028-02-01" }]));
+  await tick();
+  expect(iso(last()[1])).toBe("2028-02-01");
   await act(() => dispatch({ type: "SET_VIEW", payload: "week" }));
   await tick();
   expect(last()[2]).toBe("week");

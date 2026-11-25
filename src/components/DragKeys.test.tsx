@@ -107,6 +107,13 @@ it("Month: Alt+↑/↓ move by a week, keeping the time", async () => {
   );
 });
 
+it("keyboardNavigation={false} turns the event keys off too", async () => {
+  const { onEventDrop } = await day({ keyboardNavigation: false });
+  expect(screen.getByTestId(item).props["aria-keyshortcuts"]).toBeUndefined();
+  await press(item, "ArrowRight");
+  expect(onEventDrop).not.toHaveBeenCalled();
+});
+
 it("native apps get no key handler", async () => {
   os.restore();
   await day();

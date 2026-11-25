@@ -23,6 +23,7 @@ import {
 } from "../../core";
 import type { EventMover } from "../../hooks/useEventMover";
 import type { DragSpec } from "../drag/useDraggable";
+import { eventFocus } from "../drag/focusAfterMove";
 import { useTestID, useViewConfig } from "../../context/LayoutContext";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
@@ -191,8 +192,11 @@ function DayColumnImpl<E extends CalendarEvent = CalendarEvent>({
       const start = dateFn(ev.startDate);
       const end = ev.endDate ? dateFn(ev.endDate) : start;
       const room = Math.max(0, f.height - minHeight);
+      // Focus after a keyboard move goes to one piece of a multi-day event:
+      // the column of its start, or the first column when it starts earlier.
+      const primary = start.hasSame(day, "day") || (index === 0 && start < day);
       return {
-        focusKey: ev.id,
+        focus: primary ? eventFocus(ev) : undefined,
         move: canMove
           ? {
               snapX: across,

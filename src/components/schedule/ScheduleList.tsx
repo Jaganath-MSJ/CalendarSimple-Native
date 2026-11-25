@@ -31,6 +31,8 @@ interface Section<E> {
 }
 
 const RETRY_MS = 100;
+/** Jumps near a far section before giving up (onScrollToIndexFailed). */
+const MAX_RETRIES = 3;
 
 export function ScheduleList<E extends CalendarEvent = CalendarEvent>() {
   const cfg = useViewConfig<E>();
@@ -80,6 +82,8 @@ export function ScheduleList<E extends CalendarEvent = CalendarEvent>() {
 
   // The first day on or after the selected date, else the last day.
   const listRef = useRef<SectionList<E, Section<E>>>(null);
+  // Retries left for the current scroll (onScrollToIndexFailed).
+  const retries = useRef(0);
   const selectedKey = state.selectedDate.toISODate() ?? "";
   const targetIndex = useMemo(() => {
     if (!sections.length) return -1;
@@ -102,31 +106,52 @@ export function ScheduleList<E extends CalendarEvent = CalendarEvent>() {
     },
     [targetIndex],
   );
-  // On mount (and when the events change) only with autoScrollToCurrentTime;
-  // every later Today or date pick (even to the same date) scrolls.
+  // With autoScrollToCurrentTime: once the target day is known (on mount, or
+  // when the events first arrive) and whenever it becomes a different day,
+  // not on every new events array (a refresh, a parent re-render or
+  // re-expanded series would pull the user back). Every Today or date pick
+  // (even to the same date) scrolls through navigationId below.
   const { autoScrollToCurrentTime } = cfg;
+  const targetKey = sections[targetIndex]?.dateKey;
+  const scrolledKey = useRef<string | undefined>(undefined);
   useEffect(() => {
-    if (autoScrollToCurrentTime) scrollToTarget(false);
-    // Keyed on the setting and the events only.
+    if (!autoScrollToCurrentTime || !targetKey) return;
+    if (scrolledKey.current === targetKey) return;
+    scrolledKey.current = targetKey;
+    retries.current = 0;
+    scrollToTarget(false);
+    // Keyed on the setting and the target day only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoScrollToCurrentTime, sections]);
+  }, [autoScrollToCurrentTime, targetKey]);
   const lastNavigation = useRef(state.navigationId);
   useEffect(() => {
     if (lastNavigation.current === state.navigationId) return;
     lastNavigation.current = state.navigationId;
+    retries.current = 0;
     scrollToTarget(!reduceMotion);
     // Keyed on navigation only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.navigationId]);
-  const retried = useRef(false);
-  const onScrollToIndexFailed = useCallback(() => {
-    if (retried.current) return;
-    retried.current = true;
-    setTimeout(() => {
-      scrollToTarget(false);
-      retried.current = false;
-    }, RETRY_MS);
-  }, [scrollToTarget]);
+  // A far section is not rendered yet when rows have no fixed height
+  // (renderEvent or separators): jump near it with the average row height,
+  // let it render, then try again (a few times).
+  const onScrollToIndexFailed = useCallback(
+    (info: { index: number; averageItemLength: number }) => {
+      if (retries.current >= MAX_RETRIES) {
+        retries.current = 0;
+        return;
+      }
+      retries.current += 1;
+      listRef.current?.getScrollResponder()?.scrollTo({
+        y: info.averageItemLength * info.index,
+        animated: false,
+      });
+      setTimeout(() => {
+        scrollToTarget(false);
+      }, RETRY_MS);
+    },
+    [scrollToTarget],
+  );
 
   const last = sections.length - 1;
   const separated = renderScheduleSeparator !== undefined;

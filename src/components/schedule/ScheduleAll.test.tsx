@@ -1,5 +1,5 @@
-import { Platform, SectionList } from "react-native";
-import { fireEvent, screen } from "@testing-library/react-native";
+import { Platform, SectionList, Text } from "react-native";
+import { act, fireEvent, screen } from "@testing-library/react-native";
 import { Calendar } from "../Calendar";
 import type { CalendarEvent } from "../../types";
 import { renderCalendar } from "../../test-utils/renderCalendar";
@@ -72,6 +72,51 @@ it("Today scrolls, even to the same date, without onNavigate", async () => {
   await fireEvent.press(screen.getByTestId("calendar-header-today-btn"));
   expect(sectionsScrolledTo()).toEqual([1, 1]);
   expect(onNavigate).not.toHaveBeenCalled();
+});
+
+it("does not scroll again when only the events array is new", async () => {
+  // A refresh, a parent re-render or re-expanded series give a new array.
+  const { rerender } = await schedule({ autoScrollToCurrentTime: true });
+  await rerender(
+    <Calendar
+      view="schedule"
+      selectedDate={new Date(2026, 9, 22)}
+      events={[...events]}
+      autoScrollToCurrentTime
+    />,
+  );
+  expect(sectionsScrolledTo()).toEqual([1]);
+  // A different target day does scroll.
+  await rerender(
+    <Calendar
+      view="schedule"
+      selectedDate={new Date(2026, 9, 22)}
+      events={events.filter((e) => e.id !== "oct")}
+      autoScrollToCurrentTime
+    />,
+  );
+  expect(sectionsScrolledTo()).toEqual([1, 1]);
+});
+
+it("a far section that fails to scroll is approached, then retried", async () => {
+  // renderEvent: rows have no fixed height, so a far section may fail.
+  const scrollTo = jest.fn();
+  jest
+    .spyOn(SectionList.prototype, "getScrollResponder")
+    .mockImplementation(() => ({ scrollTo }) as never);
+  await schedule({
+    renderEvent: (e) => <Text>{e.title}</Text>,
+    autoScrollToCurrentTime: true,
+  });
+  const list = screen.getByTestId("calendar-schedule-view");
+  const fail = list.props.onScrollToIndexFailed as (info: {
+    index: number;
+    averageItemLength: number;
+  }) => void;
+  await act(() => fail({ index: 40, averageItemLength: 50 }));
+  expect(scrollTo).toHaveBeenCalledWith({ y: 2000, animated: false });
+  await act(() => jest.advanceTimersByTime(100));
+  expect(sectionsScrolledTo()).toEqual([1, 1]);
 });
 
 it("past the last event, scrolls to the last day", async () => {
