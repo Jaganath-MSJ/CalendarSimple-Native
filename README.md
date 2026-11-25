@@ -4,7 +4,6 @@ A simple, themeable calendar for React Native (iOS, Android, web). It is the
 React Native port of [calendar-simple](https://github.com/Jaganath-MSJ/CalendarSimple)
 v2.1 and keeps its props, callbacks and render props.
 
-[npm](https://www.npmjs.com/package/calendar-simple-native) ·
 [Live demo](https://jaganath-msj.github.io/CalendarSimple-Native/) ·
 [Try it in Expo Snack](https://snack.expo.dev/@msj_jagan/calendar-simple-native-demo)
 
