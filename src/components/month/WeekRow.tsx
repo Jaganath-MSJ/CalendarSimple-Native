@@ -4,7 +4,11 @@
  */
 import { memo } from "react";
 import { StyleSheet, View } from "react-native";
-import type { CalendarDayInfo, ThemeScheme } from "../../core";
+import {
+  getRowWeekNumber,
+  type CalendarDayInfo,
+  type ThemeScheme,
+} from "../../core";
 import { useTestID, useViewConfig } from "../../context/LayoutContext";
 import { useCalendarTheme } from "../../theme";
 import type { CalendarEvent } from "../../types";
@@ -94,7 +98,9 @@ function WeekRowImpl<E extends CalendarEvent = CalendarEvent>({
               fontSize: metrics.month.labelFontSize,
             }}
           >
-            {first && !blankWeek ? String(first.currentDate.weekNumber) : ""}
+            {first && !blankWeek
+              ? String(getRowWeekNumber(first.currentDate))
+              : ""}
           </CalendarText>
         </View>
       ) : null}

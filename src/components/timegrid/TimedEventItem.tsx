@@ -89,6 +89,7 @@ function TimedEventItemImpl<E extends CalendarEvent = CalendarEvent>({
       accessibilityLabel={`${event.title || messages.noTitle}, ${tooltip}`}
       accessibilityActions={draggable.accessibilityActions}
       onAccessibilityAction={draggable.onAccessibilityAction}
+      {...draggable.keys}
       {...draggable.press(
         () => onEventClick?.(event),
         () => onEventLongPress?.(event),

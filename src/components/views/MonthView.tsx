@@ -7,9 +7,8 @@ import { StyleSheet, View, type LayoutChangeEvent } from "react-native";
 import {
   calculateMaxEvents,
   dateFn,
-  DATE_FORMATS,
   ECalendarViewType,
-  formatDate,
+  formatMonthYear,
   getMonthKeyTarget,
   isVisibleWeekday,
   MONTH_METRICS,
@@ -283,11 +282,7 @@ export function MonthView({ date, ...local }: MonthViewProps) {
     <ViewConfigProvider value={cfg}>
       <View
         testID={id("month-view")}
-        accessibilityLabel={formatDate(
-          shown,
-          DATE_FORMATS.MONTH_YEAR,
-          cfg.locale,
-        )}
+        accessibilityLabel={formatMonthYear(shown, cfg.locale)}
         onLayout={onLayout}
         onKeyDown={keyboard ? onKeyDown : undefined}
         style={[styles.root, cfg.styles.table]}

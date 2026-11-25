@@ -57,11 +57,11 @@ export const ENTRIES: Entry[] = [
   {
     key: "schedule",
     title: "Schedule",
-    description: "Agenda, pull to refresh",
+    description: "Every event by day, pull to refresh",
     group: "views",
     view: ECalendarViewType.schedule,
     code: basic(
-      '  view="schedule"\n  onRefresh={refresh}\n  onEndReached={loadMore}\n',
+      '  view="schedule"\n  autoScrollToCurrentTime\n  onRefresh={refresh}\n',
     ),
   },
   {

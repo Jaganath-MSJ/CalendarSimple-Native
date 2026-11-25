@@ -174,6 +174,9 @@ export function parseRRule(rule: string): ParsedRRule {
 
   if (out.count !== undefined && out.until !== undefined)
     return { ok: false, reason: "COUNT and UNTIL cannot both be set" };
+  // RFC 5545: BYMONTHDAY must not be used with FREQ=WEEKLY.
+  if (out.freq === "WEEKLY" && out.byMonthDay)
+    return { ok: false, reason: "BYMONTHDAY cannot be used with FREQ=WEEKLY" };
   const ordinal = out.byDay?.some((d) => d.nth !== undefined);
   if (
     ordinal &&

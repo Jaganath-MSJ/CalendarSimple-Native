@@ -43,6 +43,10 @@ export interface CalendarMessages {
   eventCount: (n: number) => string;
   /** "+ 3 more" */
   more: (n: number) => string;
+  /** "3 more events on October 22, 2026": the "+N more" accessibility label */
+  moreEventsOn: (n: number, date: string) => string;
+  /** "W43": week number after the Week title (`showWeekNumbers`) */
+  weekNumber: (n: number) => string;
   /** "3 more all-day events, tap to expand" */
   moreAllDay: (n: number) => string;
   /** "(Day 1/3)" */
@@ -96,6 +100,8 @@ export const DEFAULT_MESSAGES: CalendarMessages = {
   eventCount: (n) =>
     n === 0 ? "no events" : n === 1 ? "1 event" : `${n} events`,
   more: (n) => `+ ${n} more`,
+  moreEventsOn: (n, d) => `${n} more events on ${d}`,
+  weekNumber: (n) => `W${n}`,
   moreAllDay: (n) => `${n} more all-day events, tap to expand`,
   dayOfTotal: (i, n) => `(Day ${i}/${n})`,
   eventsOn: (d) => `Events on ${d}`,

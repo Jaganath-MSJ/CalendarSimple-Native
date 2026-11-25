@@ -9,14 +9,14 @@ import {
 } from ".";
 
 describe("core constants", () => {
-  it("keeps web defaults and adds scheduleDays", () => {
+  it("keeps web defaults; no Schedule window (1.1)", () => {
     expect(CORE_DEFAULTS.weekStartsOn).toBe(0);
     expect(CORE_DEFAULTS.selectable).toBe(false);
-    expect(CORE_DEFAULTS.scheduleDays).toBe(30);
+    expect(CORE_DEFAULTS).not.toHaveProperty("scheduleDays");
     expect(CORE_DEFAULTS).not.toHaveProperty("classNames");
   });
-  it("adds EXTEND_SCHEDULE", () =>
-    expect(CALENDAR_ACTIONS.EXTEND_SCHEDULE).toBe("EXTEND_SCHEDULE"));
+  it("has no EXTEND_SCHEDULE action (1.1)", () =>
+    expect(CALENDAR_ACTIONS).not.toHaveProperty("EXTEND_SCHEDULE"));
   it("drops dead code (#15)", () => {
     expect(DATE_FORMATS).not.toHaveProperty("FULL_DATE");
     expect(DATE_FORMATS).not.toHaveProperty("DAY_INDEX");

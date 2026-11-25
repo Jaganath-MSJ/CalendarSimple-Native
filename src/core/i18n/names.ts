@@ -41,11 +41,13 @@ export type NameSource = "custom" | "luxon" | "intl" | "english";
 const cache = new Map<string, string[]>();
 const luxonOk = new Map<string, boolean>();
 const custom = new Map<string, LocaleNames>();
+const monthYearFormats = new Map<string, Intl.DateTimeFormat | null>();
 
 /** Clears the name caches (tests). */
 export function clearNameCache(): void {
   cache.clear();
   luxonOk.clear();
+  monthYearFormats.clear();
 }
 
 /**
@@ -106,6 +108,8 @@ function intlNames(
   const options: Intl.DateTimeFormatOptions = {
     [part]: length,
     timeZone: "UTC",
+    // The grid is Gregorian: not the locale's default calendar (fa, th).
+    calendar: "gregory",
   };
   const fromParts = safe(() => {
     const dtf = new Intl.DateTimeFormat(locale, options);
@@ -302,4 +306,95 @@ export function formatWithNames(
   }
   flush();
   return out;
+}
+
+function dateFormat(
+  locale: string,
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat | null {
+  const key = `${locale}|${JSON.stringify(options)}`;
+  let dtf = monthYearFormats.get(key);
+  if (dtf === undefined) {
+    try {
+      dtf = new Intl.DateTimeFormat(locale, {
+        ...options,
+        timeZone: "UTC",
+        // The grid is Gregorian: not the locale's default calendar (th
+        // reads 2569, fa reads 1405, ar-SA can read a Hijri year).
+        calendar: "gregory",
+      });
+    } catch {
+      dtf = null;
+    }
+    monthYearFormats.set(key, dtf);
+  }
+  return dtf;
+}
+
+/**
+ * `Intl` with `options` in the locale's own order, else `pattern` through
+ * `formatWithNames`: also when the app registered names for the locale, or
+ * the engine gives no month name (`formatToParts`, then `format` for iOS
+ * Hermes, which lacks `formatToParts`).
+ */
+function formatLocalized(
+  dt: DateTime,
+  locale: string,
+  options: Intl.DateTimeFormatOptions,
+  pattern: string,
+): string {
+  const loc = locale || "en";
+  const registered = custom.has(loc) || custom.has(loc.split("-")[0] ?? "");
+  const dtf = registered ? null : dateFormat(loc, options);
+  if (dtf) {
+    // Noon UTC on the same calendar day: that day in every time zone.
+    const date = new Date(Date.UTC(dt.year, dt.month - 1, dt.day, 12));
+    try {
+      const parts = dtf.formatToParts(date);
+      const month = parts.find((p) => p.type === "month")?.value ?? "";
+      // An empty month part means this engine has no names for the locale.
+      if (month.trim()) return parts.map((p) => p.value).join("");
+    } catch {
+      // No formatToParts (iOS Hermes): try format below.
+    }
+    try {
+      // Accept it only with a month name (a letter) and the year in it.
+      const text = dtf.format(date).trim();
+      if (/\p{L}/u.test(text) && text.includes(String(dt.year))) return text;
+    } catch {
+      // Fall through to the pattern.
+    }
+  }
+  return formatWithNames(dt, pattern, loc);
+}
+
+/**
+ * Month and year in the locale's own order: "October 2026", "2026年10月"
+ * (ja, zh), "2026년 10월" (ko), always in the Gregorian calendar. Falls back
+ * to `MMMM yyyy` / `MMM yyyy` (see `formatLocalized`).
+ */
+export function formatMonthYear(
+  dt: DateTime,
+  locale: string,
+  length: NameLength = "long",
+): string {
+  return formatLocalized(
+    dt.set({ day: 15 }),
+    locale,
+    { year: "numeric", month: length },
+    length === "long" ? "MMMM yyyy" : "MMM yyyy",
+  );
+}
+
+/**
+ * A full date in the locale's own order: "October 22, 2026", "2026年10月22日"
+ * (ja), Gregorian calendar. Falls back to `MMMM d, yyyy`.
+ */
+export function formatLongDate(dt: DateTime, locale: string): string {
+  return formatLocalized(
+    dt,
+    locale,
+    { year: "numeric", month: "long", day: "numeric" },
+    "MMMM d, yyyy",
+  );
 }

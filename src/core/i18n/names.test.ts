@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { DateTime, Info } from "luxon";
 import {
   clearNameCache,
+  formatLongDate,
+  formatMonthYear,
   monthNames,
   nameSource,
   registerLocaleNames,
@@ -199,6 +201,49 @@ describe("name fallbacks", () => {
         compact: false,
       }),
     ).toBe("October 2026");
+  });
+
+  it("formatMonthYear: Intl order; registered names keep the pattern", () => {
+    const d = DateTime.fromISO("2026-03-05");
+    expect(formatMonthYear(d, "ja-JP")).toBe("2026年3月");
+    expect(formatMonthYear(d, "en", "short")).toBe("Mar 2026");
+    registerLocaleNames("fr", FR);
+    expect(formatMonthYear(d, "fr")).toBe("mars-L 2026");
+    // No month names from Intl: the MMMM yyyy fallback.
+    registerLocaleNames("fr", undefined);
+    emptyLuxonNames();
+    emptyIntlNames();
+    expect(formatMonthYear(d, "fr")).toBe("March 2026");
+  });
+
+  it("formatMonthYear and formatLongDate stay Gregorian (th, fa)", () => {
+    const d = DateTime.fromISO("2026-10-22");
+    // th-TH defaults to the Buddhist year (2569), fa-IR to the Persian one.
+    expect(formatMonthYear(d, "th-TH")).toContain("2026");
+    expect(formatMonthYear(d, "fa-IR")).not.toContain("مهر");
+    expect(formatLongDate(d, "ja-JP")).toBe("2026年10月22日");
+    expect(formatLongDate(d, "en")).toBe("October 22, 2026");
+    expect(formatLongDate(d, "th-TH")).toContain("2026");
+  });
+
+  it("formatMonthYear: without formatToParts (iOS Hermes) uses format", () => {
+    const d = DateTime.fromISO("2026-03-05");
+    const withFormat = (text: string) =>
+      vi.spyOn(Intl, "DateTimeFormat").mockImplementation(function () {
+        return {
+          format: () => text,
+          formatToParts: () => {
+            throw new TypeError("not supported");
+          },
+        };
+      });
+    withFormat("2026年3月");
+    expect(formatMonthYear(d, "ja-JP")).toBe("2026年3月");
+    // A result without a month name (or the year) is not trusted.
+    vi.restoreAllMocks();
+    clearNameCache();
+    withFormat("3 2026");
+    expect(formatMonthYear(d, "en")).toBe("March 2026");
   });
 
   it("leaves formats without names untouched", () => {

@@ -32,7 +32,6 @@ export const CORE_DEFAULTS = {
   sortedMonthView: true,
   isLoading: false,
   theme: {},
-  scheduleDays: 30,
 } as const;
 
 /**
@@ -58,5 +57,4 @@ export const CALENDAR_ACTIONS = {
   NEXT: "NEXT",
   PREV: "PREV",
   TODAY: "TODAY",
-  EXTEND_SCHEDULE: "EXTEND_SCHEDULE",
 } as const;

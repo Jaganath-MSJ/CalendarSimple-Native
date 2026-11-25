@@ -28,7 +28,10 @@ export interface BaseCalendarEvent {
   rrule?: string;
   /** Occurrences to skip: ISO dates (`"2026-11-04"`) or exact start times. */
   exdates?: string[];
-  /** Set on an occurrence of a recurring event: the series' `id`. */
+  /**
+   * Set on an occurrence of a recurring event: the series' `id` (its
+   * `startDate` when it has none). An event with it is never expanded again.
+   */
   recurringEventId?: string;
   /** Set on an occurrence of a recurring event: its start, as `startDate`. */
   occurrenceDate?: string;

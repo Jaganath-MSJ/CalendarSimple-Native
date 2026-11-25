@@ -24,16 +24,18 @@ it("view picker switches view and reports it", async () => {
   expect(screen.queryByTestId("calendar-menu-view")).toBeNull();
 });
 
-it("offers N Days only for 1–10", async () => {
+it("offers N Days when customDays is set", async () => {
   await renderCalendar(<Calendar customDays={3} />);
   await fireEvent.press(screen.getByTestId("calendar-header-view-select"));
   expect(screen.getByText("3 Days")).toBeOnTheScreen();
 });
 
-it("does not offer N Days for 11", async () => {
-  await renderCalendar(<Calendar customDays={11} />);
+it("labels N Days with the clamped count (1–7)", async () => {
+  // JavaScript callers can pass any number; the label shows what is drawn.
+  await renderCalendar(<Calendar customDays={11 as 7} />);
   await fireEvent.press(screen.getByTestId("calendar-header-view-select"));
   expect(screen.queryByText("11 Days")).toBeNull();
+  expect(screen.getByText("7 Days")).toBeOnTheScreen();
 });
 
 it("month picker clamps the day (Jan 31 → Feb 28)", async () => {

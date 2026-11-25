@@ -9,6 +9,8 @@ import { CalendarText } from "../ui/CalendarText";
 
 export interface MoreLabelProps {
   hidden: number;
+  /** Screen-reader label (`messages.moreEventsOn`). */
+  accessibilityLabel: string;
   start: number;
   top: number;
   width: number;
@@ -17,6 +19,7 @@ export interface MoreLabelProps {
 
 export function MoreLabel({
   hidden,
+  accessibilityLabel,
   start,
   top,
   width,
@@ -27,7 +30,7 @@ export function MoreLabel({
   return (
     <CalendarText
       testID={testID}
-      accessibilityLabel={cfg.messages.more(hidden)}
+      accessibilityLabel={accessibilityLabel}
       numberOfLines={1}
       pointerEvents="none"
       style={[

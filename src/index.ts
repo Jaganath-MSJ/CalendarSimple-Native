@@ -13,6 +13,7 @@ export type {
   CalendarMessages,
   CalendarTheme,
   ColorScheme,
+  CustomDaysCount,
   LocaleNames,
   ThemeScheme,
   ThemeStyle,

@@ -3,6 +3,7 @@ import { I18nManager, ScrollView } from "react-native";
 import { Calendar } from "./Calendar";
 import { renderCalendar } from "../test-utils/renderCalendar";
 import { OCT_2026_EVENTS } from "../core/test/fixtures";
+import { eventsFrom } from "../test-utils/scheduleEvents";
 import { useFrozenClock } from "../test-utils/clock";
 
 // eslint-disable-next-line react-hooks/rules-of-hooks -- not a React hook
@@ -62,7 +63,7 @@ describe.each([
           view="schedule"
           locale={locale}
           selectedDate={new Date(2026, 9, 22)}
-          events={OCT_2026_EVENTS}
+          events={eventsFrom("2026-10-22", OCT_2026_EVENTS)}
         />,
       );
       expect(screen.getAllByTestId(/-schedule-section$/)[0]).toHaveStyle({
@@ -79,7 +80,7 @@ describe.each([
           view="schedule"
           locale={locale}
           selectedDate={new Date(2026, 9, 22)}
-          events={OCT_2026_EVENTS}
+          events={eventsFrom("2026-10-22", OCT_2026_EVENTS)}
         />,
       );
       expect(screen.getAllByText("Stand-up")[0]).toHaveStyle(

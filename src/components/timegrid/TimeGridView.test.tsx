@@ -22,15 +22,24 @@ it("week shows Sun–Sat with today highlighted", async () => {
   ).toHaveTextContent("THU22");
 });
 
-it("custom days render only for 1–10", async () => {
+it("custom days draw the given count", async () => {
   await grid("customDays", { customDays: 3 });
   expect(screen.getByTestId("calendar-custom-days-view")).toBeOnTheScreen();
   expect(screen.getAllByTestId("calendar-day-column")).toHaveLength(3);
 });
 
-it("custom days 11 renders nothing", async () => {
-  await grid("customDays", { customDays: 11 });
-  expect(screen.queryByTestId("calendar-custom-days-view")).toBeNull();
+it("custom days outside 1–7 are clamped and always drawn", async () => {
+  // JavaScript callers and stored settings can pass any number.
+  for (const [given, drawn] of [
+    [11, 7],
+    [0, 1],
+    [2.6, 3],
+    [NaN, 3],
+  ] as const) {
+    await grid("customDays", { customDays: given as 7 });
+    expect(screen.getByTestId("calendar-custom-days-view")).toBeOnTheScreen();
+    expect(screen.getAllByTestId("calendar-day-column")).toHaveLength(drawn);
+  }
 });
 
 it("time column follows minHour/maxHour and is12Hour", async () => {

@@ -34,6 +34,18 @@ it("validates events and warns once in development", async () => {
   expect(warn).toHaveBeenCalledTimes(1);
 });
 
+it("testId is an alias of testID (calendar-simple's name); testID wins", async () => {
+  await renderCalendar(<Calendar testId="cal" />, undefined, "cal");
+  expect(screen.getByTestId("cal-month-view")).toBeOnTheScreen();
+  await renderCalendar(
+    <Calendar testID="main" testId="cal" />,
+    undefined,
+    "main",
+  );
+  expect(screen.getByTestId("main-month-view")).toBeOnTheScreen();
+  expect(screen.queryByTestId("cal-month-view")).toBeNull();
+});
+
 it("renders the body only after layout", async () => {
   await render(<Calendar />);
   expect(screen.queryByTestId("calendar-body")).toBeNull();

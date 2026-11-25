@@ -2,6 +2,11 @@ import { applyDefaults } from "./applyDefaults";
 
 it("#13: explicit undefined keeps the default", () =>
   expect(applyDefaults({ minHour: undefined }).minHour).toBe(0));
+it("testId is an alias of testID; testID wins", () => {
+  expect(applyDefaults({}).testID).toBe("calendar");
+  expect(applyDefaults({ testId: "cal" }).testID).toBe("cal");
+  expect(applyDefaults({ testID: "main", testId: "cal" }).testID).toBe("main");
+});
 it("derives weekEndsOn from weekStartsOn", () => {
   expect(applyDefaults({}).weekEndsOn).toBe(6);
   expect(applyDefaults({ weekStartsOn: 1 }).weekEndsOn).toBe(0);
@@ -29,10 +34,10 @@ it("merges messages key by key", () => {
 it("defaults for new props", () => {
   const c = applyDefaults({});
   expect([
-    c.scheduleDays,
     c.slotPressMode,
     c.showMorePopover,
     c.maxFontSizeMultiplier,
     c.testID,
-  ]).toEqual([30, "press", true, 1.5, "calendar"]);
+  ]).toEqual(["press", true, 1.5, "calendar"]);
+  expect(c).not.toHaveProperty("scheduleDays");
 });
