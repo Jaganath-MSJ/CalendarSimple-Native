@@ -48,7 +48,7 @@
     "size": "size-limit",
     "example:web:export": "cd example && npx expo export -p web",
     "e2e:web": "npm run example:web:export && playwright test -c e2e-web",
-    "readme:gif": "npm run example:web:export && node scripts/record-readme-gif.mjs",
+    "readme:gifs": "bash scripts/readme-gifs/record.sh",
     "e2e:native": "maestro test e2e"
   },
   "keywords": [

@@ -56,11 +56,14 @@ Run these before opening a pull request; CI runs the same ones.
 Add or update tests with every change: core logic in Vitest next to the file,
 components in Jest with `renderCalendar` from `src/test-utils/`.
 
-After a visible change to dragging, resizing or the Week view, re-record the
-README GIF (`media/drag-resize.gif`) with `npm run readme:gif`. It records the
-web export with Playwright; add `-- --frames <dir>` to also save each frame as
-a PNG for review. The live demo is deployed to GitHub Pages from `main` after
-each release (`.github/workflows/pages.yml`).
+After a visible change to the views, dragging, theming or localization,
+re-record the README GIFs (`.github/assets/demo/*.gif`) with
+`npm run readme:gifs` (or `npm run readme:gifs -- drag` for one). It records
+the example's bare `readme-*` screens on the iOS simulator, so it needs
+macOS with Xcode, Maestro, a booted iPhone simulator with Expo Go (its
+"Tools button" turned off) and `npm run example -- start` running. The live
+demo is deployed to GitHub Pages from `main` after each release
+(`.github/workflows/pages.yml`).
 
 ## Branches and pull requests
 

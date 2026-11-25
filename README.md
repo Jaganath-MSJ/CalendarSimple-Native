@@ -8,10 +8,21 @@ v2.1 and keeps its props, callbacks and render props.
 [Live demo](https://jaganath-msj.github.io/CalendarSimple-Native/) ·
 [Try it in Expo Snack](https://snack.expo.dev/@msj_jagan/calendar-simple-native-demo)
 
-![Moving an event a day later and an hour down with a long press, then dragging its bottom edge to make it longer](https://raw.githubusercontent.com/Jaganath-MSJ/CalendarSimple-Native/main/media/drag-resize.gif)
+<table>
+  <tr>
+    <td align="center"><img src=".github/assets/demo/views.gif" alt="On an iPhone, the calendar switching between the Month, Week, Day and Schedule views" width="270" /><br /><sub>Month, Week, Day and Schedule</sub></td>
+    <td align="center"><img src=".github/assets/demo/drag-and-resize.gif" alt="On an iPhone, a long press moves an event a day later and an hour down, then dragging its bottom edge makes it longer" width="270" /><br /><sub>Drag to move and resize</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src=".github/assets/demo/dark-mode.gif" alt="On an iPhone, the month view switching between light and dark mode" width="270" /><br /><sub>Light and dark mode</sub></td>
+    <td align="center"><img src=".github/assets/demo/localization.gif" alt="On an iPhone, the month view in English, German and Arabic (right to left)" width="270" /><br /><sub>Localization and right-to-left</sub></td>
+  </tr>
+</table>
 
 - Month, Week, Day, Custom Days (1–7) and Schedule views
 - Swipe paging, and a Schedule list of every event with pull-to-refresh
+- Drag to move and resize events, pinch to zoom the hours, with haptics and
+  screen-reader and keyboard alternatives (optional gestures entry)
 - Light, dark and automatic colour schemes, palette and per-state theme
 - Locale-aware names, times, week start and right-to-left layout
 - Screen-reader labels, 44 pt touch targets, font scaling, reduce motion
@@ -312,6 +323,10 @@ export function Meetings() {
 ```
 
 ## Gestures: move, resize, zoom
+
+<p align="center">
+  <img src=".github/assets/demo/drag-and-resize.gif" alt="On an iPhone, a long press moves an event a day later and an hour down, then dragging its bottom edge makes it longer" width="270" />
+</p>
 
 Set `draggable` and `onEventDrop` to move events, and `resizable` and
 `onEventResize` to resize them. The calendar never changes `events`
