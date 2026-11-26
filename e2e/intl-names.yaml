@@ -10,10 +10,16 @@ appId: com.calendarsimplenative.example
     commands:
       - tapOn: "Developer"
       - tapOn: "Intl check"
+# fr, ja and de are the first rows: check them before scrolling past them
+# (a short emulator screen cannot show the whole list).
 - scrollUntilVisible:
-    element: { id: "intl-names-th" }
+    element: { id: "intl-names-de" }
     direction: DOWN
 - assertVisible: ".*: octobre / lun.*"
 - assertVisible: ".*: 10月 / 月.*"
 - assertVisible: ".*: Oktober / Mo.*"
+- assertNotVisible: ".*(months|weekdays) english.*"
+- scrollUntilVisible:
+    element: { id: "intl-names-th" }
+    direction: DOWN
 - assertNotVisible: ".*(months|weekdays) english.*"
