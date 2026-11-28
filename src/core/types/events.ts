@@ -19,6 +19,22 @@ export interface BaseCalendarEvent {
   endDate?: string;
   /** Display title shown on the event chip. */
   title: string;
+  /**
+   * RFC 5545 recurrence rule, e.g. `"FREQ=WEEKLY;BYDAY=MO,WE;COUNT=10"`.
+   * `startDate` is the first occurrence and sets the time and length. The
+   * calendar shows each occurrence in view as its own event (see
+   * `recurringEventId`); unsupported rules show the event once.
+   */
+  rrule?: string;
+  /** Occurrences to skip: ISO dates (`"2026-11-04"`) or exact start times. */
+  exdates?: string[];
+  /**
+   * Set on an occurrence of a recurring event: the series' `id` (its
+   * `startDate` when it has none). An event with it is never expanded again.
+   */
+  recurringEventId?: string;
+  /** Set on an occurrence of a recurring event: its start, as `startDate`. */
+  occurrenceDate?: string;
   /** Allows arbitrary custom fields to be attached and accessed in custom renderers. */
   [key: string]: unknown;
 }

@@ -249,3 +249,22 @@ describe("buildMonthGrid", () => {
     ).toEqual(["Hackathon", "spacer", "spacer"]); // Design sprint and Release freeze continue from earlier days
   });
 });
+
+describe("buildMonthGrid leaves the events it is given alone", () => {
+  it("does not write to them (frozen input works, no _tempId)", () => {
+    const events = [
+      Object.freeze({ id: "a", title: "A", startDate: "2026-10-05" }),
+      Object.freeze({
+        id: "b",
+        title: "B",
+        startDate: "2026-10-05",
+        endDate: "2026-10-07",
+      }),
+    ];
+    const grid = buildMonthGrid(dateFn("2026-10-15"), events, 0, 6);
+    expect(Object.keys(events[0]!)).toEqual(["id", "title", "startDate"]);
+    const items = grid.flat().flatMap((day) => day.events.filter(Boolean));
+    expect(items.length).toBeGreaterThan(0);
+    for (const item of items) expect(item).not.toHaveProperty("_tempId");
+  });
+});

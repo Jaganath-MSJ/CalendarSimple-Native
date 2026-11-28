@@ -10,11 +10,13 @@ import InteractionsScreen from "./screens/InteractionsScreen";
 import PlaygroundScreen from "./screens/PlaygroundScreen";
 import CustomDaysScreen from "./screens/CustomDaysScreen";
 import DayScreen from "./screens/DayScreen";
+import DragScreen from "./screens/DragScreen";
 import HeaderScreen from "./screens/HeaderScreen";
 import IntlCheckScreen from "./screens/IntlCheckScreen";
 import MonthScreen from "./screens/MonthScreen";
 import PagerProbeScreen from "./screens/PagerProbeScreen";
 import PerfScreen from "./screens/PerfScreen";
+import RecurringScreen from "./screens/RecurringScreen";
 import ScheduleScreen from "./screens/ScheduleScreen";
 import WeekScreen from "./screens/WeekScreen";
 
@@ -37,6 +39,8 @@ export const SCREENS: {
     component: CustomizationScreen,
   },
   { key: "localization", title: "Localization", component: LocalizationScreen },
+  { key: "recurring", title: "Recurring events", component: RecurringScreen },
+  { key: "drag", title: "Gestures", component: DragScreen },
   {
     key: "accessibility",
     title: "Accessibility",

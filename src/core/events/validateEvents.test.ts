@@ -3,7 +3,7 @@ import type { BaseCalendarEvent as CalendarEvent } from "../types";
 import { validateEvents, getEventWarnings } from "./validateEvents";
 
 describe("validateEvents", () => {
-  const events = [
+  const events: CalendarEvent[] = [
     {
       id: "1",
       title: "Valid Event",

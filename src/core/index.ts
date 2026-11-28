@@ -6,6 +6,8 @@ export * from "./constants";
 export * from "./utils";
 export * from "./i18n";
 export * from "./events/validateEvents";
+export * from "./recurrence";
+export * from "./drag";
 export * from "./layout/monthMatrix";
 export * from "./layout/monthGrid";
 export * from "./layout/allDayBanner";

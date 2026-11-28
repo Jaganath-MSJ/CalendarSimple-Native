@@ -15,7 +15,7 @@ ideas and pull requests are all welcome. By taking part you agree to the
 
 ## Setup
 
-Requires Node 20 or later and npm.
+Requires Node 22.22 or later (24 LTS recommended) and npm; the Git hooks (commitlint, lint-staged) and Vitest need it.
 
 ```sh
 git clone https://github.com/Jaganath-MSJ/CalendarSimple-Native.git
@@ -55,6 +55,15 @@ Run these before opening a pull request; CI runs the same ones.
 
 Add or update tests with every change: core logic in Vitest next to the file,
 components in Jest with `renderCalendar` from `src/test-utils/`.
+
+After a visible change to the views, dragging, theming or localization,
+re-record the README GIFs (`.github/assets/demo/*.gif`) with
+`npm run readme:gifs` (or `npm run readme:gifs -- drag` for one). It records
+the example's bare `readme-*` screens on the iOS simulator, so it needs
+macOS with Xcode, Maestro, a booted iPhone simulator with Expo Go (its
+"Tools button" turned off) and `npm run example -- start` running. The live
+demo is deployed to GitHub Pages from `main` after each release
+(`.github/workflows/pages.yml`).
 
 ## Branches and pull requests
 

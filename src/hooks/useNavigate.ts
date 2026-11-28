@@ -7,9 +7,11 @@ import { useCalendar } from "../context/CalendarContext";
 
 /**
  * Returns `navigate(target)`: `1`/`-1` dispatches `NEXT`/`PREV`; a date
- * (Today, pickers) dispatches `SET_DATE`. Either way `onNavigate` gets the new
- * date. Calls made before the next render chain from the previous call's
- * target, so rapid repeats (including Today then ›) report the right dates.
+ * (Today, pickers) dispatches `SET_DATE` (always: Schedule scrolls to it).
+ * `onNavigate` gets the new date only when it changed; Prev/Next that do not
+ * move (Schedule) dispatch nothing. Calls made before the next render chain
+ * from the previous call's target, so rapid repeats (including Today then ›)
+ * report the right dates.
  */
 export function useNavigate(
   /** Overrides `config.onNavigate` (e.g. `Calendar.Header` props). */
@@ -32,21 +34,19 @@ export function useNavigate(
   return useCallback(
     (target: 1 | -1 | DateType) => {
       const { view: v, customDays: c, onNavigate: cb } = latest.current;
+      const from = pending.current ?? base.current;
       if (typeof target !== "number") {
         pending.current = target;
         dispatch({ type: "SET_DATE", payload: target });
-        cb?.(target.toJSDate());
+        if (target.toMillis() !== from.toMillis()) cb?.(target.toJSDate());
         return;
       }
       const direction = target;
       const next = getNavigatedDate(
-        {
-          view: v,
-          customDays: c,
-          selectedDate: pending.current ?? base.current,
-        },
+        { view: v, customDays: c, selectedDate: from },
         direction,
       );
+      if (next === from) return;
       pending.current = next;
       dispatch({ type: direction === 1 ? "NEXT" : "PREV" });
       cb?.(next.toJSDate());

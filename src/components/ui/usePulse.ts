@@ -2,7 +2,7 @@
  * @file Skeleton shimmer: an opacity pulse (port spec §4.7, TDD §12).
  */
 import { useEffect, useState } from "react";
-import { AccessibilityInfo, Animated, Easing } from "react-native";
+import { AccessibilityInfo, Animated, Easing, Platform } from "react-native";
 import { useReduceMotion } from "../../hooks/useReduceMotion";
 
 const HALF_CYCLE_MS = 750;
@@ -34,7 +34,8 @@ export function usePulse(enabled = true): Animated.Value {
             duration: HALF_CYCLE_MS,
             // CSS ease-in-out.
             easing: Easing.bezier(0.42, 0, 0.58, 1),
-            useNativeDriver: true,
+            // No native driver on web (react-native-web warns and uses JS).
+            useNativeDriver: Platform.OS !== "web",
           });
         anim = Animated.loop(Animated.sequence([step(0.5), step(1)]));
         anim.start();

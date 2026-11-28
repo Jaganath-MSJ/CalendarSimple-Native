@@ -113,6 +113,16 @@ export function formatDate(
   return formatWithNames(dateFn(date), format, locale || "en");
 }
 
+/**
+ * ISO week number of the Thursday on or after `rowStart`, so a week that
+ * starts on Sunday (or any day) gets the number of the ISO week it mostly
+ * covers (calendar-simple `getRowWeekNumber`).
+ */
+export function getRowWeekNumber(rowStart: DateType): number {
+  const offset = (4 - rowStart.weekday + 7) % 7; // Luxon weekday: Mon=1 … Sun=7
+  return rowStart.plus({ days: offset }).weekNumber;
+}
+
 export function convertToDate(luxonDate: DateType): Date {
   return luxonDate.toJSDate();
 }

@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DateTime, Info } from "luxon";
-import { clearNameCache, monthNames, weekdayNames } from "./names";
+import {
+  clearNameCache,
+  formatLongDate,
+  formatMonthYear,
+  monthNames,
+  nameSource,
+  registerLocaleNames,
+  weekdayNames,
+} from "./names";
 import { formatDate } from "../utils/date";
 import { getDayListNames, getMonthList } from "../utils/formatting";
 import { buildLabelCache } from "../format/labels";
@@ -53,7 +61,88 @@ function emptyIntlNames(): void {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  registerLocaleNames("fr", undefined);
+  registerLocaleNames("fr-CA", undefined);
   clearNameCache();
+});
+
+const FR = {
+  months: [
+    "janv-L",
+    "févr-L",
+    "mars-L",
+    "avr-L",
+    "mai-L",
+    "juin-L",
+    "juil-L",
+    "août-L",
+    "sept-L",
+    "oct-L",
+    "nov-L",
+    "déc-L",
+  ],
+  monthsShort: ["j", "f", "m", "a", "m", "j", "j", "a", "s", "o", "n", "d"],
+  weekdays: ["dim-L", "lun-L", "mar-L", "mer-L", "jeu-L", "ven-L", "sam-L"],
+  weekdaysShort: ["di", "lu", "ma", "me", "je", "ve", "sa"],
+};
+
+describe("registerLocaleNames", () => {
+  it("wins over Luxon, Intl and English", () => {
+    registerLocaleNames("fr", FR);
+    expect(monthNames("long", "fr")[9]).toBe("oct-L");
+    expect(monthNames("short", "fr")[9]).toBe("o");
+    emptyLuxonNames();
+    emptyIntlNames();
+    clearNameCache();
+    expect(monthNames("long", "fr")[0]).toBe("janv-L");
+  });
+
+  it("takes weekdays Sunday first and returns them Monday first", () => {
+    registerLocaleNames("fr", FR);
+    expect(weekdayNames("long", "fr")[0]).toBe("lun-L");
+    expect(weekdayNames("short", "fr")[6]).toBe("di");
+    expect(getDayListNames(EDayType.half, "fr")[0]).toBe("di");
+  });
+
+  it("applies the language names to a region, and a region's own first", () => {
+    registerLocaleNames("fr", FR);
+    expect(monthNames("long", "fr-CA")[0]).toBe("janv-L");
+    registerLocaleNames("fr-CA", {
+      ...FR,
+      months: FR.months.map((m) => `${m}!`),
+    });
+    expect(monthNames("long", "fr-CA")[0]).toBe("janv-L!");
+    expect(monthNames("long", "fr")[0]).toBe("janv-L");
+  });
+
+  it("fills formatDate tokens even when Luxon has names", () => {
+    registerLocaleNames("fr", FR);
+    const d = DateTime.fromISO("2026-10-22T09:30:00");
+    expect(formatDate(d, "EEEE d MMMM yyyy", "fr")).toBe("jeu-L 22 oct-L 2026");
+  });
+
+  it("ignores an incomplete list", () => {
+    registerLocaleNames("fr", { months: ["only one"] });
+    expect(monthNames("long", "fr")[0]).toBe("janvier");
+  });
+
+  it("removes the names with undefined", () => {
+    registerLocaleNames("fr", FR);
+    registerLocaleNames("fr", undefined);
+    expect(monthNames("long", "fr")[0]).toBe("janvier");
+  });
+});
+
+describe("nameSource", () => {
+  it("reports each tier", () => {
+    expect(nameSource("month", "long", "fr")).toBe("luxon");
+    emptyLuxonNames();
+    expect(nameSource("month", "long", "fr")).toBe("intl");
+    emptyIntlNames();
+    expect(nameSource("weekday", "short", "ja")).toBe("english");
+    registerLocaleNames("fr", FR);
+    expect(nameSource("month", "long", "fr")).toBe("custom");
+  });
 });
 
 describe("name fallbacks", () => {
@@ -112,6 +201,49 @@ describe("name fallbacks", () => {
         compact: false,
       }),
     ).toBe("October 2026");
+  });
+
+  it("formatMonthYear: Intl order; registered names keep the pattern", () => {
+    const d = DateTime.fromISO("2026-03-05");
+    expect(formatMonthYear(d, "ja-JP")).toBe("2026年3月");
+    expect(formatMonthYear(d, "en", "short")).toBe("Mar 2026");
+    registerLocaleNames("fr", FR);
+    expect(formatMonthYear(d, "fr")).toBe("mars-L 2026");
+    // No month names from Intl: the MMMM yyyy fallback.
+    registerLocaleNames("fr", undefined);
+    emptyLuxonNames();
+    emptyIntlNames();
+    expect(formatMonthYear(d, "fr")).toBe("March 2026");
+  });
+
+  it("formatMonthYear and formatLongDate stay Gregorian (th, fa)", () => {
+    const d = DateTime.fromISO("2026-10-22");
+    // th-TH defaults to the Buddhist year (2569), fa-IR to the Persian one.
+    expect(formatMonthYear(d, "th-TH")).toContain("2026");
+    expect(formatMonthYear(d, "fa-IR")).not.toContain("مهر");
+    expect(formatLongDate(d, "ja-JP")).toBe("2026年10月22日");
+    expect(formatLongDate(d, "en")).toBe("October 22, 2026");
+    expect(formatLongDate(d, "th-TH")).toContain("2026");
+  });
+
+  it("formatMonthYear: without formatToParts (iOS Hermes) uses format", () => {
+    const d = DateTime.fromISO("2026-03-05");
+    const withFormat = (text: string) =>
+      vi.spyOn(Intl, "DateTimeFormat").mockImplementation(function () {
+        return {
+          format: () => text,
+          formatToParts: () => {
+            throw new TypeError("not supported");
+          },
+        };
+      });
+    withFormat("2026年3月");
+    expect(formatMonthYear(d, "ja-JP")).toBe("2026年3月");
+    // A result without a month name (or the year) is not trusted.
+    vi.restoreAllMocks();
+    clearNameCache();
+    withFormat("3 2026");
+    expect(formatMonthYear(d, "en")).toBe("March 2026");
   });
 
   it("leaves formats without names untouched", () => {

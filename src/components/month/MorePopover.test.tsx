@@ -10,6 +10,22 @@ import type { CalendarEvent } from "../../types";
 useFrozenClock();
 const wide = { width: 1194, height: 834 };
 
+it("+N more label: the date in the locale's order", async () => {
+  await renderCalendar(
+    <Calendar
+      selectedDate={new Date(2026, 9, 22)}
+      events={OCT_2026_EVENTS}
+      locale="ja-JP"
+      localeMessages={{ moreEventsOn: (n, d) => `${d} 他${n}件` }}
+    />,
+    wide,
+  );
+  expect(screen.getByTestId("calendar-22-more-events")).toHaveProp(
+    "accessibilityLabel",
+    "2026年10月22日 他6件",
+  );
+});
+
 it("+ 6 more on 22 Oct reports the hidden events and opens the popover", async () => {
   const onMoreClick = jest.fn<void, [Date, CalendarEvent[]]>();
   await renderCalendar(
@@ -22,6 +38,11 @@ it("+ 6 more on 22 Oct reports the hidden events and opens the popover", async (
   );
   expect(screen.getByTestId("calendar-22-more-events")).toHaveTextContent(
     "+ 6 more",
+  );
+  // Screen readers hear the count and the date (messages.moreEventsOn).
+  expect(screen.getByTestId("calendar-22-more-events")).toHaveProp(
+    "accessibilityLabel",
+    "6 more events on October 22, 2026",
   );
   await fireEvent.press(screen.getByTestId("calendar-22-more-events"));
   const [date, hidden] = onMoreClick.mock.calls[0]!;

@@ -6,6 +6,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -19,14 +20,22 @@ import {
   type NativeSyntheticEvent,
   type ScrollViewInstance,
 } from "react-native";
-import type { DateType } from "../../core";
+import { ECalendarViewType, type DateType } from "../../core";
+import {
+  useDragState,
+  useGestureAdapter,
+  useZoomState,
+} from "../../context/GestureAdapterContext";
 import {
   useCalendarLayout,
+  useIsCurrentPage,
   useTestID,
   useViewConfig,
 } from "../../context/LayoutContext";
 import { useAllDayBanner } from "../../hooks/useAllDayBanner";
 import { useDayEventLayout } from "../../hooks/useDayEventLayout";
+import { useEventMover } from "../../hooks/useEventMover";
+import { usePeriodKeys } from "../../hooks/useKeyboardNavigation";
 import { useNow } from "../../hooks/useNow";
 import { useReduceMotion } from "../../hooks/useReduceMotion";
 import { useScreenReader } from "../../hooks/useScreenReader";
@@ -41,6 +50,12 @@ import { useAppIsRTL } from "../../hooks/useAppIsRTL";
 
 /** Skips the banner layout when the banner is off. */
 const NO_DAYS: DateType[] = [];
+
+const VIEW_OF = {
+  week: ECalendarViewType.week,
+  day: ECalendarViewType.day,
+  custom: ECalendarViewType.customDays,
+} as const;
 
 export interface TimeGridViewProps {
   days: DateType[];
@@ -61,8 +76,24 @@ export function TimeGridView({
   const screenReader = useScreenReader();
   const now = useNow();
   const today = now.toISODate() ?? "";
+  const onKeyDown = usePeriodKeys(cfg.keyboardNavigation, { arrows: true });
+  // Moving events: one stable drag object per column; scrolling pauses
+  // while an event is dragged.
+  const mover = useEventMover(cfg, VIEW_OF[variant]);
+  const columnDrag = useMemo(
+    () =>
+      mover
+        ? days.map((_, index) => ({ mover, index, count: days.length }))
+        : undefined,
+    [mover, days],
+  );
+  const { dragging, setDragging } = useDragState();
 
-  const { hourHeight } = metrics.timeGrid;
+  // Hour height: the prop (controlled), else the pinched value shared by
+  // every page, else the theme's.
+  const zoom = useZoomState();
+  const hourHeight =
+    cfg.hourHeight ?? zoom.hourHeight ?? metrics.timeGrid.hourHeight;
   const { minHour, maxHour, showCurrentTime, autoScrollToCurrentTime } = cfg;
   const { colWidth, scrollable, snap } = getColumnLayout({
     width: layout.width,
@@ -159,6 +190,42 @@ export function TimeGridView({
       r.current?.scrollToEnd({ animated: false });
   }, [startAtEnd]);
 
+  // Pinch to zoom: the wrapper scales the content during the pinch; on
+  // release the new height is committed once and the scroll offset moves so
+  // the hour under the fingers stays put.
+  const { TimeGridWrapper } = useGestureAdapter();
+  const current = useIsCurrentPage();
+  const Pinch = cfg.pinchToZoom && current ? TimeGridWrapper : undefined;
+  const scrollY = useRef(0);
+  const onVScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      scrollY.current = e.nativeEvent.contentOffset.y;
+    },
+    [],
+  );
+  const pendingFocus = useRef<{ y: number; from: number } | null>(null);
+  const { onHourHeightChange } = cfg;
+  const controlled = cfg.hourHeight !== undefined;
+  const { setHourHeight } = zoom;
+  const onZoomStart = useCallback(() => setDragging(true), [setDragging]);
+  const onZoomEnd = useCallback(
+    (next: number, focalY: number) => {
+      setDragging(false);
+      if (next === hourHeight) return;
+      pendingFocus.current = { y: focalY, from: hourHeight };
+      if (!controlled) setHourHeight(next);
+      onHourHeightChange?.(next);
+    },
+    [setDragging, hourHeight, controlled, setHourHeight, onHourHeightChange],
+  );
+  useLayoutEffect(() => {
+    const focus = pendingFocus.current;
+    if (!focus || focus.from === hourHeight) return;
+    pendingFocus.current = null;
+    const y = scrollY.current + focus.y * (hourHeight / focus.from - 1);
+    scrollRef.current?.scrollTo({ y: Math.max(0, y), animated: false });
+  }, [hourHeight]);
+
   const row = flip ? styles.rowFlipped : styles.row;
   const header = (
     <DayHeaderRow
@@ -181,15 +248,42 @@ export function TimeGridView({
             hourHeight={hourHeight}
             nowTop={nowVisible && iso === today ? nowTop : null}
             screenReader={screenReader}
+            drag={columnDrag?.[i]}
           />
         );
       })}
     </View>
   );
 
+  const grid = (
+    <View style={row}>
+      <TimeColumn hourHeight={hourHeight} />
+      {scrollable ? (
+        <ScrollView
+          ref={hscrollRef}
+          testID={id("time-grid-hscroll")}
+          horizontal
+          scrollEnabled={!dragging}
+          onContentSizeChange={onHContentSize}
+          onScroll={onHScroll}
+          scrollEventThrottle={16}
+          snapToInterval={snap ? colWidth : undefined}
+          decelerationRate={snap ? "fast" : undefined}
+          showsHorizontalScrollIndicator={false}
+        >
+          {columns}
+        </ScrollView>
+      ) : (
+        columns
+      )}
+    </View>
+  );
+
   return (
     <View
       testID={id(testIDSuffix)}
+      onKeyDown={onKeyDown}
+      tabIndex={onKeyDown ? -1 : undefined}
       style={[styles.root, { backgroundColor: palette.bg }, cfg.styles.table]}
     >
       <View
@@ -223,34 +317,31 @@ export function TimeGridView({
           onToggle={onToggleBanner}
           banner={banner}
           scrollRef={bannerRef}
+          mover={mover}
         />
       ) : null}
       <ScrollView
         ref={scrollRef}
         testID={id("time-grid-scroll")}
         onLayout={onScrollLayout}
+        scrollEnabled={!dragging}
+        onScroll={onVScroll}
+        scrollEventThrottle={16}
         style={styles.root}
       >
-        <View style={row}>
-          <TimeColumn hourHeight={hourHeight} />
-          {scrollable ? (
-            <ScrollView
-              ref={hscrollRef}
-              testID={id("time-grid-hscroll")}
-              horizontal
-              onContentSizeChange={onHContentSize}
-              onScroll={onHScroll}
-              scrollEventThrottle={16}
-              snapToInterval={snap ? colWidth : undefined}
-              decelerationRate={snap ? "fast" : undefined}
-              showsHorizontalScrollIndicator={false}
-            >
-              {columns}
-            </ScrollView>
-          ) : (
-            columns
-          )}
-        </View>
+        {Pinch ? (
+          <Pinch
+            hourHeight={hourHeight}
+            minHourHeight={cfg.minHourHeight}
+            maxHourHeight={cfg.maxHourHeight}
+            onZoomStart={onZoomStart}
+            onZoomEnd={onZoomEnd}
+          >
+            {grid}
+          </Pinch>
+        ) : (
+          grid
+        )}
       </ScrollView>
     </View>
   );

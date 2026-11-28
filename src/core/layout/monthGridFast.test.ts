@@ -76,9 +76,22 @@ function events(count: number, seed: number, around: string) {
   return out;
 }
 
+// The reference still writes `_tempId` onto the events it lays out;
+// `buildMonthGrid` no longer does (calendar-simple 4b0423b), so it is ignored.
+const withoutTempId = (e: object | null) => {
+  if (!e) return e;
+  const copy: Record<string, unknown> = { ...e };
+  delete copy._tempId;
+  return copy;
+};
+
 function plain(m: CalendarMatrix<BaseCalendarEvent>) {
   return m.map((w) =>
-    w.map((d) => ({ ...d, currentDate: d.currentDate.toISO() })),
+    w.map((d) => ({
+      ...d,
+      currentDate: d.currentDate.toISO(),
+      events: d.events.map(withoutTempId),
+    })),
   );
 }
 

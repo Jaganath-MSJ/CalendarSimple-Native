@@ -8,8 +8,10 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useReducer,
+  useRef,
   type Dispatch,
   type ReactNode,
 } from "react";
@@ -17,6 +19,12 @@ import { useColorScheme } from "react-native";
 import {
   calendarReducer,
   createInitialState,
+  dateFn,
+  expandRecurringEvents,
+  getExpansionWindow,
+  getScheduleExpansionWindow,
+  getVisibleRange,
+  isSeries,
   type CalendarAction,
   type CalendarState,
   type DateType,
@@ -54,6 +62,60 @@ export interface CalendarProviderProps<
 
 const FALLBACK_CONFIG = applyDefaults({});
 
+/**
+ * `config` with recurring events (`rrule`) expanded for the window around the
+ * visible range (`getExpansionWindow`). Without recurring events, or with
+ * `enableEnrichedEvents`, `config` is returned as is, so navigation does not
+ * change its identity; with them, it changes only when the window moves.
+ */
+function useExpandedConfig(
+  config: ResolvedConfig,
+  state: CalendarState,
+): ResolvedConfig {
+  const { events, enableEnrichedEvents, eventsAreSorted } = config;
+  const recurring = useMemo(() => events.some(isSeries), [events]);
+  let windowKey = "";
+  if (recurring && !enableEnrichedEvents) {
+    // Schedule lists every event: its series use a window of their own.
+    const w =
+      state.view === "schedule"
+        ? getScheduleExpansionWindow(state.selectedDate)
+        : getExpansionWindow(
+            getVisibleRange(state.view, state.selectedDate, {
+              weekStartsOn: config.weekStartsOn,
+              weekEndsOn: config.weekEndsOn,
+              customDays: state.customDays,
+            }),
+          );
+    windowKey = `${w.start.toISODate()}|${w.end.toISODate()}`;
+  }
+  const expanded = useMemo(() => {
+    if (!windowKey) return { config, warnings: [] as string[] };
+    const [start = "", end = ""] = windowKey.split("|");
+    const result = expandRecurringEvents(
+      events,
+      { start: dateFn(start), end: dateFn(end) },
+      { sorted: eventsAreSorted },
+    );
+    return {
+      config: { ...config, events: result.events },
+      warnings: result.warnings,
+    };
+  }, [config, events, eventsAreSorted, windowKey]);
+
+  // Each warning once per provider, not again on every window change.
+  const warned = useRef(new Set<string>());
+  useEffect(() => {
+    if (!__DEV__) return;
+    for (const text of expanded.warnings) {
+      if (warned.current.has(text)) continue;
+      warned.current.add(text);
+      console.warn(text);
+    }
+  }, [expanded.warnings]);
+  return expanded.config;
+}
+
 export function CalendarProvider<TEvent extends CalendarEvent = CalendarEvent>({
   children,
   initialDate,
@@ -69,7 +131,10 @@ export function CalendarProvider<TEvent extends CalendarEvent = CalendarEvent>({
   );
   const osScheme = useColorScheme();
   // Generic config is stored widened; `useCalendar<TEvent>` narrows it back.
-  const resolvedConfig = (config ?? FALLBACK_CONFIG) as ResolvedConfig;
+  const resolvedConfig = useExpandedConfig(
+    (config ?? FALLBACK_CONFIG) as ResolvedConfig,
+    state,
+  );
   const requested = resolvedConfig.colorScheme;
   const scheme =
     colorScheme ??

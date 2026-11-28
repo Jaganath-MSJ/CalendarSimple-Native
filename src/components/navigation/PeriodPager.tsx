@@ -19,6 +19,7 @@ import {
   type NativeSyntheticEvent,
 } from "react-native";
 import { useAppIsRTL } from "../../hooks/useAppIsRTL";
+import { useDragState } from "../../context/GestureAdapterContext";
 
 export type PageOffset = -1 | 0 | 1;
 
@@ -64,6 +65,7 @@ export function PeriodPager({
   flip = false,
 }: PeriodPagerProps) {
   const appIsRTL = useAppIsRTL();
+  const { dragging } = useDragState();
   const pages = flip ? PAGES_FLIPPED : PAGES;
   const listRef = useRef<FlatList<PageOffset>>(null);
   const [neighboursReady, setNeighboursReady] = useState(false);
@@ -145,6 +147,7 @@ export function PeriodPager({
       renderItem={renderItem}
       extraData={extraData}
       horizontal
+      scrollEnabled={!dragging}
       pagingEnabled
       showsHorizontalScrollIndicator={false}
       initialScrollIndex={1}

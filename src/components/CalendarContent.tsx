@@ -2,7 +2,13 @@
  * @file Root container: measures, provides the theme and lays out the header
  * and body slots (TDD §8.1 steps 2–4).
  */
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   StyleSheet,
   useWindowDimensions,
@@ -11,6 +17,11 @@ import {
 } from "react-native";
 import { dateFn, getNavigatedDate, resolveDirection } from "../core";
 import { useCalendar } from "../context/CalendarContext";
+import {
+  DragStateProvider,
+  useGestureAdapter,
+  ZoomStateProvider,
+} from "../context/GestureAdapterContext";
 import { CalendarLayoutProvider, PageProvider } from "../context/LayoutContext";
 import { useContainerLayout } from "../hooks/useContainerLayout";
 import { useNavigate } from "../hooks/useNavigate";
@@ -81,6 +92,23 @@ export function CalendarContent({
     ],
   );
 
+  // draggable / resizable without <CalendarGestures>: only the
+  // screen-reader actions change events.
+  const { EventWrapper } = useGestureAdapter();
+  const editable =
+    (Boolean(config.draggable) && Boolean(config.onEventDrop)) ||
+    (Boolean(config.resizable) && Boolean(config.onEventResize)) ||
+    Boolean(config.pinchToZoom);
+  const withoutGestures = editable && !EventWrapper;
+  useEffect(() => {
+    if (__DEV__ && withoutGestures)
+      console.warn(
+        "[calendar] draggable / resizable / pinchToZoom: wrap the calendar " +
+          'in <CalendarGestures> from "calendar-simple-native/gestures" for ' +
+          "the gestures; without it only the screen-reader actions work.",
+      );
+  }, [withoutGestures]);
+
   const navigate = useNavigate();
   const changeView = useViewChange(navigate);
   const { renderHeader } = config;
@@ -149,42 +177,51 @@ export function CalendarContent({
       ]}
     >
       <CalendarThemeProvider value={theme}>
-        <CalendarLayoutProvider value={layout}>
-          <CalendarErrorBoundary>
-            {children !== undefined ? (
-              measured ? (
-                children
-              ) : null
-            ) : (
-              <>
-                <View
-                  onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
-                >
-                  {header}
-                </View>
-                {measured ? (
-                  <PeriodPager
-                    enabled={
-                      config.swipeNavigation && state.view !== "schedule"
-                    }
-                    width={width}
-                    testID={testId}
-                    renderPage={renderPage}
-                    renderPlaceholder={renderPlaceholder}
-                    onPage={navigate}
-                    flip={flip}
-                  />
-                ) : null}
-              </>
-            )}
-          </CalendarErrorBoundary>
-        </CalendarLayoutProvider>
+        <DragStateProvider>
+          <ZoomStateProvider>
+            <CalendarLayoutProvider value={layout}>
+              <CalendarErrorBoundary>
+                {children !== undefined ? (
+                  measured ? (
+                    children
+                  ) : null
+                ) : (
+                  <>
+                    <View
+                      onLayout={(e) =>
+                        setHeaderHeight(e.nativeEvent.layout.height)
+                      }
+                    >
+                      {header}
+                    </View>
+                    {measured ? (
+                      <PeriodPager
+                        enabled={
+                          config.swipeNavigation && state.view !== "schedule"
+                        }
+                        width={width}
+                        testID={testId}
+                        renderPage={renderPage}
+                        renderPlaceholder={renderPlaceholder}
+                        onPage={navigate}
+                        flip={flip}
+                      />
+                    ) : null}
+                  </>
+                )}
+              </CalendarErrorBoundary>
+            </CalendarLayoutProvider>
+          </ZoomStateProvider>
+        </DragStateProvider>
       </CalendarThemeProvider>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, overflow: "hidden" },
+  // Fill the parent but never outgrow it: on web, CSS sizes a non-shrinking
+  // box by its content (Yoga does not), which left the time grid and the
+  // schedule list as tall as their content, with nothing to scroll.
+  container: { flexGrow: 1, flexShrink: 1, overflow: "hidden" },
   body: { flex: 1 },
 });

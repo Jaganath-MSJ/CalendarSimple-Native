@@ -15,6 +15,12 @@ import type { CalendarEvent, CalendarProps, ResolvedConfig } from "../types";
 const NATIVE_DEFAULTS = {
   slotPressMode: "press",
   showMorePopover: true,
+  keyboardNavigation: true,
+  dragSnapMinutes: 15,
+  resizeSnapMinutes: 15,
+  minEventDurationMinutes: 15,
+  minHourHeight: 30,
+  maxHourHeight: 180,
   maxFontSizeMultiplier: 1.5,
   testID: "calendar",
   styles: {},
@@ -51,6 +57,8 @@ export function applyDefaults<TEvent extends CalendarEvent>(
 
   return {
     ...merged,
+    // `testId` is calendar-simple's name for `testID`; `testID` wins.
+    testID: props.testID ?? props.testId ?? NATIVE_DEFAULTS.testID,
     weekStartsOn,
     weekEndsOn,
     is12Hour: resolveIs12Hour(merged.is12Hour as boolean | "locale", locale),

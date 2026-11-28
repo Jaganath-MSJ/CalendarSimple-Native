@@ -46,7 +46,7 @@ it("shows +N when maxEvents limits the slots (web hidden rule)", async () => {
   expect(screen.getByTestId("calendar-22-more-label")).toHaveTextContent("+6");
   expect(screen.getByTestId("calendar-22-more-label")).toHaveProp(
     "accessibilityLabel",
-    "+ 6 more",
+    "6 more events on October 22, 2026",
   );
 });
 

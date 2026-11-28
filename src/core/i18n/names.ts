@@ -5,10 +5,12 @@
  * `Info.weekdays` (and the matching `toFormat` tokens) for some locales such
  * as `fr` and `ja`. Every displayed name goes through this module:
  *
- * 1. Luxon's names for the locale, when every entry is non-empty.
- * 2. `Intl.DateTimeFormat(locale, { month | weekday }).formatToParts`
+ * 1. Names registered with `registerLocaleNames` for the locale (or its
+ *    language: `fr-CA` uses `fr`).
+ * 2. Luxon's names for the locale, when every entry is non-empty.
+ * 3. `Intl.DateTimeFormat(locale, { month | weekday }).formatToParts`
  *    (then `.format`) on fixed reference dates (standalone forms).
- * 3. Luxon's English names.
+ * 4. Luxon's English names.
  */
 import { DateTime, Info } from "luxon";
 
@@ -18,13 +20,66 @@ export type NameLength = "long" | "short";
 /** `"format"` names sit inside a date (MMMM); `"standalone"` stand alone (LLLL). */
 export type NameContext = "format" | "standalone";
 
+/**
+ * Month and weekday names for one locale, used before any built-in source.
+ * Each list is optional; a missing or incomplete list falls back as usual.
+ */
+export interface LocaleNames {
+  /** Twelve long month names, January first. */
+  months?: string[];
+  /** Twelve short month names, January first. */
+  monthsShort?: string[];
+  /** Seven long weekday names, **Sunday first** (like `weekStartsOn` 0). */
+  weekdays?: string[];
+  /** Seven short weekday names, Sunday first. */
+  weekdaysShort?: string[];
+}
+
+/** Where a locale's names come from (IntlCheck screen, tests). */
+export type NameSource = "custom" | "luxon" | "intl" | "english";
+
 const cache = new Map<string, string[]>();
 const luxonOk = new Map<string, boolean>();
+const custom = new Map<string, LocaleNames>();
+const monthYearFormats = new Map<string, Intl.DateTimeFormat | null>();
 
 /** Clears the name caches (tests). */
 export function clearNameCache(): void {
   cache.clear();
   luxonOk.clear();
+  monthYearFormats.clear();
+}
+
+/**
+ * Sets the month and weekday names for `locale` (for example `"fr"`, or
+ * `"fr-CA"` for that region only). Call it once at app start, before the
+ * calendar renders; a later call does not re-render a mounted calendar.
+ * Pass `undefined` to remove the names.
+ */
+export function registerLocaleNames(
+  locale: string,
+  names: LocaleNames | undefined,
+): void {
+  if (names) custom.set(locale, names);
+  else custom.delete(locale);
+  clearNameCache();
+}
+
+/** The registered list for `locale` (or its language), Luxon order. */
+function customNames(
+  kind: "month" | "weekday",
+  length: NameLength,
+  locale: string,
+): string[] | undefined {
+  const names = custom.get(locale) ?? custom.get(locale.split("-")[0] ?? "");
+  if (!names) return undefined;
+  if (kind === "month") {
+    const list = length === "long" ? names.months : names.monthsShort;
+    return usable(list, 12) ? list : undefined;
+  }
+  const list = length === "long" ? names.weekdays : names.weekdaysShort;
+  // Sunday first → Luxon's Monday first.
+  return usable(list, 7) ? [...list.slice(1), list[0]!] : undefined;
 }
 
 function usable(names: unknown, count: number): names is string[] {
@@ -53,6 +108,8 @@ function intlNames(
   const options: Intl.DateTimeFormatOptions = {
     [part]: length,
     timeZone: "UTC",
+    // The grid is Gregorian: not the locale's default calendar (fa, th).
+    calendar: "gregory",
   };
   const fromParts = safe(() => {
     const dtf = new Intl.DateTimeFormat(locale, options);
@@ -105,7 +162,7 @@ function resolve(
           : Info.weekdays(length, { locale: l }),
     );
 
-  let names = luxon(loc);
+  let names = customNames(kind, length, loc) ?? luxon(loc);
   if (!usable(names, count)) {
     // Intl names are standalone forms ({ month } alone): a "format" month
     // read from { month, day } parts loses its suffix in ja ("10" not "10月").
@@ -140,11 +197,16 @@ export function weekdayNames(
   return resolve("weekday", length, locale, context);
 }
 
-/** True when Luxon's own names for `locale` are complete (fast path). */
+/**
+ * True when Luxon's own names for `locale` are complete and none are
+ * registered (fast path: plain `toFormat`).
+ */
 function luxonNamesUsable(locale: string): boolean {
   const hit = luxonOk.get(locale);
   if (hit !== undefined) return hit;
   const ok =
+    !custom.has(locale) &&
+    !custom.has(locale.split("-")[0] ?? "") &&
     usable(
       safe(() => Info.monthsFormat("long", { locale })),
       12,
@@ -163,6 +225,30 @@ function luxonNamesUsable(locale: string): boolean {
     );
   luxonOk.set(locale, ok);
   return ok;
+}
+
+/** Which source `monthNames` / `weekdayNames` use for `locale`. */
+export function nameSource(
+  kind: "month" | "weekday",
+  length: NameLength,
+  locale: string,
+): NameSource {
+  const loc = locale || "en";
+  if (customNames(kind, length, loc)) return "custom";
+  const count = kind === "month" ? 12 : 7;
+  const luxon = safe(() =>
+    kind === "month"
+      ? Info.months(length, { locale: loc })
+      : Info.weekdays(length, { locale: loc }),
+  );
+  if (usable(luxon, count)) return "luxon";
+  const intl = intlNames(
+    loc,
+    kind,
+    length,
+    kind === "month" ? MONTH_DATES : WEEKDAY_DATES,
+  );
+  return usable(intl, count) ? "intl" : "english";
 }
 
 const NAME_TOKEN = /M{3,4}|L{3,4}|E{3,4}|c{3,4}/;
@@ -220,4 +306,95 @@ export function formatWithNames(
   }
   flush();
   return out;
+}
+
+function dateFormat(
+  locale: string,
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat | null {
+  const key = `${locale}|${JSON.stringify(options)}`;
+  let dtf = monthYearFormats.get(key);
+  if (dtf === undefined) {
+    try {
+      dtf = new Intl.DateTimeFormat(locale, {
+        ...options,
+        timeZone: "UTC",
+        // The grid is Gregorian: not the locale's default calendar (th
+        // reads 2569, fa reads 1405, ar-SA can read a Hijri year).
+        calendar: "gregory",
+      });
+    } catch {
+      dtf = null;
+    }
+    monthYearFormats.set(key, dtf);
+  }
+  return dtf;
+}
+
+/**
+ * `Intl` with `options` in the locale's own order, else `pattern` through
+ * `formatWithNames`: also when the app registered names for the locale, or
+ * the engine gives no month name (`formatToParts`, then `format` for iOS
+ * Hermes, which lacks `formatToParts`).
+ */
+function formatLocalized(
+  dt: DateTime,
+  locale: string,
+  options: Intl.DateTimeFormatOptions,
+  pattern: string,
+): string {
+  const loc = locale || "en";
+  const registered = custom.has(loc) || custom.has(loc.split("-")[0] ?? "");
+  const dtf = registered ? null : dateFormat(loc, options);
+  if (dtf) {
+    // Noon UTC on the same calendar day: that day in every time zone.
+    const date = new Date(Date.UTC(dt.year, dt.month - 1, dt.day, 12));
+    try {
+      const parts = dtf.formatToParts(date);
+      const month = parts.find((p) => p.type === "month")?.value ?? "";
+      // An empty month part means this engine has no names for the locale.
+      if (month.trim()) return parts.map((p) => p.value).join("");
+    } catch {
+      // No formatToParts (iOS Hermes): try format below.
+    }
+    try {
+      // Accept it only with a month name (a letter) and the year in it.
+      const text = dtf.format(date).trim();
+      if (/\p{L}/u.test(text) && text.includes(String(dt.year))) return text;
+    } catch {
+      // Fall through to the pattern.
+    }
+  }
+  return formatWithNames(dt, pattern, loc);
+}
+
+/**
+ * Month and year in the locale's own order: "October 2026", "2026年10月"
+ * (ja, zh), "2026년 10월" (ko), always in the Gregorian calendar. Falls back
+ * to `MMMM yyyy` / `MMM yyyy` (see `formatLocalized`).
+ */
+export function formatMonthYear(
+  dt: DateTime,
+  locale: string,
+  length: NameLength = "long",
+): string {
+  return formatLocalized(
+    dt.set({ day: 15 }),
+    locale,
+    { year: "numeric", month: length },
+    length === "long" ? "MMMM yyyy" : "MMM yyyy",
+  );
+}
+
+/**
+ * A full date in the locale's own order: "October 22, 2026", "2026年10月22日"
+ * (ja), Gregorian calendar. Falls back to `MMMM d, yyyy`.
+ */
+export function formatLongDate(dt: DateTime, locale: string): string {
+  return formatLocalized(
+    dt,
+    locale,
+    { year: "numeric", month: "long", day: "numeric" },
+    "MMMM d, yyyy",
+  );
 }

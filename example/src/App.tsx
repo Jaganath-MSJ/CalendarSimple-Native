@@ -6,6 +6,8 @@
 import { useEffect, useState } from "react";
 import {
   BackHandler,
+  Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,10 +15,12 @@ import {
   View,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ECalendarViewType } from "../../src";
 import { SCREENS } from "./screens";
 import { forcedScheme, initialScreen, SchemeContext } from "./launch";
 import PlaygroundScreen from "./screens/PlaygroundScreen";
+import ReadmeScreen, { type ReadmeDemo } from "./screens/ReadmeScreen";
 import { entry, ENTRIES, inGroup, type Entry } from "./ui/catalog";
 import {
   BOTTOM_INSET,
@@ -235,7 +239,53 @@ function DemoPage({
   );
 }
 
+/** `readme-views` → `"views"`; `readme` alone is the drag demo. */
+function readmeDemo(screen: string | null): ReadmeDemo | null {
+  if (screen === "readme") return "drag";
+  const demo = screen?.startsWith("readme-") ? screen.slice(7) : null;
+  return demo === "views" ||
+    demo === "drag" ||
+    demo === "theme" ||
+    demo === "locale"
+    ? demo
+    : null;
+}
+
+/** `screen` from a deep link (`exp://…/--/?screen=readme-views` in Expo Go). */
+function screenFromUrl(url: string | null | undefined): string | null {
+  return url?.match(/[?&]screen=([^&#]+)/)?.[1] ?? null;
+}
+
+/**
+ * `?screen=readme-<demo>` (web) or a deep link with it (native) shows only
+ * a README GIF's calendar, without menus; every other launch gets the
+ * example shell.
+ */
 export default function App() {
+  const [screen, setScreen] = useState(initialScreen);
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    void Linking.getInitialURL().then((url) => {
+      const key = screenFromUrl(url);
+      if (key) setScreen(key);
+    });
+    const sub = Linking.addEventListener("url", ({ url }) => {
+      const key = screenFromUrl(url);
+      if (key) setScreen(key);
+    });
+    return () => sub.remove();
+  }, []);
+  const demo = readmeDemo(screen);
+  return demo ? (
+    <GestureHandlerRootView style={a.fill}>
+      <ReadmeScreen key={demo} demo={demo} />
+    </GestureHandlerRootView>
+  ) : (
+    <Shell />
+  );
+}
+
+function Shell() {
   const c = useChrome();
   const wide = useWide();
   const [{ tab, demo }, setState] = useState(initialState);
@@ -251,8 +301,10 @@ export default function App() {
     setState({ tab: "playground", demo: null });
   };
 
+  // Android's hardware back leaves a demo; web and iOS have no such button
+  // (react-native-web logs an error if BackHandler is used).
   useEffect(() => {
-    if (!demo) return;
+    if (!demo || Platform.OS !== "android") return;
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
       back();
       return true;
@@ -276,40 +328,42 @@ export default function App() {
     );
 
   return (
-    <SchemeContext.Provider value={SCHEME}>
-      <StatusBar style={c.dark ? "light" : "dark"} />
-      {wide ? (
-        <View style={[a.fill, a.wide, { backgroundColor: c.bgMuted }]}>
-          <Sidebar
-            current={tab === "playground" ? "playground" : (demo ?? "home")}
-            onSelect={(key) => {
-              if (key === "playground") toPlayground();
-              else if (key === "home")
-                setState({ tab: "showcase", demo: null });
-              else
-                setState({
-                  tab:
-                    entry(key)?.group === "developer"
-                      ? "developer"
-                      : "showcase",
-                  demo: key,
-                });
-            }}
-          />
-          <View style={a.fill}>{page}</View>
-        </View>
-      ) : (
-        <View style={[a.fill, { backgroundColor: c.bg }]}>
-          <View style={a.fill}>{page}</View>
-          {!item && (
-            <TabBar
-              tab={tab}
-              onChange={(t) => setState({ tab: t, demo: null })}
+    <GestureHandlerRootView style={a.fill}>
+      <SchemeContext.Provider value={SCHEME}>
+        <StatusBar style={c.dark ? "light" : "dark"} />
+        {wide ? (
+          <View style={[a.fill, a.wide, { backgroundColor: c.bgMuted }]}>
+            <Sidebar
+              current={tab === "playground" ? "playground" : (demo ?? "home")}
+              onSelect={(key) => {
+                if (key === "playground") toPlayground();
+                else if (key === "home")
+                  setState({ tab: "showcase", demo: null });
+                else
+                  setState({
+                    tab:
+                      entry(key)?.group === "developer"
+                        ? "developer"
+                        : "showcase",
+                    demo: key,
+                  });
+              }}
             />
-          )}
-        </View>
-      )}
-    </SchemeContext.Provider>
+            <View style={a.fill}>{page}</View>
+          </View>
+        ) : (
+          <View style={[a.fill, { backgroundColor: c.bg }]}>
+            <View style={a.fill}>{page}</View>
+            {!item && (
+              <TabBar
+                tab={tab}
+                onChange={(t) => setState({ tab: t, demo: null })}
+              />
+            )}
+          </View>
+        )}
+      </SchemeContext.Provider>
+    </GestureHandlerRootView>
   );
 }
 

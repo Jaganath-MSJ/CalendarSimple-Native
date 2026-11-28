@@ -8,6 +8,10 @@ describe("messages", () => {
   });
   it("formats parameterised messages", () => {
     expect(DEFAULT_MESSAGES.more(3)).toBe("+ 3 more");
+    expect(DEFAULT_MESSAGES.moreEventsOn(3, "November 10, 2026")).toBe(
+      "3 more events on November 10, 2026",
+    );
+    expect(DEFAULT_MESSAGES.weekNumber(45)).toBe("W45");
     expect(DEFAULT_MESSAGES.dayOfTotal(1, 3)).toBe("(Day 1/3)");
     expect(DEFAULT_MESSAGES.noTitle).toBe("No title");
     expect(DEFAULT_MESSAGES.moreAllDay(3)).toBe(

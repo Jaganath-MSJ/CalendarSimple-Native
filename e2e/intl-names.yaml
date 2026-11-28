@@ -1,0 +1,25 @@
+# Month and weekday names come from Luxon or Intl on Hermes, never the
+# English fallback (iOS Hermes returns empty Luxon names for fr and ja).
+appId: com.calendarsimplenative.example
+---
+- launchApp
+# A build with EXPO_PUBLIC_INITIAL_SCREEN=intl opens on the screen itself.
+- runFlow:
+    when:
+      notVisible: "Names (custom, luxon, intl, english)"
+    commands:
+      - tapOn: "Developer"
+      - tapOn: "Intl check"
+# fr, ja and de are the first rows: check them before scrolling past them
+# (a short emulator screen cannot show the whole list).
+- scrollUntilVisible:
+    element: { id: "intl-names-de" }
+    direction: DOWN
+- assertVisible: ".*: octobre / lun.*"
+- assertVisible: ".*: 10月 / 月.*"
+- assertVisible: ".*: Oktober / Mo.*"
+- assertNotVisible: ".*(months|weekdays) english.*"
+- scrollUntilVisible:
+    element: { id: "intl-names-th" }
+    direction: DOWN
+- assertNotVisible: ".*(months|weekdays) english.*"

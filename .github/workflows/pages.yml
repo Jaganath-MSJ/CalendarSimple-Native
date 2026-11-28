@@ -1,4 +1,4 @@
-name: Web demo
+name: Deploy Live Demo
 
 on:
   # semantic-release publishes with GITHUB_TOKEN, whose events (release:
@@ -11,13 +11,17 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
+# One deployment at a time; a newer release waits instead of cancelling a
+# deployment in progress.
 concurrency:
-  group: demo
-  cancel-in-progress: true
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
@@ -33,11 +37,22 @@ jobs:
           node-version: 22
           cache: "npm"
       - run: npm ci
+      # GitHub Pages serves the repo under /CalendarSimple-Native/
+      # (example/app.config.js sets Expo's experiments.baseUrl from this).
       - run: npm run example:web:export
-      - name: Deploy to Netlify
-        # example/dist is built by the previous step; --no-build stops netlify-cli
-        # from running the site's UI build command from the repo root.
-        run: npx --yes netlify-cli deploy --no-build --dir example/dist --prod
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          EXPO_BASE_URL: /CalendarSimple-Native
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: example/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

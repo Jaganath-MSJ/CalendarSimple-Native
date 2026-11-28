@@ -43,6 +43,10 @@ export interface CalendarMessages {
   eventCount: (n: number) => string;
   /** "+ 3 more" */
   more: (n: number) => string;
+  /** "3 more events on October 22, 2026": the "+N more" accessibility label */
+  moreEventsOn: (n: number, date: string) => string;
+  /** "W43": week number after the Week title (`showWeekNumbers`) */
+  weekNumber: (n: number) => string;
   /** "3 more all-day events, tap to expand" */
   moreAllDay: (n: number) => string;
   /** "(Day 1/3)" */
@@ -51,6 +55,18 @@ export interface CalendarMessages {
   eventsOn: (date: string) => string;
   /** "Create event at 14:00, Thu 22 Oct" */
   createEventAt: (time: string, date: string) => string;
+  /** "Move 15 minutes earlier" (accessibility action, `draggable`) */
+  moveEarlier: (minutes: number) => string;
+  /** "Move 15 minutes later" (accessibility action, `draggable`) */
+  moveLater: (minutes: number) => string;
+  /** "Move to the previous day" (accessibility action, `draggable`) */
+  movePreviousDay: string;
+  /** "Move to the next day" (accessibility action, `draggable`) */
+  moveNextDay: string;
+  /** "Make 15 minutes longer" (accessibility action, `resizable`) */
+  makeLonger: (minutes: number) => string;
+  /** "Make 15 minutes shorter" (accessibility action, `resizable`) */
+  makeShorter: (minutes: number) => string;
 }
 
 /** English defaults for every message. */
@@ -84,10 +100,18 @@ export const DEFAULT_MESSAGES: CalendarMessages = {
   eventCount: (n) =>
     n === 0 ? "no events" : n === 1 ? "1 event" : `${n} events`,
   more: (n) => `+ ${n} more`,
+  moreEventsOn: (n, d) => `${n} more events on ${d}`,
+  weekNumber: (n) => `W${n}`,
   moreAllDay: (n) => `${n} more all-day events, tap to expand`,
   dayOfTotal: (i, n) => `(Day ${i}/${n})`,
   eventsOn: (d) => `Events on ${d}`,
   createEventAt: (t, d) => `Create event at ${t}, ${d}`,
+  moveEarlier: (m) => `Move ${m} minutes earlier`,
+  moveLater: (m) => `Move ${m} minutes later`,
+  movePreviousDay: "Move to the previous day",
+  moveNextDay: "Move to the next day",
+  makeLonger: (m) => `Make ${m} minutes longer`,
+  makeShorter: (m) => `Make ${m} minutes shorter`,
 };
 
 /**

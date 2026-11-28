@@ -57,11 +57,11 @@ export const ENTRIES: Entry[] = [
   {
     key: "schedule",
     title: "Schedule",
-    description: "Agenda, pull to refresh",
+    description: "Every event by day, pull to refresh",
     group: "views",
     view: ECalendarViewType.schedule,
     code: basic(
-      '  view="schedule"\n  onRefresh={refresh}\n  onEndReached={loadMore}\n',
+      '  view="schedule"\n  autoScrollToCurrentTime\n  onRefresh={refresh}\n',
     ),
   },
   {
@@ -79,6 +79,60 @@ export const ENTRIES: Entry[] = [
     description: "Intl formatting, week start and right-to-left",
     group: "features",
     code: basic('  locale="ar"\n  weekStartsOn="locale"\n'),
+  },
+  {
+    key: "recurring",
+    title: "Recurring events",
+    description: "Weekly, monthly and yearly rules with skipped dates",
+    group: "features",
+    code: `import Calendar from "calendar-simple-native";
+
+const events = [
+  {
+    id: "standup",
+    title: "Standup",
+    startDate: "2026-10-05T09:30:00",
+    endDate: "2026-10-05T09:45:00",
+    rrule: "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR",
+    exdates: ["2026-10-16"],
+  },
+];
+
+<Calendar
+  events={events}
+  onEventClick={(e) => console.log(e.recurringEventId, e.occurrenceDate)}
+/>`,
+  },
+  {
+    key: "drag",
+    title: "Gestures",
+    description:
+      "Move and resize events with a long press; pinch to zoom; haptics",
+    group: "features",
+    view: ECalendarViewType.week,
+    code: `import * as Haptics from "expo-haptics";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import Calendar from "calendar-simple-native";
+import { CalendarGestures } from "calendar-simple-native/gestures";
+
+<GestureHandlerRootView style={{ flex: 1 }}>
+  <CalendarGestures>
+    <Calendar
+      events={events}
+      view="week"
+      draggable
+      onEventDrop={({ event, start, end }) => update(event.id, start, end)}
+      resizable
+      onEventResize={({ event, start, end }) => update(event.id, start, end)}
+      onHaptic={(kind) =>
+        kind === "snap"
+          ? Haptics.selectionAsync()
+          : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+      }
+      pinchToZoom
+    />
+  </CalendarGestures>
+</GestureHandlerRootView>`,
   },
   {
     key: "features",
