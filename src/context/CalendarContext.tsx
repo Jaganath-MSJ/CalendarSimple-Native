@@ -22,7 +22,9 @@ import {
   dateFn,
   expandRecurringEvents,
   getExpansionWindow,
+  getScheduleExpansionWindow,
   getVisibleRange,
+  isSeries,
   type CalendarAction,
   type CalendarState,
   type DateType,
@@ -71,21 +73,20 @@ function useExpandedConfig(
   state: CalendarState,
 ): ResolvedConfig {
   const { events, enableEnrichedEvents, eventsAreSorted } = config;
-  const recurring = useMemo(
-    () => events.some((e) => typeof e.rrule === "string" && e.rrule !== ""),
-    [events],
-  );
+  const recurring = useMemo(() => events.some(isSeries), [events]);
   let windowKey = "";
   if (recurring && !enableEnrichedEvents) {
-    const w = getExpansionWindow(
-      getVisibleRange(state.view, state.selectedDate, {
-        weekStartsOn: config.weekStartsOn,
-        weekEndsOn: config.weekEndsOn,
-        customDays: state.customDays,
-        scheduleDays: config.scheduleDays,
-        scheduleExtraDays: state.scheduleExtraDays,
-      }),
-    );
+    // Schedule lists every event: its series use a window of their own.
+    const w =
+      state.view === "schedule"
+        ? getScheduleExpansionWindow(state.selectedDate)
+        : getExpansionWindow(
+            getVisibleRange(state.view, state.selectedDate, {
+              weekStartsOn: config.weekStartsOn,
+              weekEndsOn: config.weekEndsOn,
+              customDays: state.customDays,
+            }),
+          );
     windowKey = `${w.start.toISODate()}|${w.end.toISODate()}`;
   }
   const expanded = useMemo(() => {

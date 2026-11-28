@@ -41,16 +41,25 @@ it("places stacked chips", async () => {
   });
 });
 
-it("draws arrows on clipped sides", async () => {
+it("draws arrows on clipped sides, joined without a notch", async () => {
   await week();
-  // On call started 17 Oct
+  // On call started 17 Oct: arrow at the start, text 4 px past its base.
+  expect(
+    screen.getByTestId("calendar-o7-all-day-event-arrow-start"),
+  ).toBeOnTheScreen();
   expect(screen.getByTestId("calendar-o7-all-day-event")).toHaveStyle({
-    paddingLeft: 14,
+    paddingLeft: 4,
+    borderTopLeftRadius: 0,
+    borderBottomLeftRadius: 0,
   });
-  // Conference ends 26 Oct
-  expect(screen.getByTestId("calendar-o26-all-day-event")).toHaveStyle({
-    paddingRight: 14,
+  // Conference ends 26 Oct; its start corners stay round.
+  const conference = screen.getByTestId("calendar-o26-all-day-event");
+  expect(conference).toHaveStyle({
+    paddingRight: 4,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
   });
+  expect(conference).not.toHaveStyle({ borderTopLeftRadius: 0 });
 });
 
 it("shows the GMT offset", async () => {
@@ -90,7 +99,7 @@ it("mirrors offsets and arrows under RTL", async () => {
   });
   // On call is clipped at the start: arrow and padding on the right.
   const onCall = screen.getByTestId("calendar-o7-all-day-event");
-  expect(onCall).toHaveStyle({ paddingRight: 14 });
+  expect(onCall).toHaveStyle({ paddingRight: 4, borderTopRightRadius: 0 });
   expect(
     screen.getByTestId("calendar-o7-all-day-event-arrow-start"),
   ).toHaveStyle({ right: -10 });

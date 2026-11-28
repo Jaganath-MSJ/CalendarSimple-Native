@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import {
   BackHandler,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -19,6 +20,7 @@ import { ECalendarViewType } from "../../src";
 import { SCREENS } from "./screens";
 import { forcedScheme, initialScreen, SchemeContext } from "./launch";
 import PlaygroundScreen from "./screens/PlaygroundScreen";
+import ReadmeScreen, { type ReadmeDemo } from "./screens/ReadmeScreen";
 import { entry, ENTRIES, inGroup, type Entry } from "./ui/catalog";
 import {
   BOTTOM_INSET,
@@ -237,7 +239,53 @@ function DemoPage({
   );
 }
 
+/** `readme-views` → `"views"`; `readme` alone is the drag demo. */
+function readmeDemo(screen: string | null): ReadmeDemo | null {
+  if (screen === "readme") return "drag";
+  const demo = screen?.startsWith("readme-") ? screen.slice(7) : null;
+  return demo === "views" ||
+    demo === "drag" ||
+    demo === "theme" ||
+    demo === "locale"
+    ? demo
+    : null;
+}
+
+/** `screen` from a deep link (`exp://…/--/?screen=readme-views` in Expo Go). */
+function screenFromUrl(url: string | null | undefined): string | null {
+  return url?.match(/[?&]screen=([^&#]+)/)?.[1] ?? null;
+}
+
+/**
+ * `?screen=readme-<demo>` (web) or a deep link with it (native) shows only
+ * a README GIF's calendar, without menus; every other launch gets the
+ * example shell.
+ */
 export default function App() {
+  const [screen, setScreen] = useState(initialScreen);
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    void Linking.getInitialURL().then((url) => {
+      const key = screenFromUrl(url);
+      if (key) setScreen(key);
+    });
+    const sub = Linking.addEventListener("url", ({ url }) => {
+      const key = screenFromUrl(url);
+      if (key) setScreen(key);
+    });
+    return () => sub.remove();
+  }, []);
+  const demo = readmeDemo(screen);
+  return demo ? (
+    <GestureHandlerRootView style={a.fill}>
+      <ReadmeScreen key={demo} demo={demo} />
+    </GestureHandlerRootView>
+  ) : (
+    <Shell />
+  );
+}
+
+function Shell() {
   const c = useChrome();
   const wide = useWide();
   const [{ tab, demo }, setState] = useState(initialState);

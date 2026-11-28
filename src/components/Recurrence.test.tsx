@@ -80,17 +80,18 @@ it("week and schedule show the occurrences in their range", async () => {
   await fireEvent.press(screen.getByTestId("calendar-header-view-select"));
   await fireEvent.press(screen.getByTestId("calendar-menu-option-schedule"));
   await act(() => jest.advanceTimersByTime(20));
-  // The list is virtualised: the first rows are Thu 22, Thu 29 Oct and
-  // Mon 2 Nov (Mon 26 Oct is excluded).
+  // Schedule lists every occurrence (no window since 1.1); the list is
+  // virtualised, so the first rows are the series' first: Mon 5, Thu 8 and
+  // Mon 12 Oct.
   expect(
     screen
       .getAllByTestId(/^calendar-standup::.*-schedule-event$/)
       .slice(0, 3)
       .map((r) => r.props.testID as string),
   ).toEqual([
-    "calendar-standup::2026-10-22T09:00:00-schedule-event",
-    "calendar-standup::2026-10-29T09:00:00-schedule-event",
-    "calendar-standup::2026-11-02T09:00:00-schedule-event",
+    "calendar-standup::2026-10-05T09:00:00-schedule-event",
+    "calendar-standup::2026-10-08T09:00:00-schedule-event",
+    "calendar-standup::2026-10-12T09:00:00-schedule-event",
   ]);
 });
 

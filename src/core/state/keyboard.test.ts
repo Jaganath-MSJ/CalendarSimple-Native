@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { DateTime } from "luxon";
 import {
+  getEventKeyAction,
+  getEventKeyShortcuts,
   getMonthKeyTarget,
   getPeriodKeyAction,
   isVisibleWeekday,
+  type KeyInput,
   type MonthKeyOptions,
 } from "./keyboard";
 
@@ -116,5 +119,76 @@ describe("getPeriodKeyAction", () => {
       getPeriodKeyAction({ key: "ArrowLeft", altKey: true }, grid),
     ).toBeNull();
     expect(getPeriodKeyAction({ key: "ArrowUp" }, grid)).toBeNull();
+  });
+});
+
+describe("getEventKeyAction (calendar-simple event keys)", () => {
+  const grid = { move: { stepMinutes: 15 }, resizeMinutes: 30 };
+  const k = (key: string, mods: Partial<KeyInput> = {}) => ({
+    key,
+    altKey: true,
+    ...mods,
+  });
+  it("time grids: Alt+arrows move by days and minutes", () => {
+    expect(getEventKeyAction(k("ArrowUp"), grid)).toEqual({
+      type: "move",
+      days: 0,
+      minutes: -15,
+    });
+    expect(getEventKeyAction(k("ArrowDown"), grid)).toEqual({
+      type: "move",
+      days: 0,
+      minutes: 15,
+    });
+    expect(getEventKeyAction(k("ArrowRight"), grid)).toEqual({
+      type: "move",
+      days: 1,
+      minutes: 0,
+    });
+    expect(getEventKeyAction(k("ArrowLeft"), grid)).toEqual({
+      type: "move",
+      days: -1,
+      minutes: 0,
+    });
+  });
+  it("Alt+Shift+↑/↓ resizes the end", () => {
+    expect(getEventKeyAction(k("ArrowDown", { shiftKey: true }), grid)).toEqual(
+      { type: "resize", minutes: 30 },
+    );
+    expect(
+      getEventKeyAction(k("ArrowUp", { shiftKey: true }), {
+        move: { stepMinutes: 15 },
+      }),
+    ).toBeNull();
+  });
+  it("Month: ↑/↓ move by a week; right to left mirrors ←/→", () => {
+    const month = { move: { stepMinutes: 0, rowDays: 7, reversed: true } };
+    expect(getEventKeyAction(k("ArrowUp"), month)).toEqual({
+      type: "move",
+      days: -7,
+      minutes: 0,
+    });
+    expect(getEventKeyAction(k("ArrowRight"), month)).toEqual({
+      type: "move",
+      days: -1,
+      minutes: 0,
+    });
+  });
+  it("all-day row: only ←/→; nothing without Alt or with Ctrl/⌘", () => {
+    const row = { move: { stepMinutes: 0 } };
+    expect(getEventKeyAction(k("ArrowUp"), row)).toBeNull();
+    expect(getEventKeyAction({ key: "ArrowRight" }, grid)).toBeNull();
+    expect(
+      getEventKeyAction(k("ArrowRight", { metaKey: true }), grid),
+    ).toBeNull();
+  });
+  it("lists the shortcuts", () => {
+    expect(getEventKeyShortcuts(grid)).toBe(
+      "Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight Alt+Shift+ArrowUp Alt+Shift+ArrowDown",
+    );
+    expect(getEventKeyShortcuts({ move: { stepMinutes: 0 } })).toBe(
+      "Alt+ArrowLeft Alt+ArrowRight",
+    );
+    expect(getEventKeyShortcuts({})).toBeUndefined();
   });
 });

@@ -1,22 +1,47 @@
 /**
  * @file What a draggable or resizable event needs: the gestures wrapper
- * (when an adapter is provided) and the screen-reader actions (always).
+ * (when an adapter is provided), the screen-reader actions (always) and the
+ * Alt+arrow keys (web).
  */
-import { useRef, type ReactNode } from "react";
+import {
+  useRef,
+  type ComponentRef,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import {
   Platform,
+  type Pressable,
   type AccessibilityActionEvent,
   type AccessibilityActionInfo,
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import type { AxisBounds, DragBounds, ResizeEdge } from "../../core";
+import {
+  getEventKeyAction,
+  getEventKeyShortcuts,
+  type AxisBounds,
+  type DragBounds,
+  type EventKeyOptions,
+  type ResizeEdge,
+} from "../../core";
 import {
   useDragState,
   useGestureAdapter,
 } from "../../context/GestureAdapterContext";
-import { useViewConfig } from "../../context/LayoutContext";
+import { useTestID, useViewConfig } from "../../context/LayoutContext";
+import {
+  readKey,
+  useKeyboardEnabled,
+  type WebKeyEvent,
+} from "../../hooks/useKeyboardNavigation";
 import type { HapticKind } from "../../types";
+import {
+  focusKey as keyOf,
+  markFocusAfterMove,
+  useFocusAfterMove,
+  type EventFocus,
+} from "./focusAfterMove";
 
 /** Shortest gap between two `"snap"` haptics, in ms. */
 export const SNAP_HAPTIC_MS = 50;
@@ -32,6 +57,10 @@ export interface MoveSpec {
   shift: (days: number, minutes: number) => void;
   /** Minutes per step, or 0 where only whole days move (month). */
   stepMinutes: number;
+  /** Days per row for Alt+↑/↓ when `stepMinutes` is 0 (Month: 7). */
+  rowDays?: number;
+  /** Day columns run right to left on screen (Alt+←/→ mirror). */
+  reversed?: boolean;
 }
 
 /** Resizing from an edge (time grids). */
@@ -49,6 +78,12 @@ export interface ResizeSpec {
 export interface DragSpec {
   move?: MoveSpec;
   resize?: ResizeSpec;
+  /**
+   * Keeps keyboard focus on the event after a keyboard move. Set it on one
+   * drawn piece of the event only (the one holding its start, or the first
+   * visible one), so a multi-week or multi-day event takes focus once.
+   */
+  focus?: EventFocus;
 }
 
 export interface Draggable {
@@ -63,6 +98,15 @@ export interface Draggable {
    * (native gesture handlers cancel it); that one is not a click.
    */
   press: (onPress: () => void, onLongPress: () => void) => PressHandlers;
+  /** Web keys (Alt+arrows) and focus after a keyboard move. */
+  keys?: EventKeyProps;
+}
+
+/** Props for the event's pressable on web. */
+export interface EventKeyProps {
+  ref: RefObject<ComponentRef<typeof Pressable> | null>;
+  onKeyDown: (e: WebKeyEvent) => void;
+  "aria-keyshortcuts"?: string;
 }
 
 interface PressHandlers {
@@ -85,10 +129,19 @@ const NONE: Draggable = {
 export function useDraggable(spec: DragSpec | undefined): Draggable {
   const { EventWrapper } = useGestureAdapter();
   const { setDragging } = useDragState();
-  const { messages, onHaptic } = useViewConfig();
+  const { messages, onHaptic, keyboardNavigation } = useViewConfig();
+  // The event keys follow keyboardNavigation (and only the current page).
+  const keyboard = useKeyboardEnabled(keyboardNavigation);
   const lastSnap = useRef(0);
   // A drag began during the current press.
   const dragged = useRef(false);
+  const id = useTestID();
+  const keyRef = useRef<ComponentRef<typeof Pressable> | null>(null);
+  const focus = spec?.focus;
+  // Its key now, and after a keyboard move (`undefined` on neighbour pages).
+  const prefix = focus ? id("focus") : undefined;
+  const focusKey = prefix && focus ? `${prefix}|${keyOf(focus)}` : undefined;
+  useFocusAfterMove(focusKey, keyRef);
   const { move, resize } = spec ?? {};
   if (!move && !resize) return NONE;
 
@@ -127,6 +180,39 @@ export function useDraggable(spec: DragSpec | undefined): Draggable {
     }
   };
 
+  // Web: Alt+arrows move, Alt+Shift+↑/↓ resize the end (calendar-simple).
+  const keyOptions: EventKeyOptions = {
+    move: move && {
+      stepMinutes: move.stepMinutes,
+      rowDays: move.rowDays,
+      reversed: move.reversed,
+    },
+    resizeMinutes: resize?.bottom ? resize.stepMinutes : undefined,
+  };
+  const keys: EventKeyProps | undefined = keyboard
+    ? {
+        ref: keyRef,
+        "aria-keyshortcuts": getEventKeyShortcuts(keyOptions),
+        onKeyDown: (e) => {
+          const key = readKey(e);
+          const action = key && getEventKeyAction(key, keyOptions);
+          if (!action) return;
+          e.preventDefault();
+          markFocusAfterMove(
+            prefix && focus
+              ? `${prefix}|${
+                  action.type === "move"
+                    ? keyOf(focus, action.days, action.minutes)
+                    : keyOf(focus)
+                }`
+              : undefined,
+          );
+          if (action.type === "move") move?.shift(action.days, action.minutes);
+          else resize?.stretch("bottom", action.minutes);
+        },
+      }
+    : undefined;
+
   if (!EventWrapper)
     return {
       wrapped: false,
@@ -134,6 +220,7 @@ export function useDraggable(spec: DragSpec | undefined): Draggable {
       accessibilityActions: actions,
       onAccessibilityAction,
       press: passThrough,
+      keys,
     };
 
   // Haptics are a native-app concern; web never gets them.
@@ -192,6 +279,7 @@ export function useDraggable(spec: DragSpec | undefined): Draggable {
     ),
     accessibilityActions: actions,
     onAccessibilityAction,
+    keys,
     press: (onPress, onLongPress) => ({
       onPressIn: () => {
         dragged.current = false;

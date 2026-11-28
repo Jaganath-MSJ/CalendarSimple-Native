@@ -2,40 +2,35 @@
  * @file Debounced `onDateRangeChange` (TDD §8.4).
  */
 import { useEffect, useMemo, useRef } from "react";
-import { getVisibleRange } from "../core";
+import { getScheduleLoadRange, getVisibleRange } from "../core";
 import { useCalendar } from "../context/CalendarContext";
 
 const DELAY_MS = 16;
 
 /**
  * Call once inside the provider. When the visible range key
- * `"<view>|<startISO>|<endISO>"` changes (mount, navigation, view change,
- * `EXTEND_SCHEDULE`), fires `onDateRangeChange(start, end, view)` after 16 ms;
- * a newer key cancels the pending call.
+ * `"<view>|<startISO>|<endISO>"` changes (mount, navigation, view change, and
+ * in Schedule — the events' span joined with the window around the selected
+ * date — an events change that moves the span), fires `onDateRangeChange(start, end, view)` after 16 ms; a newer key
+ * cancels the pending call.
  */
 export function useDateRangeNotifier(): void {
   const { state, config } = useCalendar();
-  const { view, selectedDate, customDays, scheduleExtraDays } = state;
-  const { weekStartsOn, weekEndsOn, scheduleDays, onDateRangeChange } = config;
+  const { view, selectedDate, customDays } = state;
+  const { weekStartsOn, weekEndsOn, events, onDateRangeChange } = config;
 
+  // Schedule reports the events' span joined with the window around the
+  // selected date, so an app that loads by range has something to load.
   const range = useMemo(
     () =>
-      getVisibleRange(view, selectedDate, {
-        weekStartsOn,
-        weekEndsOn,
-        customDays,
-        scheduleDays,
-        scheduleExtraDays,
-      }),
-    [
-      view,
-      selectedDate,
-      weekStartsOn,
-      weekEndsOn,
-      customDays,
-      scheduleDays,
-      scheduleExtraDays,
-    ],
+      view === "schedule"
+        ? getScheduleLoadRange(selectedDate, events)
+        : getVisibleRange(view, selectedDate, {
+            weekStartsOn,
+            weekEndsOn,
+            customDays,
+          }),
+    [view, selectedDate, weekStartsOn, weekEndsOn, customDays, events],
   );
   const key = `${view}|${range.start.toISODate()}|${range.end.toISODate()}`;
 

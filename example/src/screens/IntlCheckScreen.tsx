@@ -1,4 +1,5 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { DateTime } from "luxon";
 import {
   probeDigits,
   probeHourCycle,
@@ -8,10 +9,14 @@ import {
   probeWeekStart,
 } from "../intl/probes";
 import {
+  formatMonthYear,
   monthNames,
   nameSource,
   weekdayNames,
 } from "../../../src/core/i18n/names";
+
+/** October 2026, as the header title shows it (month and year order). */
+const OCT_2026 = DateTime.fromObject({ year: 2026, month: 10, day: 22 });
 
 /** Locales whose month and weekday names are checked on each engine. */
 const NAME_LOCALES = [
@@ -56,6 +61,16 @@ function rows(): Row[] {
       expected: "7",
     },
     { label: "ko 13:00", value: probeMeridiem("ko"), expected: "오후" },
+    {
+      label: "ja title",
+      value: formatMonthYear(OCT_2026, "ja-JP"),
+      expected: "2026年10月",
+    },
+    {
+      label: "ko title",
+      value: formatMonthYear(OCT_2026, "ko-KR"),
+      expected: "2026년 10월",
+    },
     { label: "ar-EG 123", value: probeDigits("ar-EG"), expected: "١٢٣" },
     {
       label: "week start en-US",

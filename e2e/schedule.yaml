@@ -2,12 +2,13 @@ appId: com.calendarsimplenative.example
 ---
 - launchApp
 - tapOn: "Schedule"
+# Every event is listed; the example opens at the selected date.
 - assertVisible: { id: "calendar-2026-10-22-schedule-section" }
-# Pull to refresh.
-- swipe: { direction: DOWN }
-# Scroll to the end: end reached extends the window into December.
-- scrollUntilVisible:
-    element: { id: "calendar-header-title", text: ".*Dec.*" }
-    direction: DOWN
-    timeout: 20000
-- assertVisible: { id: "calendar-header-title", text: ".*Dec.*" }
+- assertNotVisible: { id: "calendar-header-prev-btn" }
+# No window: picking December scrolls the list there (a scroll from October
+# takes too long on a slow emulator).
+- tapOn: { id: "calendar-header-month-select" }
+- tapOn: "December"
+- extendedWaitUntil:
+    visible: { id: "calendar-2026-12-.*-schedule-section" }
+    timeout: 10000

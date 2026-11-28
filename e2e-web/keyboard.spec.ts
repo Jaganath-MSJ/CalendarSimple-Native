@@ -91,14 +91,17 @@ test("week: PageDown, ← / → and T turn the period", async ({ page }) => {
   await expect(title(page)).toHaveText("October 2026");
 });
 
-test("schedule: PageDown keeps focus in the list", async ({ page }) => {
+test("schedule: PageDown leaves the focused row alone", async ({ page }) => {
   await page.goto("/?screen=schedule&scheme=light");
-  await page.locator('[data-testid$="-schedule-event"]').first().focus();
+  const rows = page.locator('[data-testid$="-schedule-event"]');
+  await rows.nth(0).focus();
+  // No window to move since 1.1: the title stays and focus stays.
+  const before = await title(page).textContent();
   await page.keyboard.press("PageDown");
+  await expect(title(page)).toHaveText(before!);
+  await expect(rows.nth(0)).toBeFocused();
   await page.keyboard.press("ArrowDown");
-  await expect(
-    page.locator('[data-testid$="-schedule-event"]').first(),
-  ).toBeFocused();
+  await expect(rows.nth(1)).toBeFocused();
 });
 
 test("schedule: ↓ and ↑ move between rows", async ({ page }) => {
@@ -127,4 +130,29 @@ test("phone: Enter opens the day sheet, Escape closes it", async ({ page }) => {
   await expect(cell).toBeFocused();
   await page.keyboard.press(" ");
   await expect(byID(page, "calendar-day-sheet")).toBeVisible();
+});
+
+test("event keys: Alt+arrows move, Alt+Shift+↓ resizes, focus stays", async ({
+  page,
+}) => {
+  await page.goto("/?screen=drag&scheme=light");
+  const item = byID(page, "calendar-review-day-event-item");
+  await item.focus();
+  await expect(item).toHaveAttribute(
+    "aria-keyshortcuts",
+    "Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight Alt+Shift+ArrowUp Alt+Shift+ArrowDown",
+  );
+  await page.keyboard.press("Alt+ArrowDown");
+  await expect(
+    page.getByText("Design review → Thu 22 Oct 10:15 (week)"),
+  ).toBeVisible();
+  await expect(item).toBeFocused();
+  // Redrawn in the next day's column: the new element takes focus.
+  await page.keyboard.press("Alt+ArrowRight");
+  await expect(
+    page.getByText("Design review → Fri 23 Oct 10:15 (week)"),
+  ).toBeVisible();
+  await expect(byID(page, "calendar-review-day-event-item")).toBeFocused();
+  await page.keyboard.press("Alt+Shift+ArrowDown");
+  await expect(page.getByText(/Design review ⇕ 10:15–11:30/)).toBeVisible();
 });

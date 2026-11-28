@@ -9,7 +9,7 @@ import {
   useState,
   type ReactElement,
 } from "react";
-import { dateFn, type ECalendarViewType } from "../core";
+import { dateFn, type CustomDaysCount, type ECalendarViewType } from "../core";
 import { applyDefaults } from "../config/applyDefaults";
 import { CalendarProvider, useCalendarState } from "../context/CalendarContext";
 import { useDateRangeNotifier } from "../hooks/useDateRangeNotifier";
@@ -89,7 +89,7 @@ function PropSync({
 }: {
   selectedDate?: Date;
   view?: ECalendarViewType;
-  customDays?: number;
+  customDays?: CustomDaysCount;
 }) {
   const { dispatch } = useCalendarState();
   const time = selectedDate?.getTime();
@@ -113,10 +113,23 @@ function DateRangeNotifier() {
   return null;
 }
 
+/** Props removed in 1.1: Schedule lists every event (MIGRATION.md). */
+const REMOVED_PROPS = ["scheduleDays", "onEndReached"] as const;
+
 function CalendarRoot<TEvent extends CalendarEvent = CalendarEvent>(
   props: CalendarProps<TEvent>,
 ) {
   const { children, ...rest } = props;
+  const removed = REMOVED_PROPS.filter(
+    (name) => (props as Record<string, unknown>)[name] !== undefined,
+  ).join(", ");
+  useEffect(() => {
+    if (__DEV__ && removed)
+      console.warn(
+        `[calendar] ${removed}: removed in 1.1; Schedule now lists every ` +
+          "event. See MIGRATION.md, 'Upgrading from calendar-simple-native 1.0'.",
+      );
+  }, [removed]);
   const base = useResolvedConfig(rest);
   const events = useEvents(base.events, base);
   const config = useMemo(() => ({ ...base, events }), [base, events]);

@@ -26,12 +26,15 @@ import type { CalendarMessages } from "../i18n";
 
 /**
  * Groups events by every day they span, keeping only days inside `range`
- * (both ends inclusive). Groups are sorted by `dateKey`; events inside a
- * group keep start-date order.
+ * (both ends inclusive). With `fill`, a multi-day event fills only its days
+ * inside `fill`, plus its first day, so a years-long event does not make
+ * thousands of groups yet every event is still listed. Groups are sorted by
+ * `dateKey`; events inside a group keep start-date order.
  */
 export function groupScheduleEvents<E extends BaseCalendarEvent>(
   events: E[],
   range: VisibleRange,
+  fill?: VisibleRange,
 ): ScheduleGroup<E>[] {
   // -------------------------------------------------------------------------
   // 1. Initial Sorting
@@ -51,18 +54,32 @@ export function groupScheduleEvents<E extends BaseCalendarEvent>(
   sorted.forEach((event) => {
     // Group by every date the event spans, clipped to the window (#6C)
     const first = dateFn(event.startDate).startOf("day");
-    let current = first < rangeStart ? rangeStart : first;
+    const startDay = first < rangeStart ? rangeStart : first;
     const last = getLastEventDay(event);
     const end = last > rangeEnd ? rangeEnd : last;
-
-    while (current < end || current.equals(end)) {
-      const dateKey = formatDate(current, DATE_FORMATS.DATE);
+    if (end < startDay) return;
+    const add = (day: DateType) => {
+      const dateKey = formatDate(day, DATE_FORMATS.DATE);
       let group = groups.get(dateKey);
       if (!group) {
-        group = { dateKey, date: current, events: [] };
+        group = { dateKey, date: day, events: [] };
         groups.set(dateKey, group);
       }
       group.events.push(event);
+    };
+
+    // Its first day always; the rest only inside `fill` (when given).
+    add(startDay);
+    let current = startDay.plus({ days: 1 }).startOf("day");
+    let stop = end;
+    if (fill) {
+      const fillStart = fill.start.startOf("day");
+      const fillEnd = fill.end.startOf("day");
+      if (current < fillStart) current = fillStart;
+      if (stop > fillEnd) stop = fillEnd;
+    }
+    while (current < stop || current.equals(stop)) {
+      add(current);
       current = current.plus({ days: 1 }).startOf("day");
     }
   });

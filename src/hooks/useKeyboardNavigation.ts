@@ -75,12 +75,12 @@ export function moveRowFocus(e: WebKeyEvent, direction: 1 | -1): boolean {
  */
 export function usePeriodKeys(
   keyboardNavigation: boolean,
-  options: { arrows: boolean; rows?: boolean },
+  options: { arrows: boolean; rows?: boolean; pages?: boolean },
 ): ((e: WebKeyEvent) => void) | undefined {
   const enabled = useKeyboardEnabled(keyboardNavigation);
   const navigate = useNavigate();
   const { flip } = useCalendarTheme();
-  const { arrows, rows = false } = options;
+  const { arrows, rows = false, pages = true } = options;
   const onKeyDown = useCallback(
     (e: WebKeyEvent) => {
       const key = readKey(e);
@@ -90,7 +90,7 @@ export function usePeriodKeys(
           e.preventDefault();
         return;
       }
-      const action = getPeriodKeyAction(key, { flip, arrows });
+      const action = getPeriodKeyAction(key, { flip, arrows, pages });
       if (action === null) return;
       e.preventDefault();
       navigate(action === "today" ? dateFn() : action);
@@ -101,7 +101,7 @@ export function usePeriodKeys(
         preventScroll: true,
       });
     },
-    [navigate, flip, arrows, rows],
+    [navigate, flip, arrows, rows, pages],
   );
   return enabled ? onKeyDown : undefined;
 }

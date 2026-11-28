@@ -113,6 +113,11 @@ describe("zoomedHourHeight", () => {
     expect(zoomedHourHeight(60, 10, 30, 180)).toBe(180);
     expect(zoomedHourHeight(60, 0.1, 30, 180)).toBe(30);
   });
+  it("exact during the gesture: a slow pinch moves by fractions", () => {
+    expect(zoomedHourHeight(60, 1.004, 30, 180, true)).toBeCloseTo(60.24);
+    expect(zoomedHourHeight(60, 1.004, 30, 180)).toBe(60);
+    expect(zoomedHourHeight(60, 10, 30, 180, true)).toBe(180);
+  });
 });
 
 it("CalendarGestures wraps the time grid when pinchToZoom is on", async () => {

@@ -4,12 +4,24 @@ A simple, themeable calendar for React Native (iOS, Android, web). It is the
 React Native port of [calendar-simple](https://github.com/Jaganath-MSJ/CalendarSimple)
 v2.1 and keeps its props, callbacks and render props.
 
-[npm](https://www.npmjs.com/package/calendar-simple-native) ·
-[Live demo](https://calendar-simple-native.netlify.app/) ·
+[Live demo](https://jaganath-msj.github.io/CalendarSimple-Native/) ·
 [Try it in Expo Snack](https://snack.expo.dev/@msj_jagan/calendar-simple-native-demo)
 
-- Month, Week, Day, Custom Days (1–10) and Schedule views
-- Swipe paging, pull-to-refresh and "load more" in Schedule
+<table>
+  <tr>
+    <td align="center"><img src=".github/assets/demo/views.gif" alt="On an iPhone, the calendar switching between the Month, Week, Day and Schedule views" width="270" /><br /><sub>Month, Week, Day and Schedule</sub></td>
+    <td align="center"><img src=".github/assets/demo/drag-and-resize.gif" alt="On an iPhone, a long press moves an event a day later and an hour down, then dragging its bottom edge makes it longer" width="270" /><br /><sub>Drag to move and resize</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src=".github/assets/demo/dark-mode.gif" alt="On an iPhone, the month view switching between light and dark mode" width="270" /><br /><sub>Light and dark mode</sub></td>
+    <td align="center"><img src=".github/assets/demo/localization.gif" alt="On an iPhone, the month view in English, German and Arabic (right to left)" width="270" /><br /><sub>Localization and right-to-left</sub></td>
+  </tr>
+</table>
+
+- Month, Week, Day, Custom Days (1–7) and Schedule views
+- Swipe paging, and a Schedule list of every event with pull-to-refresh
+- Drag to move and resize events, pinch to zoom the hours, with haptics and
+  screen-reader and keyboard alternatives (optional gestures entry)
 - Light, dark and automatic colour schemes, palette and per-state theme
 - Locale-aware names, times, week start and right-to-left layout
 - Screen-reader labels, 44 pt touch targets, font scaling, reduce motion
@@ -149,12 +161,15 @@ export function TeamCalendar() {
 
 - Each occurrence is a copy of the event with its own `startDate` and
   `endDate`, `id` `"<id>::<occurrence start>"`, `recurringEventId` (the
-  series `id`) and `occurrenceDate`. Callbacks receive the occurrence, so you
-  can offer "this event" or "the whole series".
+  series `id`, or its `startDate` when it has none) and `occurrenceDate`.
+  Callbacks receive the occurrence, so you can offer "this event" or "the
+  whole series". An event with `recurringEventId` is shown as is, never
+  expanded again, so you can store a moved occurrence back in `events`.
 - Months without the day (the 31st, 29 February) are skipped, as RFC 5545
   says.
-- A rule with any other part (`BYSETPOS`, `HOURLY`, …) shows the event once,
-  with a development warning. At most 1,000 occurrences per event are shown
+- A rule with any other part (`BYSETPOS`, `HOURLY`, …), or one RFC 5545
+  forbids (`BYMONTHDAY` with `FREQ=WEEKLY`), shows the event once, with a
+  development warning. At most 1,000 occurrences per event are shown
   around the visible dates.
 - Recurring events are not expanded with `enableEnrichedEvents`; pass the
   occurrences in `enrichedEventsByDate` yourself.
@@ -165,14 +180,15 @@ All props are optional. Dates in props and callbacks are JS `Date` objects.
 
 ### Data
 
-| Prop                          | Type                          | Default      | Notes                                               |
-| ----------------------------- | ----------------------------- | ------------ | --------------------------------------------------- |
-| `events`                      | `TEvent[]`                    | `[]`         |                                                     |
-| `selectedDate`                | `Date`                        | today        | synced into the calendar whenever its value changes |
-| `view`                        | `ECalendarViewType`           | `"month"`    | `month`, `week`, `day`, `customDays`, `schedule`    |
-| `customDays`                  | `number`                      | 3            | days in the Custom Days view, 1–10                  |
-| `testID`                      | `string`                      | `"calendar"` | prefix of every test ID                             |
-| `isLoading` / `renderLoading` | `boolean` / `() => ReactNode` | `false` / —  | skeleton when empty, overlay over existing events   |
+| Prop                          | Type                          | Default      | Notes                                                     |
+| ----------------------------- | ----------------------------- | ------------ | --------------------------------------------------------- |
+| `events`                      | `TEvent[]`                    | `[]`         |                                                           |
+| `selectedDate`                | `Date`                        | today        | synced into the calendar whenever its value changes       |
+| `view`                        | `ECalendarViewType`           | `"month"`    | `month`, `week`, `day`, `customDays`, `schedule`          |
+| `customDays`                  | `CustomDaysCount` (1–7)       | 3            | days in the Custom Days view; other values clamp          |
+| `testID`                      | `string`                      | `"calendar"` | prefix of every test ID                                   |
+| `testId`                      | `string`                      | —            | alias of `testID` (calendar-simple's name); `testID` wins |
+| `isLoading` / `renderLoading` | `boolean` / `() => ReactNode` | `false` / —  | skeleton when empty, overlay over existing events         |
 
 ### Behaviour
 
@@ -189,11 +205,10 @@ All props are optional. Dates in props and callbacks are JS `Date` objects.
 | `minHour` / `maxHour`                           | `number`                        | `0` / `24`                | hours shown in time grids                                                                 |
 | `weekStartsOn`                                  | `WeekdayIndex \| "locale"`      | `0` (Sunday)              | `"locale"` uses the locale's first day                                                    |
 | `weekEndsOn`                                    | `WeekdayIndex`                  | day before `weekStartsOn` | for work weeks, e.g. `1`–`5`                                                              |
-| `showAdjacentMonths` / `showWeekNumbers`        | `boolean`                       | `true` / `false`          | month view                                                                                |
+| `showAdjacentMonths` / `showWeekNumbers`        | `boolean`                       | `true` / `false`          | month view; `showWeekNumbers` also ends the Week title with "· W43" (`weekNumber`)        |
 | `resetDateOnViewChange`                         | `boolean`                       | `false`                   | jump back to today when the view changes                                                  |
 | `showAllDayRow`                                 | `boolean`                       | `true`                    | all-day banner in time grids                                                              |
 | `eventOverlapOffset`                            | `number`                        | `0`                       | percent of the column width; > 0 stacks overlapping events                                |
-| `scheduleDays`                                  | `number`                        | `30`                      | length of the Schedule window from the selected date                                      |
 | `swipeNavigation`                               | `boolean`                       | `true` (`false` on web)   | swipe between periods in month and time grids                                             |
 | `showMorePopover`                               | `boolean`                       | `true`                    | `false` lets `onMoreClick` handle "+N more" alone                                         |
 | `draggable`                                     | `boolean \| (event) => boolean` | `false`                   | events can be moved; see [Moving and resizing events](#gestures-move-resize-zoom)         |
@@ -230,7 +245,6 @@ All props are optional. Dates in props and callbacks are JS `Date` objects.
 | `onSlotClick`              | `(start: Date, end: Date) => void`                          | an empty slot or cell is pressed (with `creatable`) |
 | `onDateRangeChange`        | `(start: Date, end: Date, view: ECalendarViewType) => void` | the visible range changes (once per settle)         |
 | `onRefresh` / `refreshing` | `() => void` / `boolean`                                    | Schedule pull-to-refresh                            |
-| `onEndReached`             | `() => void`                                                | the Schedule window grew at the end                 |
 
 ### Appearance
 
@@ -267,7 +281,9 @@ All props are optional. Dates in props and callbacks are JS `Date` objects.
 ## Typed events (generics)
 
 `Calendar` is generic over the event type, so callbacks get your own fields
-back without casts.
+back without casts. Pass the type argument (`<Calendar<Meeting> …>`): the event
+type is never inferred from `events` or the callbacks, so without it every
+callback gets a plain `CalendarEvent` (same as calendar-simple).
 
 ```tsx
 import { Text } from "react-native";
@@ -306,6 +322,10 @@ export function Meetings() {
 ```
 
 ## Gestures: move, resize, zoom
+
+<p align="center">
+  <img src=".github/assets/demo/drag-and-resize.gif" alt="On an iPhone, a long press moves an event a day later and an hour down, then dragging its bottom edge makes it longer" width="270" />
+</p>
 
 Set `draggable` and `onEventDrop` to move events, and `resizable` and
 `onEventResize` to resize them. The calendar never changes `events`
@@ -369,6 +389,10 @@ export function PlannerCalendar({ initial }: { initial: CalendarEvent[] }) {
 - **Month:** chips move by days and weeks inside the grid; a timed event
   keeps its time. On phones the month view shows bars, so drag in the time
   grids there.
+- **All-day row (Week, Day, Custom Days):** chips move sideways by whole
+  days inside the visible days; a timed multi-day event keeps its times.
+  With `showAllDayRow={false}`, all-day events drawn in the grid do the
+  same: whole days only, never resized.
 - `onEventDrop` receives `{ event, start, end, allDay, view }`; `end` keeps
   the length (equal to `start` when the event has no `endDate`). A recurring
   event's occurrence is passed as shown (see `recurringEventId`).
@@ -377,8 +401,10 @@ export function PlannerCalendar({ initial }: { initial: CalendarEvent[] }) {
   shorter" on resizable ones, with or without `<CalendarGestures>`. Their
   labels come from `localeMessages` (`moveEarlier`, `moveLater`,
   `movePreviousDay`, `moveNextDay`, `makeLonger`, `makeShorter`).
+- On web, a focused event also moves with Alt + arrow keys and resizes with
+  Alt + Shift + ↑ / ↓ (see [Keyboard](#keyboard-web)).
 - Not yet: dragging into the next week or month, and between the all-day
-  row and the hours.
+  row and the hours (same as calendar-simple).
 
 ### Pinch to zoom
 
@@ -471,6 +497,9 @@ use gestures do not need them.
 `onDateRangeChange` fires with the first and last visible day whenever the
 visible range settles (after mount, navigation, a swipe or a view change),
 once for a burst of quick swipes. Use it to fetch only what is on screen.
+Schedule, which lists every event, reports the window around the selected
+date (two months before to twelve months after, whole quarters), widened by
+any events outside it; Today or a date pick in another quarter moves it.
 
 ```tsx
 import { useCallback, useState } from "react";
@@ -570,6 +599,8 @@ export function FrenchCalendar() {
         week: "Semaine",
         day: "Jour",
         more: (n) => `+ ${n} de plus`,
+        moreEventsOn: (n, date) => `${n} événements de plus le ${date}`,
+        weekNumber: (n) => `S${n}`,
         eventCount: (n) =>
           n === 0 ? "aucun événement" : DEFAULT_MESSAGES.eventCount(n),
       }}
@@ -589,6 +620,9 @@ Measured on Hermes (React Native 0.88):
 - On iOS, Luxon on Hermes returns empty month and weekday names for some
   locales (seen with `fr` and `ja`). The calendar then reads them through
   `Intl.DateTimeFormat`, and uses English only if that is empty too.
+- Month and year in titles follow the locale's order through `Intl`
+  ("2026年10月" in `ja`, "2026년 10월" in `ko`); without `Intl` month names, or
+  with names from `registerLocaleNames`, they read "October 2026".
 
 ### Your own month and weekday names
 
@@ -676,13 +710,23 @@ Android ignore the prop.
 | Month grid | PageUp / PageDown      | Previous or next month (with Shift: year)                     |
 | Month grid | Enter / Space          | Press the day (select, create or open the day sheet)          |
 | Time grids | ← → / PageUp, PageDown | Previous or next period                                       |
-| Schedule   | ↑ ↓ / PageUp, PageDown | Move between rows / move the window                           |
+| Schedule   | ↑ ↓                    | Move between rows                                             |
 | All views  | T                      | Today                                                         |
 | Overlays   | Escape                 | Close the popover, sheet or menu; focus returns to its opener |
+| Event      | Alt + ↑ ↓              | Move by `dragSnapMinutes` (Month: a week), with `draggable`   |
+| Event      | Alt + ← →              | Move a day, with `draggable`                                  |
+| Event      | Alt + Shift + ↑ ↓      | Move the end by `resizeSnapMinutes`, with `resizable`         |
 
 The month grid is one Tab stop (the focused day). Event chips stay in reading
 order, after their week's days. ← and → swap in right-to-left layouts. Keys
 typed into a text field inside a custom renderer are ignored.
+
+The event keys work on any focused draggable or resizable event, with or
+without `<CalendarGestures>`, and are listed in its `aria-keyshortcuts`;
+`keyboardNavigation={false}` turns them off with the other keys. After a
+move the event keeps focus, also when it is redrawn in another column (a
+recurring occurrence too). They report through `onEventDrop` /
+`onEventResize` like a drag.
 
 ## Performance
 
@@ -711,7 +755,7 @@ Every ID starts with `testID` (default `calendar`). The most useful ones:
 
 ## Example app and demo
 
-Try the [live demo](https://calendar-simple-native.netlify.app/) in the
+Try the [live demo](https://jaganath-msj.github.io/CalendarSimple-Native/) in the
 browser, or open the
 [Expo Snack](https://snack.expo.dev/@msj_jagan/calendar-simple-native-demo)
 on your phone with Expo Go.

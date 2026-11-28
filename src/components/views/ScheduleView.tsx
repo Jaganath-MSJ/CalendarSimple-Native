@@ -22,10 +22,8 @@ export type ScheduleViewProps = Partial<
     | "autoScrollToCurrentTime"
     | "renderEvent"
     | "renderScheduleSeparator"
-    | "scheduleDays"
     | "onRefresh"
     | "refreshing"
-    | "onEndReached"
   >
 > & {
   styles?: CalendarStyles;
@@ -35,10 +33,11 @@ export type ScheduleViewProps = Partial<
 
 export function ScheduleView({ date: _date, ...local }: ScheduleViewProps) {
   const cfg = useCalendarProps(local);
-  // Web: PageUp / PageDown / T move the window, ↑ / ↓ move between rows.
+  // Web: T scrolls to today, ↑ / ↓ move between rows (no Prev/Next).
   const onKeyDown = usePeriodKeys(cfg.keyboardNavigation, {
     arrows: false,
     rows: true,
+    pages: false,
   });
   return (
     <ViewConfigProvider value={cfg}>
